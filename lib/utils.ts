@@ -13,10 +13,10 @@ export const formatCurrency = (value: number | undefined | null): string => {
   return `$${value.toFixed(2)}`
 }
 
-// Format grams with "g" suffix
+// Format grams
 export const formatGrams = (grams: number | undefined | null): string => {
-  if (grams === undefined || grams === null) return "0.00g"
-  return `${grams.toFixed(2)}g`
+  if (grams === undefined || grams === null) return "0.00"
+  return `${grams.toFixed(2)}`
 }
 
 // Function to calculate derived values
