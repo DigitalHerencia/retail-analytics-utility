@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Save, Download, Trash2, Check, AlertCircle, Shield, Database, Palette } from "lucide-react"
+import { Save, Download, Trash2, Check, AlertCircle, Shield, Database, Palette, RotateCcw } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { saveData, getSavedDataList, loadData, deleteData } from "@/app/actions"
 import type { BusinessData, InventoryItem, Customer } from "@/lib/data"
 import { HustleTip } from "@/components/hustle-tip"
@@ -30,12 +41,14 @@ const accentColors = {
 }
 
 type AccentColorName = keyof typeof accentColors
+const ACCENT_COLOR_STORAGE_KEY = "retailAppAccentColor"
 
 interface SettingsTabProps {
   businessData: BusinessData
   inventory: InventoryItem[]
   customers: Customer[]
   onDataLoaded: (businessData: BusinessData, inventory: InventoryItem[], customers: Customer[]) => void
+  isNewAccount?: boolean
 }
 
 interface SavedFile {
@@ -45,14 +58,19 @@ interface SavedFile {
   uploadedAt: string
 }
 
-export default function SettingsTab({ businessData, inventory, customers, onDataLoaded }: SettingsTabProps) {
+export default function SettingsTab({ businessData, inventory, customers, onDataLoaded, isNewAccount = false }: SettingsTabProps) {
   const [saveName, setSaveName] = useState("")
   const [savedFiles, setSavedFiles] = useState<SavedFile[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false)
-  const [selectedAccent, setSelectedAccent] = useState<AccentColorName>("gold") // Default to gold
+  const [selectedAccent, setSelectedAccent] = useState<AccentColorName>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem(ACCENT_COLOR_STORAGE_KEY) as AccentColorName) || "gold"
+    }
+    return "gold"
+  })
 
   // Load saved files list
   const loadSavedFiles = async () => {
@@ -98,6 +116,11 @@ export default function SettingsTab({ businessData, inventory, customers, onData
 
     // Apply accent to chart colors (optional, can be customized further)
     root.style.setProperty("--chart-1", color.accent)
+
+    // Save selected accent color to local storage
+    if (typeof window !== "undefined") {
+      localStorage.setItem(ACCENT_COLOR_STORAGE_KEY, selectedAccent)
+    }
   }, [selectedAccent])
 
   // Handle save data
@@ -150,8 +173,20 @@ export default function SettingsTab({ businessData, inventory, customers, onData
     }
   }
 
+  // Placeholder for handleResetData
+  const handleResetData = async () => {
+    console.log("Resetting user data...") // Replace with actual API call
+    setMessage({ type: "success", text: "Demo data reset successfully (placeholder)." })
+  }
+
   return (
     <div className="space-y-4 p-4">
+      {isNewAccount && (
+        <HustleTip title="Clear Demo Data">
+          Welcome! Your account includes demo data to help you get started. You can clear this demo data in the 'Database Management' section below.
+        </HustleTip>
+      )}
+
       <div className="mb-4">
         <div className="gangster-gradient text-white py-6 px-4 mb-4 border-accent border-2 text-center">
           <h1 className="text-4xl font-bold text-accent gangster-font text-shadow">SETTINGS</h1>
@@ -187,7 +222,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
               ACCENT COLOR
             </h3>
             <p className="text-sm text-muted-foreground">
-              Choose an accent color to customize the look.
+              Choose an accent color to customize the look. Your choice is saved automatically.
             </p>
             <div className="flex flex-wrap gap-2">
               {(Object.keys(accentColors) as AccentColorName[]).map((colorName) => (
@@ -195,7 +230,11 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                   key={colorName}
                   variant={selectedAccent === colorName ? "default" : "outline"}
                   onClick={() => setSelectedAccent(colorName)}
-                  className={`button-sharp capitalize ${selectedAccent === colorName ? 'bg-accent text-accent-foreground' : 'border-accent text-accent'}`}
+                  className={`button-sharp capitalize ${
+                    selectedAccent === colorName
+                      ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] hover:bg-[hsl(var(--accent))]"
+                      : "border-[hsl(var(--accent))] text-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--accent-foreground))]"
+                  }`}
                 >
                   {colorName}
                 </Button>
@@ -311,6 +350,51 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                 </DialogContent>
               </Dialog>
             </div>
+
+            <div className="pt-4 border-t border-[hsl(var(--border))]">
+              <h4 className="text-md font-medium mb-2 gangster-font text-accent">Reset Data</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Reset all your stored data to the initial demo state. This action cannot be undone.
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="button-sharp">
+                    <RotateCcw className="mr-2 h-4 w-4" /> Reset All Data
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will permanently delete all your current business data, inventory, and customer records, replacing it with the default demo data. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleResetData}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Yes, Reset Data
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="card-hover card-sharp border-accent">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gangster-font text-accent">
+              <Shield className="h-5 w-5 mr-2 text-accent" />
+              ACCOUNT SECURITY
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Password reset and account management options will appear here once authentication is fully implemented.
+            </p>
           </div>
         </CardContent>
       </Card>
