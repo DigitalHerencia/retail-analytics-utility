@@ -23,6 +23,7 @@ import {
   Pie,
   Cell,
   LabelList,
+  TooltipProps,
 } from "recharts"
 import { formatCurrency, formatPercentage } from "@/lib/utils"
 import { DollarSign, TrendingUp, Calendar, AlertTriangle } from "lucide-react"
@@ -160,24 +161,28 @@ export default function MonthlyForecast({
 
   // Format sales by product for chart
   const salesByProductChart = useMemo(() => {
-    const data = Object.entries(monthlyStats.salesByProduct).map(([name, data]) => ({
-      name,
+    let data = Object.entries(monthlyStats.salesByProduct).map(([name, data]) => ({
+      name: name.length > 18 ? `${name.substring(0, 15)}...` : name, // less aggressive truncation
       revenue: data.revenue,
       profit: data.profit,
       quantity: data.quantity,
     }))
-
+    // Always show at least 3 products (with zeroes if needed)
+    if (data.length < 3) {
+      data = [
+        ...data,
+        ...Array.from({ length: 3 - data.length }, (_, i) => ({
+          name: `Product ${data.length + i + 1}`,
+          revenue: 0,
+          profit: 0,
+          quantity: 0,
+        })),
+      ]
+    }
     // For mobile, limit to top 5 products
     if (isMobile) {
-      return data
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 5)
-        .map((item) => ({
-          ...item,
-          name: item.name.length > 10 ? `${item.name.substring(0, 10)}...` : item.name,
-        }))
+      return data.sort((a, b) => b.revenue - a.revenue).slice(0, 5)
     }
-
     return data
   }, [monthlyStats.salesByProduct, isMobile])
 
@@ -193,13 +198,14 @@ export default function MonthlyForecast({
   // Colors for pie chart
   const COLORS = ["#8884d8", "#82ca9d", "#ffc658"]
 
-  // Format date for display on mobile
+  // Format date for display on mobile and desktop
   const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return dateStr
     if (isMobile) {
-      const date = new Date(dateStr)
       return `${date.getMonth() + 1}/${date.getDate()}`
     }
-    return dateStr
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   }
 
   return (
@@ -211,7 +217,7 @@ export default function MonthlyForecast({
         </div>
 
         <HustleTip title="BUSINESS INTELLIGENCE">
-          <p>
+          <p className="text-center">
             This page shows your monthly performance and projections. Track your progress towards your target profit,
             see which products are selling best, and identify trends in your business.
           </p>
@@ -316,7 +322,7 @@ export default function MonthlyForecast({
                 </div>
               </div>
 
-              <div className={`${isMobile ? "h-[30rem]" : "h-[40rem]"} w-full`}> {/* Increased height and added w-full */}
+              <div className={`${isMobile ? "h-[30rem]" : "h-[40rem]"} w-full`}>
                 <h3 className="gangster-font text-white mb-2">DAILY REVENUE & PROFIT</h3>
                 <ChartContainer
                   config={{
@@ -329,11 +335,13 @@ export default function MonthlyForecast({
                       color: "#ffc658", // yellow
                     },
                   }}
-                  className={`${isMobile ? "h-[26rem]" : "h-[36rem]"} w-full`} // Increased height and added w-full
+                  className={`${isMobile ? "h-[26rem]" : "h-[36rem]"} w-full`}
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={isMobile ? monthlyStats.optimizedDailySales : monthlyStats.dailySales}
+                      data={(isMobile ? monthlyStats.optimizedDailySales : monthlyStats.dailySales).length > 0
+                        ? (isMobile ? monthlyStats.optimizedDailySales : monthlyStats.dailySales)
+                        : [{ date: formatDate(new Date().toISOString()), revenue: 0, profit: 0 }]}
                       margin={
                         isMobile
                           ? { top: 5, right: 10, left: 0, bottom: 5 }
@@ -416,7 +424,7 @@ export default function MonthlyForecast({
               <CardTitle className="gangster-font text-white">SALES BY PRODUCT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className={`${isMobile ? "h-[30rem]" : "h-[40rem]"} w-full`}> {/* Increased height and added w-full */}
+              <div className={`${isMobile ? "h-[30rem]" : "h-[40rem]"} w-full`}>
                 <ChartContainer
                   config={{
                     revenue: {
@@ -428,11 +436,15 @@ export default function MonthlyForecast({
                       color: "#ffc658", // yellow
                     },
                   }}
-                  className={`${isMobile ? "h-[26rem]" : "h-[36rem]"} w-full`} // Increased height and added w-full
+                  className={`${isMobile ? "h-[26rem]" : "h-[36rem]"} w-full`}
                 >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={salesByProductChart}
+                      data={salesByProductChart.length > 0 ? salesByProductChart : [
+                        { name: 'No Sales', revenue: 0, profit: 0, quantity: 0 },
+                        { name: 'No Sales 2', revenue: 0, profit: 0, quantity: 0 },
+                        { name: 'No Sales 3', revenue: 0, profit: 0, quantity: 0 },
+                      ]}
                       margin={
                         isMobile
                           ? { top: 5, right: 10, left: 0, bottom: 5 }
@@ -454,7 +466,12 @@ export default function MonthlyForecast({
                       )}
                       <Tooltip
                         contentStyle={{ fontSize: isMobile ? "10px" : "12px" }}
-                        formatter={(value: any) => [`$${value}`, ""]}
+                        formatter={(value: any, name: string) =>
+                          name === 'revenue' || name === 'profit'
+                            ? [`$${value}`, name.charAt(0).toUpperCase() + name.slice(1)]
+                            : [value, name.charAt(0).toUpperCase() + name.slice(1)]
+                        }
+                        labelFormatter={(label) => `Product: ${label}`}
                       />
                       <Legend
                         wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
