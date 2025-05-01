@@ -63,8 +63,8 @@ export default function SetupTab({
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-gold border-2">
-          <h1 className="text-4xl font-bold text-gold gangster-font text-shadow">BUSINESS SETUP</h1>
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+          <h1 className="text-4xl font-bold text-white gangster-font text-shadow">BUSINESS SETUP</h1>
           <p className="text-white/80 mt-1">CONFIGURE YOUR OPERATION. MAXIMIZE YOUR PROFITS.</p>
         </div>
 
@@ -87,15 +87,15 @@ export default function SetupTab({
         </TabsList>
 
         <TabsContent value="pricing" className="space-y-6 mt-6">
-          <Card className="card-hover card-sharp border-gold">
+          <Card className="card-hover card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">PRICING CALCULATOR</CardTitle>
+              <CardTitle className="gangster-font text-white">PRICING CALCULATOR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="wholesalePrice" className="flex items-center gangster-font">
-                    <DollarSign className="h-4 w-4 mr-1 text-gold" />
+                    <DollarSign className="h-4 w-4 mr-1 text-white" />
                     WHOLESALE PRICE (PER OZ)
                     <TooltipProvider>
                       <Tooltip>
@@ -104,12 +104,12 @@ export default function SetupTab({
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs card-sharp">
                           <p>{businessConcepts.wholesale}</p>
-                          <p className="text-xs mt-1 text-muted-foreground">💰 Buy low, sell high. That's the game.</p>
+                          <p className="text-xs mt-1 text-white">💰 Buy low, sell high. That's the game.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </Label>
-                  <span className="font-medium gold-text">{formatCurrency(businessData.wholesalePricePerOz)}</span>
+                  <span className="font-medium white-text">{formatCurrency(businessData.wholesalePricePerOz)}</span>
                 </div>
                 <Input
                   id="wholesalePrice"
@@ -118,13 +118,13 @@ export default function SetupTab({
                   onChange={(e) => handleInputChange("wholesalePricePerOz", Number.parseFloat(e.target.value) || 0)}
                   className="text-lg input-sharp"
                 />
-                <p className="text-xs text-muted-foreground">Per gram: {formatCurrency(wholesalePricePerGram)}</p>
+                <p className="text-xs text-white">Per gram: {formatCurrency(wholesalePricePerGram)}</p>
               </div>
 
               <div className="space-y-2">
                 <Label className="flex items-center justify-between mb-2 gangster-font">
                   <span className="flex items-center">
-                    <Percent className="h-4 w-4 mr-1 text-gold" />
+                    <Percent className="h-4 w-4 mr-1 text-white" />
                     MARKUP PERCENTAGE
                     <TooltipProvider>
                       <Tooltip>
@@ -133,14 +133,14 @@ export default function SetupTab({
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs card-sharp">
                           <p>{businessConcepts.markup}</p>
-                          <p className="text-xs mt-1 text-muted-foreground">
+                          <p className="text-xs mt-1 text-white">
                             💰 Higher markup = bigger profits per unit. Find your sweet spot.
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </span>
-                  <span className="font-medium text-gold">{formatPercentage(markupPercentage)}</span>
+                  <span className="font-medium text-white">{formatPercentage(markupPercentage)}</span>
                 </Label>
                 <Slider
                   value={[markupPercentage]}
@@ -150,7 +150,7 @@ export default function SetupTab({
                   onValueChange={handleMarkupChange}
                   className="mb-6"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-xs text-white">
                   <span>50%</span>
                   <span>100%</span>
                   <span>150%</span>
@@ -159,44 +159,44 @@ export default function SetupTab({
               </div>
 
               <div className="bg-smoke p-6 space-y-4">
-                <h3 className="text-lg font-semibold gangster-font text-gold">CALCULATED RETAIL PRICE</h3>
+                <h3 className="text-lg font-semibold gangster-font text-white">CALCULATED RETAIL PRICE</h3>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground gangster-font">RETAIL PRICE (PER GRAM)</p>
-                    <p className="text-2xl font-bold mt-1 gold-text gangster-font">
+                    <p className="text-sm text-white gangster-font">RETAIL PRICE (PER GRAM)</p>
+                    <p className="text-2xl font-bold mt-1 white-text gangster-font">
                       {formatCurrency(retailPricePerGram)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground gangster-font">PROFIT (PER GRAM)</p>
-                    <p className="text-2xl font-bold mt-1 money-text gangster-font">{formatCurrency(profitPerGram)}</p>
+                    <p className="text-sm text-white gangster-font">PROFIT (PER GRAM)</p>
+                    <p className="text-2xl font-bold mt-1 text-white gangster-font">{formatCurrency(profitPerGram)}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground gangster-font">PROFIT MARGIN</span>
-                    <span className="font-medium gold-text">{formatPercentage(profitMarginPercentage)}</span>
+                    <span className="text-white gangster-font">PROFIT MARGIN</span>
+                    <span className="font-medium white-text">{formatPercentage(profitMarginPercentage)}</span>
                   </div>
                   <div className="w-full bg-secondary h-2">
-                    <div className="bg-gold h-2" style={{ width: `${profitMarginPercentage}%` }}></div>
+                    <div className="bg-white h-2" style={{ width: `${profitMarginPercentage}%` }}></div>
                   </div>
                 </div>
               </div>
 
               <Button
                 onClick={() => onUpdateRetailPrice(retailPricePerGram)}
-                className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
+                className="w-full bg-white hover:bg-white/90 text-black button-sharp"
               >
                 SAVE PRICING SETTINGS
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="card-hover card-sharp border-gold">
+          <Card className="card-hover card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">PRICING STRATEGY</CardTitle>
+              <CardTitle className="gangster-font text-white">PRICING STRATEGY</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -225,7 +225,7 @@ export default function SetupTab({
                   )}
 
                   {profitMarginPercentage > 70 && (
-                    <div className="bg-gold/10 p-3 border-l-4 border-gold">
+                    <div className="bg-white/10 p-3 border-l-4 border-white">
                       <p className="text-sm">
                         Your margins are excellent, but make sure your price isn't limiting your sales volume. Consider
                         offering volume discounts to move more product.
@@ -253,9 +253,9 @@ export default function SetupTab({
         </TabsContent>
 
         <TabsContent value="business" className="space-y-6 mt-6">
-          <Card className="card-hover card-sharp border-gold">
+          <Card className="card-hover card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">BUSINESS PARAMETERS</CardTitle>
+              <CardTitle className="gangster-font text-white">BUSINESS PARAMETERS</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -270,7 +270,7 @@ export default function SetupTab({
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs card-sharp">
                           <p>Your fixed monthly costs like rent, utilities, etc.</p>
-                          <p className="text-xs mt-1 text-muted-foreground">
+                          <p className="text-xs mt-1 text-white">
                             💰 Keep your overhead low to maximize profits.
                           </p>
                         </TooltipContent>
@@ -291,7 +291,7 @@ export default function SetupTab({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="targetProfit" className="flex items-center gangster-font">
-                    <TrendingUp className="h-4 w-4 mr-1 text-money" />
+                    <TrendingUp className="h-4 w-4 mr-1 text-white" />
                     TARGET MONTHLY PROFIT
                     <TooltipProvider>
                       <Tooltip>
@@ -300,14 +300,14 @@ export default function SetupTab({
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs card-sharp">
                           <p>How much profit you want to make each month.</p>
-                          <p className="text-xs mt-1 text-muted-foreground">
+                          <p className="text-xs mt-1 text-white">
                             💰 Set ambitious targets. Aim high, hustle hard.
                           </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </Label>
-                  <span className="font-medium money-text">{formatCurrency(businessData.targetProfitPerMonth)}</span>
+                  <span className="font-medium white-text">{formatCurrency(businessData.targetProfitPerMonth)}</span>
                 </div>
                 <Input
                   id="targetProfit"
@@ -319,26 +319,26 @@ export default function SetupTab({
               </div>
 
               <div className="bg-smoke p-6">
-                <h3 className="text-lg font-semibold gangster-font text-gold mb-4">BREAK-EVEN ANALYSIS</h3>
+                <h3 className="text-lg font-semibold gangster-font text-white mb-4">BREAK-EVEN ANALYSIS</h3>
 
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <div className="flex justify-between">
                       <span className="gangster-font">MONTHLY FIXED COSTS</span>
-                      <span className="text-gold">{formatCurrency(businessData.operatingExpenses)}</span>
+                      <span className="text-white">{formatCurrency(businessData.operatingExpenses)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="gangster-font">PROFIT PER GRAM</span>
-                      <span className="text-gold">{formatCurrency(profitPerGram)}</span>
+                      <span className="text-white">{formatCurrency(profitPerGram)}</span>
                     </div>
                   </div>
 
                   <div className="pt-4 border-t border-muted/20">
                     <div className="flex justify-between">
                       <span className="gangster-font">BREAK-EVEN QUANTITY</span>
-                      <span className="text-gold">{formatGrams(businessData.operatingExpenses / profitPerGram)}</span>
+                      <span className="text-white">{formatGrams(businessData.operatingExpenses / profitPerGram)}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-white mt-1">
                       This is how much you need to sell each month just to cover your expenses.
                     </p>
                   </div>
@@ -346,13 +346,13 @@ export default function SetupTab({
                   <div className="pt-4 border-t border-muted/20">
                     <div className="flex justify-between">
                       <span className="gangster-font">TARGET QUANTITY</span>
-                      <span className="text-gold">
+                      <span className="text-white">
                         {formatGrams(
                           (businessData.operatingExpenses + businessData.targetProfitPerMonth) / profitPerGram,
                         )}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-white mt-1">
                       This is how much you need to sell each month to hit your profit target.
                     </p>
                   </div>
@@ -361,16 +361,16 @@ export default function SetupTab({
 
               <Button
                 onClick={() => onUpdateBusinessData(businessData)}
-                className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
+                className="w-full bg-white hover:bg-white/90 text-black button-sharp"
               >
                 SAVE BUSINESS SETTINGS
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="card-hover card-sharp border-gold">
+          <Card className="card-hover card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">BUSINESS OPTIMIZATION</CardTitle>
+              <CardTitle className="gangster-font text-white">BUSINESS OPTIMIZATION</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -424,9 +424,9 @@ export default function SetupTab({
             </CardContent>
           </Card>
 
-          <Card className="card-hover card-sharp border-gold mt-6">
+          <Card className="card-hover card-sharp border-white mt-6">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">INVENTORY SETTINGS</CardTitle>
+              <CardTitle className="gangster-font text-white">INVENTORY SETTINGS</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -444,19 +444,19 @@ export default function SetupTab({
                 <div className="bg-smoke p-4 space-y-4">
                   <div className="flex justify-between">
                     <span className="gangster-font">TOTAL INVENTORY VALUE:</span>
-                    <span className="text-gold">
+                    <span className="text-white">
                       {formatCurrency(inventory.reduce((sum, item) => sum + item.totalCost, 0))}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="gangster-font">TOTAL QUANTITY:</span>
-                    <span className="text-gold">
+                    <span className="text-white">
                       {formatGrams(inventory.reduce((sum, item) => sum + item.quantityG, 0))}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="gangster-font">LOW STOCK ITEMS:</span>
-                    <span className="text-gold">
+                    <span className="text-white">
                       {inventory.filter((item) => item.quantityG <= item.reorderThresholdG).length}
                     </span>
                   </div>
@@ -483,7 +483,7 @@ export default function SetupTab({
 
               <Button
                 onClick={() => setActiveTab("inventory")}
-                className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
+                className="w-full bg-white hover:bg-white/90 text-black button-sharp"
               >
                 MANAGE INVENTORY
               </Button>

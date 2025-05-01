@@ -60,45 +60,45 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold gangster-font text-gold">MONEY COLLECTION STATS</h2>
+      <h2 className="text-xl font-bold gangster-font text-white">MONEY COLLECTION STATS</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <HustleStat
           title="TOTAL RECEIVABLES"
           value={formatCurrency(metrics.totalReceivables)}
-          icon={<DollarSign className="h-5 w-5 text-black" />}
+          icon={<DollarSign className="h-5 w-5 text-white" />}
         />
         <HustleStat
           title="OVERDUE AMOUNT"
           value={formatCurrency(metrics.overdueAmount)}
-          icon={<AlertTriangle className="h-5 w-5 text-black" />}
+          icon={<AlertTriangle className="h-5 w-5 text-white" />}
           trend={metrics.overdueAmount > 0 ? "down" : "neutral"}
           trendValue={metrics.overdueAmount > 0 ? "Needs collection" : "All paid on time"}
         />
         <HustleStat
           title="TOTAL CLIENTS"
           value={customers.length.toString()}
-          icon={<Users className="h-5 w-5 text-black" />}
+          icon={<Users className="h-5 w-5 text-white" />}
         />
         <HustleStat
           title="COLLECTION RATE"
           value={`${metrics.collectionRate.toFixed(1)}%`}
-          icon={<Clock className="h-5 w-5 text-black" />}
+          icon={<Clock className="h-5 w-5 text-white" />}
           trend={metrics.collectionRate > 80 ? "up" : metrics.collectionRate > 50 ? "neutral" : "down"}
           trendValue={metrics.collectionRate > 80 ? "Excellent" : metrics.collectionRate > 50 ? "Average" : "Poor"}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="card-sharp border-gold">
+        <Card className="card-sharp border-white">
           <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold gangster-font text-gold mb-4">CLIENT PAYMENT STATUS</h3>
+            <h3 className="text-lg font-semibold gangster-font text-white mb-4">CLIENT PAYMENT STATUS</h3>
 
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="gangster-font">PAID CLIENTS</span>
-                  <span className="text-money">
+                  <span className="text-white">
                     {metrics.paidCustomers} / {customers.length}
                   </span>
                 </div>
@@ -112,7 +112,7 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="gangster-font">PARTIAL PAYMENT</span>
-                  <span className="text-gold">
+                  <span className="text-whie">
                     {metrics.partialCustomers} / {customers.length}
                   </span>
                 </div>
@@ -126,14 +126,14 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="gangster-font">UNPAID CLIENTS</span>
-                  <span className="text-muted-foreground">
+                  <span className="text-white">
                     {metrics.unpaidCustomers} / {customers.length}
                   </span>
                 </div>
                 <Progress
                   value={(metrics.unpaidCustomers / Math.max(1, customers.length)) * 100}
                   className="h-2 border-sharp"
-                  indicatorClassName="bg-secondary"
+                  indicatorClassName="bg-white"
                 />
               </div>
 
@@ -154,9 +154,9 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
           </CardContent>
         </Card>
 
-        <Card className="card-sharp border-gold">
+        <Card className="card-sharp border-white">
           <CardContent className="pt-6">
-            <h3 className="text-lg font-semibold gangster-font text-gold mb-4">COLLECTION METRICS</h3>
+            <h3 className="text-lg font-semibold gangster-font text-white mb-4">COLLECTION METRICS</h3>
 
             <div className="space-y-6">
               <div>
@@ -165,9 +165,9 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
                   <span
                     className={
                       metrics.collectionRate > 80
-                        ? "text-money"
+                        ? "text-white"
                         : metrics.collectionRate > 50
-                          ? "text-gold"
+                          ? "text-white"
                           : "text-blood"
                     }
                   >
@@ -176,7 +176,7 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
                 </div>
                 <div className="w-full bg-secondary h-4">
                   <div
-                    className={`h-4 ${metrics.collectionRate > 80 ? "bg-money" : metrics.collectionRate > 50 ? "bg-gold" : "bg-blood"}`}
+                    className={`h-4 ${metrics.collectionRate > 80 ? "bg-white" : metrics.collectionRate > 50 ? "bg-white" : "bg-blood"}`}
                     style={{ width: `${Math.min(100, metrics.collectionRate)}%` }}
                   ></div>
                 </div>

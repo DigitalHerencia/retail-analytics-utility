@@ -205,8 +205,8 @@ export default function MonthlyForecast({
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-gold border-2">
-          <h1 className="text-4xl font-bold text-gold graffiti-font text-shadow">MONTHLY FORECAST</h1>
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">MONTHLY FORECAST</h1>
           <p className="text-white/80 mt-1">TRACK YOUR PROGRESS. PLAN YOUR MOVES.</p>
         </div>
 
@@ -222,40 +222,58 @@ export default function MonthlyForecast({
         <HustleStat
           title="MONTHLY REVENUE"
           value={formatCurrency(monthlyStats.revenue)}
-          icon={<DollarSign className="h-5 w-5 text-black" />}
+          icon={<DollarSign className="h-5 w-5 text-white" />}
         />
         <HustleStat
           title="MONTHLY PROFIT"
           value={formatCurrency(monthlyStats.profit)}
-          icon={<TrendingUp className="h-5 w-5 text-black" />}
+          icon={<TrendingUp className="h-5 w-5 text-white" />}
         />
         <HustleStat
           title="PROJECTED PROFIT"
           value={formatCurrency(monthlyStats.projectedProfit)}
-          icon={<Calendar className="h-5 w-5 text-black" />}
+          icon={<Calendar className="h-5 w-5 text-white" />}
         />
       </div>
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 p-1">
-          <TabsTrigger value="overview" className="gangster-font text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-            OVERVIEW
-          </TabsTrigger>
-          <TabsTrigger value="sales" className="gangster-font text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-            SALES
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="gangster-font text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-            INVENTORY
-          </TabsTrigger>
-          <TabsTrigger value="accounts" className="gangster-font text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2">
-            ACCOUNTS
-          </TabsTrigger>
-        </TabsList>
+        <div className="border border-white rounded-lg bg-black p-0 mb-4 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-0 bg-transparent p-0 overflow-hidden">
+            <TabsTrigger
+              value="overview"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 border-0 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:border-0 data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent', borderRadius: 0 }}
+            >
+              OVERVIEW
+            </TabsTrigger>
+            <TabsTrigger
+              value="sales"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 border-0 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:border-0 data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent', borderRadius: 0 }}
+            >
+              SALES
+            </TabsTrigger>
+            <TabsTrigger
+              value="inventory"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 border-0 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:border-0 data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent', borderRadius: 0 }}
+            >
+              INVENTORY
+            </TabsTrigger>
+            <TabsTrigger
+              value="accounts"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 border-0 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:border-0 data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent', borderRadius: 0 }}
+            >
+              ACCOUNTS
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">PROFIT TARGET PROGRESS</CardTitle>
+              <CardTitle className="gangster-font text-white">PROFIT TARGET PROGRESS</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -269,7 +287,7 @@ export default function MonthlyForecast({
               </div>
 
               <div className="bg-smoke p-4">
-                <h3 className="gangster-font text-gold mb-2">MONTHLY SUMMARY</h3>
+                <h3 className="gangster-font text-white mb-2">MONTHLY SUMMARY</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Revenue:</span>
@@ -281,7 +299,7 @@ export default function MonthlyForecast({
                   </div>
                   <div className="flex justify-between">
                     <span>Profit:</span>
-                    <span className="font-medium text-money">{formatCurrency(monthlyStats.profit)}</span>
+                    <span className="font-medium text-white">{formatCurrency(monthlyStats.profit)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Accounts Receivable:</span>
@@ -299,16 +317,16 @@ export default function MonthlyForecast({
               </div>
 
               <div className={`${isMobile ? "h-[30rem]" : "h-[40rem]"} w-full`}> {/* Increased height and added w-full */}
-                <h3 className="gangster-font text-gold mb-2">DAILY REVENUE & PROFIT</h3>
+                <h3 className="gangster-font text-white mb-2">DAILY REVENUE & PROFIT</h3>
                 <ChartContainer
                   config={{
                     revenue: {
                       label: "Revenue",
-                      color: "hsl(var(--chart-1))",
+                      color: "#8884d8", // purple
                     },
                     profit: {
                       label: "Profit",
-                      color: "hsl(var(--chart-2))",
+                      color: "#ffc658", // yellow
                     },
                   }}
                   className={`${isMobile ? "h-[26rem]" : "h-[36rem]"} w-full`} // Increased height and added w-full
@@ -345,7 +363,7 @@ export default function MonthlyForecast({
                       <Line
                         type="monotone"
                         dataKey="revenue"
-                        stroke="var(--color-revenue)"
+                        stroke="#8884d8"
                         name="Revenue"
                         strokeWidth={2}
                         dot={isMobile ? false : { r: 3 }}
@@ -353,7 +371,7 @@ export default function MonthlyForecast({
                       <Line
                         type="monotone"
                         dataKey="profit"
-                        stroke="var(--color-profit)"
+                        stroke="#ffc658"
                         name="Profit"
                         strokeWidth={2}
                         dot={isMobile ? false : { r: 3 }}
@@ -365,7 +383,7 @@ export default function MonthlyForecast({
 
               {isMobile && (
                 <div className="h-60 mt-6">
-                  <h3 className="gangster-font text-gold mb-2">PROFIT DISTRIBUTION</h3>
+                  <h3 className="gangster-font text-white mb-2">PROFIT DISTRIBUTION</h3>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -393,9 +411,9 @@ export default function MonthlyForecast({
         </TabsContent>
 
         <TabsContent value="sales" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">SALES BY PRODUCT</CardTitle>
+              <CardTitle className="gangster-font text-white">SALES BY PRODUCT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className={`${isMobile ? "h-[30rem]" : "h-[40rem]"} w-full`}> {/* Increased height and added w-full */}
@@ -403,11 +421,11 @@ export default function MonthlyForecast({
                   config={{
                     revenue: {
                       label: "Revenue",
-                      color: "hsl(var(--chart-1))",
+                      color: "#8884d8", // purple
                     },
                     profit: {
                       label: "Profit",
-                      color: "hsl(var(--chart-2))",
+                      color: "#ffc658", // yellow
                     },
                   }}
                   className={`${isMobile ? "h-[26rem]" : "h-[36rem]"} w-full`} // Increased height and added w-full
@@ -442,15 +460,15 @@ export default function MonthlyForecast({
                         wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
                         verticalAlign={isMobile ? "top" : "bottom"}
                       />
-                      <Bar dataKey="revenue" fill="var(--color-revenue)" name="Revenue" barSize={isMobile ? 15 : 20} />
-                      <Bar dataKey="profit" fill="var(--color-profit)" name="Profit" barSize={isMobile ? 15 : 20} />
+                      <Bar dataKey="revenue" fill="#8884d8" name="Revenue" barSize={isMobile ? 15 : 20} />
+                      <Bar dataKey="profit" fill="#ffc658" name="Profit" barSize={isMobile ? 15 : 20} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
 
               <div className="space-y-4 mt-4">
-                <h3 className="gangster-font text-gold">TOP PRODUCTS</h3>
+                <h3 className="gangster-font text-white">TOP PRODUCTS</h3>
                 <div className="space-y-2">
                   {salesByProductChart
                     .sort((a, b) => b.revenue - a.revenue)
@@ -465,7 +483,7 @@ export default function MonthlyForecast({
                         </div>
                         <div className="text-right">
                           <div className="font-medium">{formatCurrency(product.revenue || 0)}</div>
-                          <div className="text-xs text-money">{formatCurrency(product.profit || 0)} profit</div>
+                          <div className="text-xs text-white">{formatCurrency(product.profit || 0)} profit</div>
                         </div>
                       </div>
                     ))}
@@ -476,9 +494,9 @@ export default function MonthlyForecast({
         </TabsContent>
 
         <TabsContent value="inventory" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">INVENTORY STATUS</CardTitle>
+              <CardTitle className="gangster-font text-white">INVENTORY STATUS</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
@@ -493,13 +511,13 @@ export default function MonthlyForecast({
                   </div>
                   <div className="flex justify-between items-center mt-2">
                     <h3 className="gangster-font">POTENTIAL PROFIT</h3>
-                    <span className="font-medium text-money">
+                    <span className="font-medium text-white">
                       {formatCurrency(monthlyStats.inventoryRetailValue - monthlyStats.inventoryValue)}
                     </span>
                   </div>
                 </div>
 
-                <h3 className="gangster-font text-gold">INVENTORY LEVELS</h3>
+                <h3 className="gangster-font text-white">INVENTORY LEVELS</h3>
                 <div className="space-y-2">
                   {inventory.slice(0, isMobile ? 5 : inventory.length).map((item) => {
                     const percentRemaining = item.initialQuantityOz
@@ -557,9 +575,9 @@ export default function MonthlyForecast({
         </TabsContent>
 
         <TabsContent value="accounts" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">ACCOUNTS RECEIVABLE</CardTitle>
+              <CardTitle className="gangster-font text-white">ACCOUNTS RECEIVABLE</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-smoke p-4">
@@ -573,7 +591,7 @@ export default function MonthlyForecast({
                 </div>
               </div>
 
-              <h3 className="gangster-font text-gold">OUTSTANDING BALANCES</h3>
+              <h3 className="gangster-font text-white">OUTSTANDING BALANCES</h3>
               <div className="space-y-2">
                 {customers
                   .filter((c) => (c.amountOwed || 0) > 0)
@@ -614,7 +632,7 @@ export default function MonthlyForecast({
 
                 {customers.filter((c) => (c.amountOwed || 0) > 0).length === 0 && (
                   <div className="bg-smoke p-6 text-center">
-                    <p className="text-money gangster-font">NO OUTSTANDING BALANCES</p>
+                    <p className="text-white gangster-font">NO OUTSTANDING BALANCES</p>
                     <p className="text-sm text-muted-foreground mt-1">All clients are paid up. Good work!</p>
                   </div>
                 )}

@@ -77,9 +77,9 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-smoke border-gold card-sharp max-w-md">
+      <DialogContent className="bg-smoke border-white card-sharp max-w-md">
         <DialogHeader>
-          <DialogTitle className="gangster-font text-gold">
+          <DialogTitle className="gangster-font text-white">
             {initialData ? "EDIT CLIENT" : "ADD NEW CLIENT"}
           </DialogTitle>
           <DialogDescription>
@@ -198,7 +198,7 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isLoading} className="bg-gold hover:bg-gold/90 text-black button-sharp">
+              <Button type="submit" disabled={isLoading} className="bg-white hover:bg-white/90 text-black button-sharp">
                 {isLoading ? "SAVING..." : initialData ? "UPDATE CLIENT" : "ADD CLIENT"}
               </Button>
             </DialogFooter>

@@ -144,8 +144,8 @@ export default function SettingsTab({ businessData, inventory, customers, onData
       )}
 
       <div className="mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-accent border-2 text-center">
-          <h1 className="text-4xl font-bold text-accent gangster-font text-shadow">SETTINGS</h1>
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 text-center">
+          <h1 className="text-4xl font-bold text-white gangster-font text-shadow">SETTINGS</h1>
           <p className="text-white/80 mt-1">SECURE YOUR DATA. PROTECT YOUR EMPIRE.</p>
         </div>
 
@@ -160,7 +160,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
         <Alert
           variant={message.type === "success" ? "default" : "destructive"}
           className={`mb-4 card-sharp ${
-            message.type === "success" ? "bg-accent/10 text-accent border-accent/20" : "bg-blood/10 text-blood border-blood/20"
+            message.type === "success" ? "bg-white/10 text-white border-white/20" : "bg-blood/10 text-blood border-blood/20"
           }`}
         >
           {message.type === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -169,24 +169,24 @@ export default function SettingsTab({ businessData, inventory, customers, onData
         </Alert>
       )}
 
-      <Card className="card-hover card-sharp border-accent">
+      <Card className="card-hover card-sharp border-white">
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gangster-font text-accent">
-              <Database className="h-5 w-5 mr-2 text-accent" />
+            <h3 className="text-lg font-semibold flex items-center gangster-font text-white">
+              <Database className="h-5 w-5 mr-2 text-white" />
               DATA MANAGEMENT
             </h3>
 
             <div className="grid grid-cols-2 gap-4">
               <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground button-sharp">
+                  <Button className="w-full bg-white hover:bg-white/90 text-white-foreground button-sharp">
                     <Save className="mr-2 h-4 w-4" /> SAVE DATA
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-smoke border-accent card-sharp">
+                <DialogContent className="bg-smoke border-white card-sharp">
                   <DialogHeader>
-                    <DialogTitle className="gangster-font text-accent">SAVE YOUR DATA</DialogTitle>
+                    <DialogTitle className="gangster-font text-white">SAVE YOUR DATA</DialogTitle>
                     <DialogDescription>
                       Enter a name to identify this save. This will secure your current business data.
                     </DialogDescription>
@@ -209,7 +209,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                     <Button
                       onClick={handleSaveData}
                       disabled={isLoading}
-                      className="bg-accent hover:bg-accent/90 text-accent-foreground button-sharp"
+                      className="bg-white hover:bg-white/90 text-white-foreground button-sharp"
                     >
                       {isLoading ? "SAVING..." : "SAVE DATA"}
                     </Button>
@@ -223,9 +223,9 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                     <Download className="mr-2 h-4 w-4" /> LOAD DATA
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-smoke border-accent card-sharp">
+                <DialogContent className="bg-smoke border-white card-sharp">
                   <DialogHeader>
-                    <DialogTitle className="gangster-font text-accent">LOAD SAVED DATA</DialogTitle>
+                    <DialogTitle className="gangster-font text-white">LOAD SAVED DATA</DialogTitle>
                     <DialogDescription>
                       Select a previously saved file to load. This will replace your current data.
                     </DialogDescription>
@@ -233,14 +233,14 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                   <div className="space-y-4 py-4 max-h-[300px] overflow-y-auto">
                     {isLoading ? (
                       <div className="text-center py-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
                         <p className="mt-2 text-muted-foreground">LOADING DATA...</p>
                       </div>
                     ) : savedFiles.length === 0 ? (
                       <p className="text-center text-muted-foreground py-4">NO SAVED DATA FOUND</p>
                     ) : (
                       savedFiles.map((file) => (
-                        <Card key={file.id} className="overflow-hidden card-hover card-sharp border-accent">
+                        <Card key={file.id} className="overflow-hidden card-hover card-sharp border-white">
                           <div className="p-4">
                             <div className="flex justify-between items-start">
                               <div>
@@ -252,7 +252,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                                   size="sm"
                                   onClick={() => handleLoadData(file.url)}
                                   disabled={isLoading}
-                                  className="bg-accent/20 text-accent hover:bg-accent/30 border-none button-sharp"
+                                  className="bg-white/20 text-white hover:bg-white/30 border-none button-sharp"
                                 >
                                   LOAD
                                 </Button>
@@ -277,7 +277,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
             </div>
 
             <div className="pt-4 border-t border-[hsl(var(--border))]">
-              <h4 className="text-md font-medium mb-2 gangster-font text-accent">Reset Data</h4>
+              <h4 className="text-md font-medium mb-2 gangster-font text-white">Reset Data</h4>
               <p className="text-sm text-muted-foreground mb-3">
                 Reset all your stored data to the initial demo state. This action cannot be undone.
               </p>
@@ -310,11 +310,11 @@ export default function SettingsTab({ businessData, inventory, customers, onData
         </CardContent>
       </Card>
 
-      <Card className="card-hover card-sharp border-accent">
+      <Card className="card-hover card-sharp border-white">
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gangster-font text-accent">
-              <Shield className="h-5 w-5 mr-2 text-accent" />
+            <h3 className="text-lg font-semibold flex items-center gangster-font text-white">
+              <Shield className="h-5 w-5 mr-2 text-white" />
               ACCOUNT SECURITY
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -324,11 +324,11 @@ export default function SettingsTab({ businessData, inventory, customers, onData
         </CardContent>
       </Card>
 
-      <Card className="card-hover card-sharp border-accent">
+      <Card className="card-hover card-sharp border-white">
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gangster-font text-accent">
-              <Shield className="h-5 w-5 mr-2 text-accent" />
+            <h3 className="text-lg font-semibold flex items-center gangster-font text-white">
+              <Shield className="h-5 w-5 mr-2 text-white" />
               ABOUT
             </h3>
             <p className="text-sm text-muted-foreground">
@@ -337,15 +337,15 @@ export default function SettingsTab({ businessData, inventory, customers, onData
             </p>
             <div className="flex items-center justify-between bg-smoke p-3">
               <span className="text-sm gangster-font">VERSION</span>
-              <span className="text-sm font-medium text-accent">2.0</span>
+              <span className="text-sm font-medium text-white">2.0</span>
             </div>
             <div className="flex items-center justify-between bg-smoke p-3">
               <span className="text-sm gangster-font">DATA STORAGE</span>
-              <span className="text-sm font-medium text-accent">VERCEL BLOB</span>
+              <span className="text-sm font-medium text-white">VERCEL BLOB</span>
             </div>
             <div className="flex items-center justify-between bg-smoke p-3">
               <span className="text-sm gangster-font">THEME</span>
-              <span className="text-sm font-medium text-accent">BOSS MODE</span>
+              <span className="text-sm font-medium text-white">BOSS MODE</span>
             </div>
           </div>
         </CardContent>

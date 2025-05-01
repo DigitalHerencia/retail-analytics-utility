@@ -275,14 +275,24 @@ export default function CashRegister({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 gap-1 p-1 rounded-lg bg-black border border-white mb-[5px]">
-          <TabsTrigger value="quick-sale" className="gangster-font text-xs sm:text-sm px-2 sm:px-3 py-2 text-white data-[state=active]:bg-white data-[state=active]:text-black rounded-md flex items-center justify-center">
-            QUICK SALE
-          </TabsTrigger>
-          <TabsTrigger value="collect-payment" className="gangster-font text-xs sm:text-sm px-2 sm:px-3 py-2 text-white data-[state=active]:bg-white data-[state=active]:text-black rounded-md flex items-center justify-center">
-            COLLECT PAYMENT
-          </TabsTrigger>
-        </TabsList>
+        <div className="border rounded-md border-white bg-black p-0 mb-4 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2 gap-0 bg-transparent p-0 overflow-hidden">
+            <TabsTrigger
+              value="quick-sale"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent' }}
+            >
+              QUICK SALE
+            </TabsTrigger>
+            <TabsTrigger
+              value="collect-payment"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent' }}
+            >
+              COLLECT PAYMENT
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="quick-sale" className="space-y-4 mt-4 px-1 sm:px-0">
           <Card className="card-sharp border-white">

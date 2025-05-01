@@ -68,7 +68,7 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white" />
         <Input
           placeholder="Search clients..."
           value={searchTerm}
@@ -82,7 +82,7 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
           variant={filter === "all" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("all")}
-          className={filter === "all" ? "bg-gold text-black hover:bg-gold/90 button-sharp" : "button-sharp"}
+          className={filter === "all" ? "bg-white text-black hover:bg-white/90 button-sharp" : "button-sharp"}
         >
           All ({customers.length})
         </Button>
@@ -90,7 +90,7 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
           variant={filter === "unpaid" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("unpaid")}
-          className={filter === "unpaid" ? "bg-gold text-black hover:bg-gold/90 button-sharp" : "button-sharp"}
+          className={filter === "unpaid" ? "bg-white text-black hover:bg-white/90 button-sharp" : "button-sharp"}
         >
           Unpaid ({customers.filter((c) => c.status === "unpaid" || c.status === "partial").length})
         </Button>
@@ -107,7 +107,7 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
           variant={filter === "paid" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("paid")}
-          className={filter === "paid" ? "bg-money text-white hover:bg-money/90 button-sharp" : "button-sharp"}
+          className={filter === "paid" ? "bg-white text-black hover:bg-white/90 button-sharp" : "button-sharp"}
         >
           Paid ({customers.filter((c) => c.status === "paid").length})
         </Button>
@@ -123,7 +123,7 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
           {sortedCustomers.map((customer) => (
             <Card
               key={customer.id}
-              className="overflow-hidden card-hover card-sharp border-gold cursor-pointer"
+              className="overflow-hidden card-hover card-sharp border-white cursor-pointer"
               onClick={() => onSelectCustomer(customer)}
             >
               <div className="p-4">
@@ -136,11 +136,11 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
                   </div>
                   <div className="flex items-center space-x-2">
                     {customer.status === "paid" ? (
-                      <Badge className="bg-money text-black hover:bg-money/90 border border-money rounded-none">
+                      <Badge className="bg-white text-black hover:bg-white/90 border border-white rounded-none">
                         PAID
                       </Badge>
                     ) : customer.status === "partial" ? (
-                      <Badge className="bg-gold text-black hover:bg-gold/90 border border-gold rounded-none">
+                      <Badge className="bg-white text-black hover:bg-white/90 border border-white rounded-none">
                         PARTIAL
                       </Badge>
                     ) : new Date(customer.dueDate) < new Date() ? (

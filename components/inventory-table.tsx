@@ -166,12 +166,10 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="space-y-2">
-            <CardTitle>Inventory Management</CardTitle>
-            <CardDescription>Track your commodity inventory levels and costs</CardDescription>
+          <div className="flex justify-between items-center mb-4">
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="mt-2">
+                <Button className="bg-white hover:bg-white/90 text-black button-sharp">
                   <Plus className="mr-2 h-4 w-4" /> Add Inventory
                 </Button>
               </DialogTrigger>
@@ -179,33 +177,6 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{formatCurrency(totalInventoryValue)}</div>
-                <p className="text-sm text-muted-foreground">Total Inventory Value</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{formatGrams(totalQuantityG)}</div>
-                <p className="text-sm text-muted-foreground">Total Quantity (g)</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{formatOunces(totalQuantityOz)}</div>
-                <p className="text-sm text-muted-foreground">Total Quantity (oz)</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{formatKilograms(totalQuantityKg)}</div>
-                <p className="text-sm text-muted-foreground">Total Quantity (kg)</p>
-              </CardContent>
-            </Card>
-          </div>
-
           <div className="overflow-x-auto">
             <Table className="w-full">
               <TableHeader>
@@ -235,7 +206,7 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
                       <TableCell className="hidden sm:table-cell">
                         <div className="space-y-1">
                           <div>{formatGrams(item.quantityG)}</div>
-                          <div className="text-xs text-muted-foreground hidden sm:block">{formatOunces(item.quantityOz)}</div>
+                          <div className="text-xs white hidden sm:block">{formatOunces(item.quantityOz)}</div>
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{formatCurrency(item.totalCost)}</TableCell>
@@ -325,7 +296,7 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
                     <FormItem>
                       <FormLabel>Unit</FormLabel>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         {...field}
                       >
                         <option value="g">Grams (g)</option>
