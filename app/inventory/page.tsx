@@ -35,7 +35,16 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="container py-4">
+    <div className="container py-4 space-y-6">
+      {/* Restored Header Section */}
+      <div className="text-center mb-4">
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">INVENTORY</h1>
+          <p className="text-white/80 mt-1">Track your commodity inventory levels and costs</p>
+        </div>
+        {/* Optional: Add HustleTip here if needed */}
+      </div>
+
       <InventoryTable
         inventory={inventory || []}
         onAddItem={handleAddItem}

@@ -12,7 +12,7 @@ import { DollarSign, TrendingUp, BarChart3, Percent, HelpCircle } from "lucide-r
 import { formatCurrency, formatPercentage, businessConcepts, formatGrams } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import type { BusinessData } from "@/lib/data"
-import { useInventory } from "@/lib/hooks/use-inventory"
+import { useInventory } from "@/hooks/use-inventory"
 
 interface SetupTabProps {
   businessData: BusinessData

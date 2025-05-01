@@ -236,49 +236,41 @@ export default function InventoryManagement({
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-gold border-2">
-          <h1 className="text-4xl font-bold text-gold gangster-font text-shadow">INVENTORY</h1>
-          <p className="text-white/80 mt-1">KNOW YOUR SUPPLY. CONTROL YOUR GAME.</p>
-        </div>
-
-        <HustleTip title="INVENTORY MANAGEMENT">
-          <p>Track every gram. Know what you've got and what it's worth. Never get caught slipping with low stock.</p>
-        </HustleTip>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <HustleStat
           title="TOTAL VALUE"
           value={formatCurrency(totalInventoryValue)}
-          icon={<Plus className="h-5 w-5 text-black" />}
+          icon={<Plus className="h-5 w-5 text-white" />}
+          className="border-white"
         />
         <HustleStat
           title="TOTAL QUANTITY"
           value={`${formatGrams(totalQuantityG)} (${formatOunces(totalQuantityOz)})`}
-          icon={<Plus className="h-5 w-5 text-black" />}
+          icon={<Plus className="h-5 w-5 text-white" />}
+          className="border-white"
         />
         <HustleStat
           title="LOW STOCK ITEMS"
           value={lowStockItems.toString()}
-          icon={<AlertTriangle className="h-5 w-5 text-black" />}
+          icon={<AlertTriangle className="h-5 w-5 text-white" />}
+          className="border-white"
           trend={lowStockItems > 0 ? "down" : "up"}
           trendValue={lowStockItems > 0 ? "Needs attention" : "All stocked"}
         />
       </div>
 
-      <Card className="card-hover card-sharp border-gold">
+      <Card className="card-hover card-sharp border-white">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="gangster-font text-gold">PRODUCT INVENTORY</CardTitle>
+          <CardTitle className="gangster-font text-white">PRODUCT INVENTORY</CardTitle>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gold hover:bg-gold/90 text-black button-sharp">
+              <Button className="bg-white hover:bg-white/90 text-black button-sharp border-white">
                 <Plus className="mr-2 h-4 w-4" /> ADD PRODUCT
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-smoke border-gold card-sharp">
+            <DialogContent className="bg-smoke border-white card-sharp">
               <DialogHeader>
-                <DialogTitle className="gangster-font text-gold">ADD NEW PRODUCT</DialogTitle>
+                <DialogTitle className="gangster-font text-white">ADD NEW PRODUCT</DialogTitle>
                 <DialogDescription>Enter the details of the new product for your inventory.</DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -387,7 +379,7 @@ export default function InventoryManagement({
                     )}
                   />
                   <DialogFooter>
-                    <Button type="submit" className="bg-gold hover:bg-gold/90 text-black button-sharp">
+                    <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white">
                       ADD PRODUCT
                     </Button>
                   </DialogFooter>
@@ -404,11 +396,11 @@ export default function InventoryManagement({
               </div>
             ) : (
               inventory.map((item) => (
-                <Card key={item.id} className="overflow-hidden card-hover card-sharp border-gold">
+                <Card key={item.id} className="overflow-hidden card-hover card-sharp border-white">
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-medium gangster-font">{item.name}</h4>
+                        <h4 className="font-medium gangster-font text-white">{item.name}</h4>
                         <p className="text-sm text-muted-foreground">Purchased: {item.purchaseDate}</p>
                       </div>
                       {item.quantityG <= item.reorderThresholdG ? (
@@ -416,7 +408,7 @@ export default function InventoryManagement({
                           LOW STOCK
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-gold/10 text-gold border-gold/20 rounded-none">
+                        <Badge variant="outline" className="bg-white/10 text-white border-white/20 rounded-none">
                           {formatOunces(item.quantityOz)}
                         </Badge>
                       )}
@@ -435,12 +427,12 @@ export default function InventoryManagement({
                       </div>
                     </div>
                     <div className="flex justify-between mt-3 pt-3 border-t border-muted/20">
-                      <span className="font-medium gold-text">Total Value: {formatCurrency(item.totalCost)}</span>
+                      <span className="font-medium text-white">Total Value: {formatCurrency(item.totalCost)}</span>
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-gold/20 text-gold hover:bg-gold/10 button-sharp"
+                          className="border-white/20 text-white hover:bg-white/10 button-sharp"
                           onClick={() => openEditDialog(item)}
                         >
                           <Edit className="h-4 w-4" />
@@ -463,11 +455,10 @@ export default function InventoryManagement({
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-smoke border-gold card-sharp">
+        <DialogContent className="bg-smoke border-white card-sharp">
           <DialogHeader>
-            <DialogTitle className="gangster-font text-gold">EDIT PRODUCT</DialogTitle>
+            <DialogTitle className="gangster-font text-white">EDIT PRODUCT</DialogTitle>
             <DialogDescription>Update the details of this product.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -576,7 +567,7 @@ export default function InventoryManagement({
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="bg-gold hover:bg-gold/90 text-black button-sharp">
+                <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white">
                   UPDATE PRODUCT
                 </Button>
               </DialogFooter>
@@ -585,11 +576,10 @@ export default function InventoryManagement({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-smoke border-gold card-sharp">
+        <AlertDialogContent className="bg-smoke border-white card-sharp">
           <AlertDialogHeader>
-            <AlertDialogTitle className="gangster-font text-gold">DELETE PRODUCT</AlertDialogTitle>
+            <AlertDialogTitle className="gangster-font text-white">DELETE PRODUCT</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this product? This action cannot be undone.
               {deletingItemId && (
@@ -602,10 +592,10 @@ export default function InventoryManagement({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="button-sharp">CANCEL</AlertDialogCancel>
+            <AlertDialogCancel className="button-sharp border-white">CANCEL</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteItem}
-              className="bg-blood hover:bg-blood/90 text-white button-sharp"
+              className="bg-blood hover:bg-blood/90 text-white button-sharp border-blood"
             >
               DELETE
             </AlertDialogAction>

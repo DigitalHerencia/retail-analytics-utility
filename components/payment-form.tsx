@@ -71,9 +71,9 @@ export default function PaymentForm({ isOpen, onClose, onSave, customer }: Payme
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-smoke border-gold card-sharp max-w-md">
+      <DialogContent className="bg-smoke border-white card-sharp max-w-md">
         <DialogHeader>
-          <DialogTitle className="gangster-font text-gold">RECORD PAYMENT</DialogTitle>
+          <DialogTitle className="gangster-font text-white">RECORD PAYMENT</DialogTitle>
           <DialogDescription>
             Record a payment from {customer.name}. Current balance: {formatCurrency(customer.amountOwed)}
           </DialogDescription>

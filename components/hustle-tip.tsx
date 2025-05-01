@@ -19,11 +19,11 @@ export function HustleTip({ title, children }: HustleTipProps) {
 
   return (
     // Use CSS variables for border and text color
-    <Card className={cn("relative border-0 border-l-4 border-l-[hsl(var(--accent))] bg-smoke card-sharp")}>
+    <Card className={cn("relative border-0 border-l-4 bg-smoke card-sharp")}>
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-white"
+        className="absolute top-1 right-1 h-6 w-6 text-white hover:text-white"
         onClick={() => setIsVisible(false)}
       >
         <X className="h-4 w-4" />
@@ -33,8 +33,8 @@ export function HustleTip({ title, children }: HustleTipProps) {
         <div className="flex items-start gap-3">
           <div>
             {/* Use CSS variable for title color */}
-            <h4 className="font-medium text-[hsl(var(--accent))] gangster-font [text-shadow:_1px_1px_2px_rgb(0_0_0_/_50%)]">{title}</h4>
-            <div className="text-sm mt-1 text-muted-foreground line-clamp-3">{children}</div>
+            <h4 className="font-medium text-white gangster-font [text-shadow:_1px_1px_2px_rgb(0_0_0_/_50%)]">{title}</h4>
+            <div className="text-sm mt-1 text-white line-clamp-3">{children}</div>
           </div>
         </div>
       </CardContent>

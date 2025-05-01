@@ -61,8 +61,16 @@ export default function SettingsTab({ businessData, inventory, customers, onData
     const result = await getSavedDataList()
     setIsLoading(false)
 
-    if (result.success) {
-      setSavedFiles(result.files)
+    if (result.success && result.list) {
+      // Map the result.list (array of names) to SavedFile objects
+      setSavedFiles(result.list.map((name: string) => ({
+        id: name,
+        url: name,
+        pathname: name,
+        uploadedAt: new Date().toLocaleString(), // Placeholder, update if you have a real timestamp
+      })))
+    } else {
+      setSavedFiles([])
     }
   }
 
@@ -78,45 +86,46 @@ export default function SettingsTab({ businessData, inventory, customers, onData
     }
 
     setIsLoading(true)
-    const result = await saveData(saveName, businessData, inventory, customers)
+    const result = await saveData(saveName, { businessData, inventory, customers })
     setIsLoading(false)
 
     if (result.success) {
-      setMessage({ type: "success", text: result.message })
+      setMessage({ type: "success", text: "Data saved successfully." })
       setSaveName("")
       setIsSaveDialogOpen(false)
       loadSavedFiles()
     } else {
-      setMessage({ type: "error", text: result.message })
+      setMessage({ type: "error", text: result.error || "Failed to save data." })
     }
   }
 
   // Handle load data
-  const handleLoadData = async (url: string) => {
+  const handleLoadData = async (name: string) => {
     setIsLoading(true)
-    const result = await loadData(url)
+    const result = await loadData(name)
     setIsLoading(false)
 
     if (result.success && result.data) {
-      onDataLoaded(result.data.businessData, result.data.inventory, result.data.customers)
-      setMessage({ type: "success", text: result.message })
+      const { businessData, inventory, customers } = result.data
+      onDataLoaded(businessData, inventory, customers)
+      setMessage({ type: "success", text: "Data loaded successfully." })
       setIsLoadDialogOpen(false)
     } else {
-      setMessage({ type: "error", text: result.message })
+      setMessage({ type: "error", text: result.error || "Failed to load data." })
     }
   }
 
   // Handle delete data
-  const handleDeleteData = async (pathname: string) => {
+  const handleDeleteData = async (name: string) => {
     setIsLoading(true)
-    const result = await deleteData(pathname)
+    const result = await deleteData(name)
     setIsLoading(false)
 
     if (result.success) {
-      setMessage({ type: "success", text: result.message })
+      setMessage({ type: "success", text: "Data deleted successfully." })
       loadSavedFiles()
     } else {
-      setMessage({ type: "error", text: result.message })
+      setMessage({ type: "error", text: result.error || "Failed to delete data." })
     }
   }
 

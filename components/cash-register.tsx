@@ -240,8 +240,8 @@ export default function CashRegister({
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-gold border-2">
-          <h1 className="text-4xl font-bold text-gold graffiti-font text-shadow">CASH REGISTER</h1>
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">CASH REGISTER</h1>
           <p className="text-white/80 mt-1">MOVE PRODUCT. COLLECT MONEY. STACK PAPER.</p>
         </div>
 
@@ -257,34 +257,37 @@ export default function CashRegister({
         <HustleStat
           title="TODAY'S REVENUE"
           value={formatCurrency(dailyRevenue)}
-          icon={<DollarSign className="h-5 w-5 text-black" />}
+          icon={<DollarSign className="h-5 w-5 text-white" />}
+          className="border-white"
         />
         <HustleStat
           title="TODAY'S PROFIT"
           value={formatCurrency(dailyProfit)}
-          icon={<ShoppingCart className="h-5 w-5 text-black" />}
+          icon={<ShoppingCart className="h-5 w-5 text-white" />}
+          className="border-white"
         />
         <HustleStat
           title="TRANSACTIONS"
           value={dailyTransactions.toString()}
-          icon={<Save className="h-5 w-5 text-black" />}
+          icon={<Save className="h-5 w-5 text-white" />}
+          className="border-white"
         />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="quick-sale" className="gangster-font">
+        <TabsList className="grid w-full grid-cols-2 gap-1 p-1 rounded-lg bg-black border border-white mb-[5px]">
+          <TabsTrigger value="quick-sale" className="gangster-font text-xs sm:text-sm px-2 sm:px-3 py-2 text-white data-[state=active]:bg-white data-[state=active]:text-black rounded-md flex items-center justify-center">
             QUICK SALE
           </TabsTrigger>
-          <TabsTrigger value="collect-payment" className="gangster-font">
+          <TabsTrigger value="collect-payment" className="gangster-font text-xs sm:text-sm px-2 sm:px-3 py-2 text-white data-[state=active]:bg-white data-[state=active]:text-black rounded-md flex items-center justify-center">
             COLLECT PAYMENT
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="quick-sale" className="space-y-4 mt-4">
-          <Card className="card-sharp border-gold">
+        <TabsContent value="quick-sale" className="space-y-4 mt-4 px-1 sm:px-0">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">PRODUCT SALE</CardTitle>
+              <CardTitle className="gangster-font text-white">PRODUCT SALE</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -315,7 +318,7 @@ export default function CashRegister({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="border-gold/20 text-gold hover:bg-gold/10 button-sharp"
+                    className="border-white text-white hover:bg-white/10 button-sharp"
                     onClick={() => setQuantity(Math.max(0.2, quantity - 0.2))}
                   >
                     <Minus className="h-4 w-4" />
@@ -331,7 +334,7 @@ export default function CashRegister({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="border-gold/20 text-gold hover:bg-gold/10 button-sharp"
+                    className="border-white text-white hover:bg-white/10 button-sharp"
                     onClick={() => setQuantity(quantity + 0.2)}
                   >
                     <Plus className="h-4 w-4" />
@@ -380,7 +383,7 @@ export default function CashRegister({
                   />
                   <Button
                     variant="outline"
-                    className="border-gold/20 text-gold hover:bg-gold/10 button-sharp whitespace-nowrap"
+                    className="border-white text-white hover:bg-white/10 button-sharp whitespace-nowrap"
                     onClick={() => setCustomPrice(null)}
                   >
                     Reset
@@ -422,15 +425,15 @@ export default function CashRegister({
               <div className="bg-smoke p-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="gangster-font">TOTAL PRICE:</span>
-                  <span className="font-bold text-gold">{formatCurrency(calculateSalePrice())}</span>
+                  <span className="font-bold text-white">{formatCurrency(calculateSalePrice())}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="gangster-font">COST:</span>
-                  <span className="text-muted-foreground">{formatCurrency(calculateCost())}</span>
+                  <span className="text-white">{formatCurrency(calculateCost())}</span>
                 </div>
-                <div className="flex justify-between border-t border-muted/20 pt-2 mt-2">
+                <div className="flex justify-between border-t border-white pt-2 mt-2">
                   <span className="gangster-font">PROFIT:</span>
-                  <span className="font-bold text-money">{formatCurrency(calculateProfit())}</span>
+                  <span className="font-bold text-white">{formatCurrency(calculateProfit())}</span>
                 </div>
               </div>
 
@@ -441,7 +444,7 @@ export default function CashRegister({
                   quantity <= 0 ||
                   (selectedInventory && quantity > ouncesToGrams(selectedInventory.quantityOz))
                 }
-                className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
+                className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white"
               >
                 COMPLETE SALE
               </Button>
@@ -449,10 +452,10 @@ export default function CashRegister({
           </Card>
         </TabsContent>
 
-        <TabsContent value="collect-payment" className="space-y-4 mt-4">
-          <Card className="card-sharp border-gold">
+        <TabsContent value="collect-payment" className="space-y-4 mt-4 px-1 sm:px-0">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">COLLECT PAYMENT</CardTitle>
+              <CardTitle className="gangster-font text-white">COLLECT PAYMENT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -484,9 +487,9 @@ export default function CashRegister({
                   <div className="bg-smoke p-4">
                     <div className="flex justify-between items-center">
                       <span className="gangster-font">AMOUNT OWED:</span>
-                      <span className="text-blood font-bold">{formatCurrency(selectedCustomer.amountOwed)}</span>
+                      <span className="text-white font-bold">{formatCurrency(selectedCustomer.amountOwed)}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-xs text-white mt-1">
                       Due date: {new Date(selectedCustomer.dueDate).toLocaleDateString()}
                     </div>
                   </div>
@@ -495,27 +498,27 @@ export default function CashRegister({
                     <Label className="gangster-font">PAYMENT AMOUNT</Label>
                     <Input
                       type="number"
-                      value={customPrice !== null ? customPrice : selectedCustomer.amountOwed}
+                      value={customPrice !== null ? customPrice : selectedCustomer?.amountOwed || 0}
                       onChange={(e) => setCustomPrice(Number(e.target.value))}
                       step="0.01"
                       min="0"
-                      max={selectedCustomer.amountOwed}
+                      max={selectedCustomer?.amountOwed || 0}
                       className="input-sharp"
                     />
                     <div className="flex justify-between">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-gold/20 text-gold hover:bg-gold/10 button-sharp"
-                        onClick={() => setCustomPrice(selectedCustomer.amountOwed)}
+                        className="border-white text-white hover:bg-white/10 button-sharp"
+                        onClick={() => selectedCustomer && setCustomPrice(selectedCustomer.amountOwed)}
                       >
                         Full Amount
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-gold/20 text-gold hover:bg-gold/10 button-sharp"
-                        onClick={() => setCustomPrice(selectedCustomer.amountOwed / 2)}
+                        className="border-white text-white hover:bg-white/10 button-sharp"
+                        onClick={() => selectedCustomer && setCustomPrice(selectedCustomer.amountOwed / 2)}
                       >
                         Half
                       </Button>
@@ -551,9 +554,9 @@ export default function CashRegister({
                     onClick={handleCustomerPayment}
                     disabled={
                       !selectedCustomer ||
-                      (customPrice !== null && (customPrice <= 0 || customPrice > selectedCustomer.amountOwed))
+                      (customPrice !== null && (customPrice <= 0 || customPrice > (selectedCustomer?.amountOwed || 0)))
                     }
-                    className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
+                    className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white"
                   >
                     RECORD PAYMENT
                   </Button>

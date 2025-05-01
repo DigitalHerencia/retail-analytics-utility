@@ -13,12 +13,12 @@ interface HustleStatProps {
 
 export function HustleStat({ title, value, icon, trend, trendValue, className }: HustleStatProps) {
   return (
-    <Card className={cn("overflow-hidden card-sharp border-gold", className)}>
+    <Card className={cn("overflow-hidden card-sharp border-white", className)}>
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm font-medium text-muted-foreground gangster-font">{title}</p>
-            <h3 className="text-2xl font-bold mt-1 gold-text gangster-font">{value}</h3>
+            <p className="text-sm font-medium text-white gangster-font">{title}</p>
+            <h3 className="text-2xl font-bold mt-1 text-white gangster-font">{value}</h3>
             {trend && trendValue && (
               <p
                 className={cn(
@@ -34,7 +34,7 @@ export function HustleStat({ title, value, icon, trend, trendValue, className }:
               </p>
             )}
           </div>
-          <div className="bg-gold p-2">{icon}</div>
+            <div className="bg-black p-2 text-white border border-white">{icon}</div>
         </div>
       </CardContent>
     </Card>

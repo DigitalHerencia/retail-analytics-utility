@@ -7,7 +7,6 @@ import { Menu, Settings, HelpCircle, DollarSign, Code } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
-import { logoutUser } from "@/app/actions"
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -21,24 +20,24 @@ export default function Header() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-accent bg-black">
+    <header className="sticky top-0 z-50 w-full border-b border-white bg-black">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-accent">
-                <Menu className="h-6 w-6" />
+              <Button variant="ghost" size="icon" className="text-white">
+                <Menu className="h-6 w-6 text-white" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="bg-black border-accent p-0 w-[300px]">
+            <SheetContent side="left" className="bg-black border-white p-0 w-[300px] text-white">
               <SheetHeader className="sr-only">
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="flex flex-col h-full">
                 <div className="p-6">
-                  <h2 className="text-2xl font-bold text-accent font-graffiti">Hustlers Code</h2>
-                  <p className="text-sm text-accent/70">STACK PAPER. STAY SMART.</p>
+                  <h2 className="text-2xl font-bold text-white font-graffiti">Hustlers Code</h2>
+                  <p className="text-sm text-white/70">STACK PAPER. STAY SMART.</p>
                 </div>
 
                 <nav className="flex-1 overflow-auto">
@@ -48,10 +47,10 @@ export default function Header() {
                         <Link
                           href={item.href}
                           className={cn(
-                            "flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font",
+                            "flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font text-white",
                             pathname === item.href
-                              ? "bg-accent text-accent-foreground"
-                              : "text-accent/70 hover:text-accent hover:bg-accent/10",
+                              ? "bg-white text-black"
+                              : "text-white/70 hover:text-white hover:bg-white/10",
                           )}
                           onClick={() => setIsOpen(false)}
                         >
@@ -63,18 +62,17 @@ export default function Header() {
                   </ul>
                 </nav>
 
-                <div className="p-6 border-t border-accent">
+                <div className="p-6 border-t border-white">
                   <Button
                     variant="outline"
-                    className="w-full mt-2"
+                    className="w-full mt-2 text-white border-white"
                     onClick={async () => {
-                      await logoutUser()
                       router.push("/login")
                     }}
                   >
                     Logout
                   </Button>
-                  <div className="text-xs text-accent/50 pt-2">
+                  <div className="text-xs text-white/50 pt-2">
                     <p>Hustlers Code v1.0</p>
                     <p>© 2025 Hustlers Code</p>
                   </div>
@@ -82,8 +80,8 @@ export default function Header() {
               </div>
             </SheetContent>
           </Sheet>
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-accent font-graffiti">
-            <Code className="h-6 w-6 text-accent" />
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white font-graffiti">
+            <Code className="h-6 w-6 text-white" />
             Hustlers Code
           </Link>
         </div>

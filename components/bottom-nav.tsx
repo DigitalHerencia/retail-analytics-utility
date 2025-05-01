@@ -16,10 +16,9 @@ export default function BottomNav() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-accent"> {/* Changed border color */}
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-white">
       <div className="grid grid-cols-4 h-16">
         {navItems.map((item) => {
-          // Check if we're on the home page for the register item
           const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
 
           return (
@@ -27,12 +26,14 @@ export default function BottomNav() {
               key={item.id}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center transition-colors border-t-2", // Add base border-t-2 for consistent height
-                isActive ? "text-accent border-accent" : "text-accent/50 border-transparent hover:text-accent/70", // Use accent color for active state and hover
+                "flex flex-col items-center justify-center transition-colors border-t-2 text-white",
+                "text-white",
+                "border-white",
+                isActive ? "bg-white/10" : "text-white/50 border-transparent hover:text-white/70",
               )}
             >
-              <div className={cn("p-1 rounded-full", isActive ? "bg-accent/20" : "")}>{item.icon}</div> {/* Use accent color for active background */}
-              <span className="text-xs mt-1 font-medium gangster-font">{item.label}</span>
+              <div className={cn("p-1 rounded-full", isActive ? "bg-white/20" : "")}>{item.icon}</div>
+              <span className="text-xs mt-1 font-medium gangster-font text-white">{item.label}</span>
             </Link>
           )
         })}

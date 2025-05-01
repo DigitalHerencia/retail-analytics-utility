@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Permanent_Marker, Inter } from "next/font/google"
 import Header from "@/components/header"
 import BottomNav from "@/components/bottom-nav"
-import { getSession } from "@/lib/session"
+import { ClerkProvider } from '@clerk/nextjs'
 
 // Configure the fonts
 const permanentMarker = Permanent_Marker({
@@ -22,30 +22,26 @@ const inter = Inter({
 })
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession()
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
-      <head>
-        <title>Hustlers Code</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
-      </head>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1 pb-16">{children}</main>
-            <BottomNav />
-          </div>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
+        <head>
+          <title>Hustlers Code</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+          <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
+        </head>
+        <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1 pb-16">{children}</main>
+              <BottomNav />
+            </div>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
 
-export const metadata = {
-  title: 'Hustlers Code',
-  description: 'Retail analytics utility for hustlers.',
-  generator: 'v0.dev'
-};

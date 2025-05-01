@@ -126,62 +126,6 @@ export default function BusinessCalculator() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Bottom navigation bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-midnight border-t border-gold">
-        <div className="flex justify-around">
-          <Button
-            variant={activeTab === "home" ? "default" : "ghost"}
-            className={`flex-1 flex flex-col items-center py-3 h-auto rounded-none ${
-              activeTab === "home" ? "bg-gold text-black" : ""
-            }`}
-            onClick={() => setActiveTab("home")}
-          >
-            <DollarSign className="h-5 w-5 mb-1" />
-            <span className="text-xs gangster-font">REGISTER</span>
-          </Button>
-          <Button
-            variant={activeTab === "inventory" ? "default" : "ghost"}
-            className={`flex-1 flex flex-col items-center py-3 h-auto rounded-none ${
-              activeTab === "inventory" ? "bg-gold text-black" : ""
-            }`}
-            onClick={() => setActiveTab("inventory")}
-          >
-            <Package className="h-5 w-5 mb-1" />
-            <span className="text-xs gangster-font">PRODUCT</span>
-          </Button>
-          <Button
-            variant={activeTab === "customers" ? "default" : "ghost"}
-            className={`flex-1 flex flex-col items-center py-3 h-auto rounded-none ${
-              activeTab === "customers" ? "bg-gold text-black" : ""
-            }`}
-            onClick={() => setActiveTab("customers")}
-          >
-            <Users className="h-5 w-5 mb-1" />
-            <span className="text-xs gangster-font">CLIENTS</span>
-          </Button>
-          <Button
-            variant={activeTab === "forecast" ? "default" : "ghost"}
-            className={`flex-1 flex flex-col items-center py-3 h-auto rounded-none ${
-              activeTab === "forecast" ? "bg-gold text-black" : ""
-            }`}
-            onClick={() => setActiveTab("forecast")}
-          >
-            <TrendingUp className="h-5 w-5 mb-1" />
-            <span className="text-xs gangster-font">FORECAST</span>
-          </Button>
-          <Button
-            variant={activeTab === "setup" ? "default" : "ghost"}
-            className={`flex-1 flex flex-col items-center py-3 h-auto rounded-none ${
-              activeTab === "setup" ? "bg-gold text-black" : ""
-            }`}
-            onClick={() => setActiveTab("setup")}
-          >
-            <Settings className="h-5 w-5 mb-1" />
-            <span className="text-xs gangster-font">SETUP</span>
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }
