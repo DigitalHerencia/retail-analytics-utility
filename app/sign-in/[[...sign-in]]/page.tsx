@@ -62,7 +62,6 @@ export default function CustomSignIn() {
             </div>
           </CardContent>
         </Card>
-        <img src="/code.png" alt="Code Icon" className="w-16 mt-8 opacity-80" />
       </div>
     </div>
   )

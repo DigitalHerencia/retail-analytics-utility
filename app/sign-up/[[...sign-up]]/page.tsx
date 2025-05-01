@@ -62,7 +62,6 @@ export default function CustomSignUp() {
             </div>
           </CardContent>
         </Card>
-        <img src="/register.png" alt="Register Icon" className="w-16 mt-8 opacity-80" />
       </div>
     </div>
   )
