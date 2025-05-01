@@ -5,12 +5,16 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { Select } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { saveUserSecret } from "@/app/actions"
 
 export default function CustomSignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [secret, setSecret] = useState("")
+  const [secretQuestion, setSecretQuestion] = useState("")
+  const [secretAnswer, setSecretAnswer] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -20,9 +24,11 @@ export default function CustomSignUp() {
     setLoading(true)
     setError("")
     try {
-      // Save secret answer as a public metadata field
-      const result = await signUp.create({ emailAddress: username, password, unsafeMetadata: { secret } })
+      // Save secret question and answer as metadata
+      const result = await signUp.create({ username, password })
       await setActive({ session: result.createdSessionId })
+      // Save secret question/answer in Neon DB
+      await saveUserSecret({ username, secretQuestion, secretAnswer })
       // Optionally redirect here
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "Sign up failed")
@@ -55,11 +61,22 @@ export default function CustomSignUp() {
                 required
                 className="bg-black/80 border-white text-white placeholder-white/60"
               />
+              <div>
+                <Label htmlFor="secret-question" className="text-white mb-1 block">Secret Question</Label>
+                <Select name="secret-question" value={secretQuestion} onValueChange={setSecretQuestion} required>
+                  <option value="" disabled>Select a question...</option>
+                  <option value="pet">What was the name of your first pet?</option>
+                  <option value="school">What is the name of your elementary school?</option>
+                  <option value="city">In what city were you born?</option>
+                  <option value="nickname">What is your childhood nickname?</option>
+                  <option value="car">What was your first car?</option>
+                </Select>
+              </div>
               <Input
                 type="text"
-                placeholder="Secret answer (for password reset)"
-                value={secret}
-                onChange={e => setSecret(e.target.value)}
+                placeholder="Secret answer"
+                value={secretAnswer}
+                onChange={e => setSecretAnswer(e.target.value)}
                 required
                 className="bg-black/80 border-white text-white placeholder-white/60"
               />
@@ -73,7 +90,6 @@ export default function CustomSignUp() {
             </div>
           </CardContent>
         </Card>
-        <img src="/register.png" alt="Register Icon" className="w-16 mt-8 opacity-80" />
       </div>
     </div>
   )

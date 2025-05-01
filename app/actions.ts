@@ -3,6 +3,31 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
+import bcrypt from 'bcrypt';
+
+// Save user secret question and hashed answer
+type SaveUserSecretParams = {
+  username: string
+  secretQuestion: string
+  secretAnswer: string
+}
+export async function saveUserSecret({ username, secretQuestion, secretAnswer }: SaveUserSecretParams) {
+  const hash = await bcrypt.hash(secretAnswer, 10)
+  await sql`INSERT INTO user_secrets (username, secret_question, secret_answer_hash) VALUES (${username}, ${secretQuestion}, ${hash}) ON CONFLICT (username) DO UPDATE SET secret_question = EXCLUDED.secret_question, secret_answer_hash = EXCLUDED.secret_answer_hash`
+}
+
+// Fetch secret question by username
+export async function getSecretQuestion(username: string): Promise<string | null> {
+  const result = await sql`SELECT secret_question FROM user_secrets WHERE username = ${username}`
+  return result[0]?.secret_question || null
+}
+
+// Verify secret answer
+export async function verifySecretAnswer(username: string, answer: string): Promise<boolean> {
+  const result = await sql`SELECT secret_answer_hash FROM user_secrets WHERE username = ${username}`
+  if (!result[0]) return false
+  return await bcrypt.compare(answer, result[0].secret_answer_hash)
+}
 
 export async function saveData(name: string, data: any) {
   const { userId } = (await auth()) || {};
