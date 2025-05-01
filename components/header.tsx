@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, Settings, HelpCircle, DollarSign, Code } from "lucide-react"
+import { UserButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
@@ -22,6 +23,10 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white bg-black">
       <div className="container flex h-16 items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white font-graffiti">
+          <Code className="h-6 w-6 text-white" />
+          Hustlers Code
+        </Link>
         <div className="flex items-center gap-2">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -30,7 +35,7 @@ export default function Header() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="bg-black border-white p-0 w-[300px] text-white">
+            <SheetContent side="right" className="bg-black border-white p-0 w-[300px] text-white">
               <SheetHeader className="sr-only">
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
@@ -63,15 +68,7 @@ export default function Header() {
                 </nav>
 
                 <div className="p-6 border-t border-white">
-                  <Button
-                    variant="outline"
-                    className="w-full mt-2 text-white border-white"
-                    onClick={async () => {
-                      router.push("/login")
-                    }}
-                  >
-                    Logout
-                  </Button>
+                  <UserButton afterSignOutUrl="/login" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
                   <div className="text-xs text-white/50 pt-2">
                     <p>Hustlers Code v1.0</p>
                     <p>© 2025 Hustlers Code</p>
@@ -80,10 +77,6 @@ export default function Header() {
               </div>
             </SheetContent>
           </Sheet>
-          <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white font-graffiti">
-            <Code className="h-6 w-6 text-white" />
-            Hustlers Code
-          </Link>
         </div>
       </div>
     </header>

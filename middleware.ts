@@ -1,6 +1,28 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-export default clerkMiddleware();
+// Custom middleware to allow public access to /login, /register, /help, and enforce auth elsewhere
+export default clerkMiddleware(async (auth, req) => {
+  const publicPaths = ["/login", "/register", "/help"];
+  const { pathname } = req.nextUrl;
+
+  // Allow public access to publicPaths
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // Await the auth object
+  const authObj = await auth();
+  if (!authObj.userId) {
+    // Redirect unauthenticated users to /login
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("returnBackUrl", req.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // Otherwise, proceed as normal
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
