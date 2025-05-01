@@ -136,19 +136,21 @@ export default function CustomerList({ customers, onSelectCustomer }: CustomerLi
                   </div>
                   <div className="flex items-center space-x-2">
                     {customer.status === "paid" ? (
-                      <Badge className="bg-money/20 text-money hover:bg-money/20 border-money/20 rounded-none">
+                      <Badge className="bg-money text-black hover:bg-money/90 border border-money rounded-none">
                         PAID
                       </Badge>
                     ) : customer.status === "partial" ? (
-                      <Badge className="bg-gold/20 text-gold hover:bg-gold/20 border-gold/20 rounded-none">
+                      <Badge className="bg-gold text-black hover:bg-gold/90 border border-gold rounded-none">
                         PARTIAL
                       </Badge>
                     ) : new Date(customer.dueDate) < new Date() ? (
-                      <Badge className="bg-blood/20 text-blood hover:bg-blood/20 border-blood/20 rounded-none">
+                      <Badge className="bg-blood text-white hover:bg-blood/90 border border-blood rounded-none">
                         OVERDUE
                       </Badge>
                     ) : (
-                      <Badge className="bg-secondary/50 hover:bg-secondary/50 rounded-none">UPCOMING</Badge>
+                      <Badge className="bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-secondary rounded-none">
+                        UPCOMING
+                      </Badge>
                     )}
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>

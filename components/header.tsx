@@ -2,15 +2,17 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, Settings, HelpCircle, DollarSign, Code } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { logoutUser } from "@/app/actions"
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
 
   const menuItems = [
     { id: "pricing", href: "/pricing", label: "PRICING", icon: <DollarSign className="h-5 w-5" /> },
@@ -62,6 +64,16 @@ export default function Header() {
                 </nav>
 
                 <div className="p-6 border-t border-accent">
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={async () => {
+                      await logoutUser()
+                      router.push("/login")
+                    }}
+                  >
+                    Logout
+                  </Button>
                   <div className="text-xs text-accent/50 pt-2">
                     <p>Hustlers Code v1.0</p>
                     <p>© 2025 Hustlers Code</p>

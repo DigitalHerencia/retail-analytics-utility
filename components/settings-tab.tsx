@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Save, Download, Trash2, Check, AlertCircle, Shield, Database, Palette, RotateCcw } from "lucide-react"
+import { Save, Download, Trash2, Check, AlertCircle, Shield, Database, RotateCcw } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,17 +32,6 @@ import type { BusinessData, InventoryItem, Customer } from "@/lib/data"
 import { HustleTip } from "@/components/hustle-tip"
 import { useTheme } from "next-themes"
 
-// Define accent color options
-const accentColors = {
-  gold: { accent: "43 77% 52%", foreground: "0 0% 0%" }, // Original Gold
-  blood: { accent: "0 100% 27%", foreground: "0 0% 98%" }, // Blood Red
-  steel: { accent: "220 13% 47%", foreground: "0 0% 98%" }, // Steel Blue
-  money: { accent: "120 30% 56%", foreground: "0 0% 0%" }, // Money Green
-}
-
-type AccentColorName = keyof typeof accentColors
-const ACCENT_COLOR_STORAGE_KEY = "retailAppAccentColor"
-
 interface SettingsTabProps {
   businessData: BusinessData
   inventory: InventoryItem[]
@@ -65,12 +54,6 @@ export default function SettingsTab({ businessData, inventory, customers, onData
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false)
-  const [selectedAccent, setSelectedAccent] = useState<AccentColorName>(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem(ACCENT_COLOR_STORAGE_KEY) as AccentColorName) || "gold"
-    }
-    return "gold"
-  })
 
   // Load saved files list
   const loadSavedFiles = async () => {
@@ -86,42 +69,6 @@ export default function SettingsTab({ businessData, inventory, customers, onData
   useEffect(() => {
     loadSavedFiles()
   }, [])
-
-  // Effect to apply the selected accent color
-  useEffect(() => {
-    const root = document.documentElement
-    const color = accentColors[selectedAccent]
-
-    // Core accent colors
-    root.style.setProperty("--accent", color.accent)
-    root.style.setProperty("--accent-foreground", color.foreground)
-
-    // Apply accent to primary elements
-    root.style.setProperty("--primary", color.accent)
-    root.style.setProperty("--primary-foreground", color.foreground)
-
-    // Apply accent to ring/focus elements
-    root.style.setProperty("--ring", color.accent)
-
-    // Apply accent to border elements
-    root.style.setProperty("--border", color.accent)
-
-    // Apply accent to sidebar elements
-    root.style.setProperty("--sidebar-accent", color.accent)
-    root.style.setProperty("--sidebar-accent-foreground", color.foreground)
-    root.style.setProperty("--sidebar-primary", color.accent)
-    root.style.setProperty("--sidebar-primary-foreground", color.foreground)
-    root.style.setProperty("--sidebar-ring", color.accent)
-    root.style.setProperty("--sidebar-border", color.accent)
-
-    // Apply accent to chart colors (optional, can be customized further)
-    root.style.setProperty("--chart-1", color.accent)
-
-    // Save selected accent color to local storage
-    if (typeof window !== "undefined") {
-      localStorage.setItem(ACCENT_COLOR_STORAGE_KEY, selectedAccent)
-    }
-  }, [selectedAccent])
 
   // Handle save data
   const handleSaveData = async () => {
@@ -212,37 +159,6 @@ export default function SettingsTab({ businessData, inventory, customers, onData
           <AlertDescription>{message.text}</AlertDescription>
         </Alert>
       )}
-
-      {/* Accent Color Selection Card */}
-      <Card className="card-hover card-sharp border-accent">
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gangster-font text-accent">
-              <Palette className="h-5 w-5 mr-2 text-accent" />
-              ACCENT COLOR
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Choose an accent color to customize the look. Your choice is saved automatically.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(accentColors) as AccentColorName[]).map((colorName) => (
-                <Button
-                  key={colorName}
-                  variant={selectedAccent === colorName ? "default" : "outline"}
-                  onClick={() => setSelectedAccent(colorName)}
-                  className={`button-sharp capitalize ${
-                    selectedAccent === colorName
-                      ? "bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] hover:bg-[hsl(var(--accent))]"
-                      : "border-[hsl(var(--accent))] text-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--accent-foreground))]"
-                  }`}
-                >
-                  {colorName}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <Card className="card-hover card-sharp border-accent">
         <CardContent className="pt-6">

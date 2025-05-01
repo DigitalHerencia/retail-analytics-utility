@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Permanent_Marker, Inter } from "next/font/google"
 import Header from "@/components/header"
 import BottomNav from "@/components/bottom-nav"
+import { getSession } from "@/lib/session"
 
 // Configure the fonts
 const permanentMarker = Permanent_Marker({
@@ -20,7 +21,9 @@ const inter = Inter({
   display: "swap",
 })
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession()
+
   return (
     <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
       <head>
