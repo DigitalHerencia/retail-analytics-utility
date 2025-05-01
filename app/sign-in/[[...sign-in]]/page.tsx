@@ -4,10 +4,11 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default function CustomSignIn() {
   const { signIn, setActive, isLoaded } = useSignIn()
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -18,7 +19,7 @@ export default function CustomSignIn() {
     setLoading(true)
     setError("")
     try {
-      const result = await signIn.create({ identifier: email, password })
+      const result = await signIn.create({ identifier: username, password })
       await setActive({ session: result.createdSessionId })
       // Optionally redirect here
     } catch (err: any) {
@@ -29,7 +30,7 @@ export default function CustomSignIn() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black">
+    <div className="fixed inset-0 flex items-center justify-center bg-black">
       <div className="flex flex-col items-center w-full max-w-md">
         <img src="/title-white.png" alt="Hustlers Code" className="w-64 mb-6" />
         <Card className="w-full bg-white/10 border-white text-white shadow-lg">
@@ -37,10 +38,10 @@ export default function CustomSignIn() {
             <h1 className="text-3xl font-bold mb-6 text-center font-graffiti">Sign In</h1>
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
                 required
                 className="bg-black/80 border-white text-white placeholder-white/60"
               />
@@ -58,10 +59,11 @@ export default function CustomSignIn() {
               </Button>
             </form>
             <div className="mt-4 text-center text-sm">
-              Don't have an account? <a href="/sign-up" className="underline text-white font-bold">Sign Up</a>
+              <Link href="/sign-up" className="underline text-white font-bold">Sign Up</Link> | <Link href="/reset-password" className="underline text-white font-bold">Forgot Password?</Link>
             </div>
           </CardContent>
         </Card>
+        <img src="/code.png" alt="Code Icon" className="w-16 mt-8 opacity-80" />
       </div>
     </div>
   )
