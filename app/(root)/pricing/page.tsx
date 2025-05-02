@@ -34,25 +34,31 @@ export default function PricingPage() {
         </HustleTip>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <HustleStat 
-          title="RETAIL PRICE"
-          value={formatCurrency(retailPricePerGram) + "/g"}
-          icon={<DollarSign className="h-5 w-5 text-white" />}
-          className="border-white"
-        />
-        <HustleStat 
-          title="PROFIT MARGIN"
-          value={`${Math.round(profitMarginPercentage)}%`}
-          icon={<TrendingUp className="h-5 w-5 text-white" />}
-          className="border-white"
-        />
-        <HustleStat 
-          title="PRICE PER OZ"
-          value={formatCurrency(retailPricePerOunce)}
-          icon={<FileStack className="h-5 w-5 text-white" />}
-          className="border-white"
-        />
+      <div className="flex flex-col md:flex-row gap-4 mb-8 w-full">
+        <div className="flex-1 w-full">
+          <HustleStat 
+            title="RETAIL PRICE"
+            value={formatCurrency(retailPricePerGram) + "/g"}
+            icon={<DollarSign className="h-5 w-5 text-white" />}
+            className="border-white w-full h-full"
+          />
+        </div>
+        <div className="flex-1 w-full">
+          <HustleStat 
+            title="PROFIT MARGIN"
+            value={`${Math.round(profitMarginPercentage)}%`}
+            icon={<TrendingUp className="h-5 w-5 text-white" />}
+            className="border-white w-full h-full"
+          />
+        </div>
+        <div className="flex-1 w-full">
+          <HustleStat 
+            title="PRICE PER OZ"
+            value={formatCurrency(retailPricePerOunce)}
+            icon={<FileStack className="h-5 w-5 text-white" />}
+            className="border-white w-full h-full"
+          />
+        </div>
       </div>
       
       <SimplifiedPricing />

@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { DollarSign, Percent, ArrowRightLeft, Check } from "lucide-react"
-import { formatCurrency, formatPercentage, businessConcepts } from "@/lib/utils"
+import { DollarSign, Percent, Check } from "lucide-react"
+import { formatCurrency, businessConcepts } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { usePricing } from "@/hooks/use-pricing"
@@ -126,22 +126,6 @@ export default function SimplifiedPricing() {
                   onValueChange={handleMarkupChange}
                   className="mb-6"
                 />
-                <div className="flex justify-between text-xs text-white/60">
-                  <span>10%</span>
-                  <span>150%</span>
-                  <span>300%</span>
-                </div>
-              </div>
-              
-              <div className="bg-black/20 p-4 border-l-2 border-white">
-                <div className="flex items-center justify-between">
-                  <span className="gangster-font">PROFIT PER GRAM:</span>
-                  <span className="text-white font-medium">{formatCurrency(profitPerGram)}</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="gangster-font">PROFIT MARGIN:</span>
-                  <span className="text-white font-medium">{profitMarginPercentage.toFixed(0)}%</span>
-                </div>
               </div>
             </div>
             
@@ -174,15 +158,24 @@ export default function SimplifiedPricing() {
                 />
                 <p className="text-xs text-white/60">Your retail price per ounce: {formatCurrency(retailPricePerOunce)}</p>
               </div>
-              
-              <div className="flex items-center justify-center my-4">
-                <div className="bg-black p-4 rounded-full">
-                  <ArrowRightLeft className="h-8 w-8 text-white" />
+            </div>
+          </div>
+
+          {/* Combined price breakdown and profit info into one uniform width table */}
+          <div className="bg-smoke p-4 w-full">
+            <div className="text-lg font-medium text-center mb-4 white-text gangster-font">PRICE BREAKDOWN</div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="gangster-font">PROFIT PER GRAM:</span>
+                  <span className="text-white font-medium">{formatCurrency(profitPerGram)}</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="gangster-font">PROFIT MARGIN:</span>
+                  <span className="text-white font-medium">{profitMarginPercentage.toFixed(0)}%</span>
                 </div>
               </div>
-              
-              <div className="bg-white/10 p-4 border-l-2 border-white/60">
-                <div className="text-lg font-medium text-center mb-2 white-text">PRICE BREAKDOWN</div>
+              <div>
                 <div className="flex items-center justify-between">
                   <span className="gangster-font">COST:</span>
                   <span className="text-white/80">{formatCurrency(wholesalePricePerGram)} per gram</span>
