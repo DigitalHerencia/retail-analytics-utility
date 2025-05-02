@@ -1,7 +1,6 @@
 "use client"
 
 import { useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { PricePoint } from "@/lib/data"
 import {
   BarChart,
@@ -16,6 +15,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { useMediaQuery } from "@/hooks/use-mobile"
+import { formatCurrency } from "@/lib/utils"
 
 interface PriceChartsProps {
   pricePoints: PricePoint[]
@@ -34,191 +34,275 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
 
     return filteredPoints.map((p) => ({
       name: `${p.markupPercentage}%`,
-      retailPrice: p.retailPricePerGram, // Fix: Use retailPricePerGram
-      wholesalePrice: p.retailPricePerGram - p.profitPerGram, // Fix: Calculate wholesale price
-      margin: p.profitPerGram, // Fix: Use profitPerGram
-      quantity: p.breakEvenGramsPerMonth, // Fix: Use breakEvenGramsPerMonth
+      retailPrice: p.retailPricePerGram,
+      wholesalePrice: p.retailPricePerGram - p.profitPerGram,
+      margin: p.profitPerGram,
+      quantity: p.breakEvenGramsPerMonth,
       revenue: p.monthlyRevenue,
       cost: p.monthlyCost,
-      profit: p.monthlyProfit, // Fix: Use monthlyProfit
+      profit: p.monthlyProfit,
     }))
   }, [pricePoints, isMobile])
 
   // Highlight the middle data point (median price)
   const middleIndex = Math.floor(pricePoints.length / 2)
 
+  // Custom styles for all charts to ensure consistency with the gangster theme
+  const chartStyle = {
+    fill: "#FFFFFF",
+    fontFamily: "'Roboto Condensed', sans-serif",
+    fontSize: isMobile ? 10 : 12
+  }
+  
+  const tooltipStyle = {
+    backgroundColor: "#000",
+    border: "1px solid #FFFFFF",
+    borderRadius: "0px",
+    padding: "8px",
+    color: "#FFFFFF",
+    boxShadow: "none",
+  }
+
+  const getMarginByScreenSize = () => {
+    if (isMobile) return { top: 5, right: 10, left: 0, bottom: 5 };
+    if (isTablet) return { top: 15, right: 20, left: 10, bottom: 5 };
+    return { top: 20, right: 30, left: 20, bottom: 5 };
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Price Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent className={isMobile ? "h-60" : "h-80"}>
+      {/* Price Breakdown Chart */}
+      <div className="bg-black p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font">PRICE BREAKDOWN</h3>
+        <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={
-                isMobile ? { top: 5, right: 10, left: 0, bottom: 5 } : { top: 20, right: 30, left: 20, bottom: 5 }
-              }
+              margin={getMarginByScreenSize()}
               layout={isMobile ? "vertical" : "horizontal"}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
               {isMobile ? (
                 <>
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={40} />
-                  <XAxis type="number" tick={{ fontSize: 10 }} />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={40} 
+                    tick={{ ...chartStyle }} 
+                    axisLine={{ stroke: "#FFFFFF" }}
+                  />
+                  <XAxis 
+                    type="number" 
+                    tick={{ ...chartStyle }} 
+                    axisLine={{ stroke: "#FFFFFF" }}
+                    tickFormatter={(value) => `$${value}`}
+                  />
                 </>
               ) : (
                 <>
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <XAxis dataKey="name" tick={{ ...chartStyle }} axisLine={{ stroke: "#FFFFFF" }} />
+                  <YAxis 
+                    tick={{ ...chartStyle }} 
+                    axisLine={{ stroke: "#FFFFFF" }} 
+                    tickFormatter={(value) => `$${value}`}
+                  />
                 </>
               )}
-              <Tooltip contentStyle={{ fontSize: isMobile ? "10px" : "12px" }} />
+              <Tooltip 
+                contentStyle={tooltipStyle} 
+                formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+              />
               <Legend
-                wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
+                wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
                 verticalAlign={isMobile ? "top" : "bottom"}
+                iconType="square"
               />
               <Bar
                 dataKey="wholesalePrice"
-                name="Wholesale Price ($/g)"
+                name="Wholesale Price"
                 stackId="a"
-                fill="#82ca9d"
-                barSize={isMobile ? 15 : 20}
+                fill="#32D74B"
+                barSize={isMobile ? 15 : 30}
               />
-              <Bar dataKey="margin" name="Margin ($/g)" stackId="a" fill="#8884d8" barSize={isMobile ? 15 : 20} />
+              <Bar 
+                dataKey="margin" 
+                name="Profit Margin" 
+                stackId="a" 
+                fill="#9C4AFF" 
+                barSize={isMobile ? 15 : 30}
+              />
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Price vs. Quantity</CardTitle>
-        </CardHeader>
-        <CardContent className={isMobile ? "h-60" : "h-80"}>
+      {/* Price vs. Quantity Chart */}
+      <div className="bg-black p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font">PRICE VS. QUANTITY</h3>
+        <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              margin={
-                isMobile ? { top: 5, right: 10, left: 0, bottom: 5 } : { top: 20, right: 30, left: 20, bottom: 5 }
-              }
+              margin={getMarginByScreenSize()}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: isMobile ? 10 : 12 }} interval={isMobile ? 1 : 0} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis 
+                dataKey="name" 
+                tick={{ ...chartStyle }} 
+                axisLine={{ stroke: "#FFFFFF" }}
+                interval={isMobile ? 1 : 0} 
+              />
               <YAxis
                 yAxisId="left"
                 orientation="left"
-                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tick={{ ...chartStyle }}
                 width={isMobile ? 40 : 60}
+                axisLine={{ stroke: "#FFFFFF" }}
+                tickFormatter={(value) => `$${value}`}
               />
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tick={{ ...chartStyle }}
                 width={isMobile ? 40 : 60}
+                axisLine={{ stroke: "#FFFFFF" }}
+                tickFormatter={(value) => `${value}g`}
               />
-              <Tooltip contentStyle={{ fontSize: isMobile ? "10px" : "12px" }} />
+              <Tooltip 
+                contentStyle={tooltipStyle}
+                formatter={(value: number, name: string) => {
+                  if (name === "Retail Price") return [`$${value.toFixed(2)}`, name];
+                  return [`${value.toFixed(0)}g`, name];
+                }}
+              />
               <Legend
-                wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
+                wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
                 verticalAlign={isMobile ? "top" : "bottom"}
+                iconType="square"
               />
               <Line
                 yAxisId="left"
                 type="monotone"
                 dataKey="retailPrice"
-                name="Retail Price ($/g)"
-                stroke="#8884d8"
-                activeDot={{ r: isMobile ? 4 : 8 }}
-                strokeWidth={2}
-                dot={isMobile ? false : { r: 3 }}
+                name="Retail Price"
+                stroke="#9C4AFF"
+                activeDot={{ r: isMobile ? 4 : 8, fill: "#9C4AFF" }}
+                strokeWidth={3}
+                dot={isMobile ? false : { r: 3, fill: "#9C4AFF" }}
               />
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="quantity"
-                name="Monthly Quantity (g)"
-                stroke="#82ca9d"
-                activeDot={{ r: isMobile ? 4 : 8 }}
-                strokeWidth={2}
-                dot={isMobile ? false : { r: 3 }}
+                name="Monthly Quantity"
+                stroke="#32D74B"
+                activeDot={{ r: isMobile ? 4 : 8, fill: "#32D74B" }}
+                strokeWidth={3}
+                dot={isMobile ? false : { r: 3, fill: "#32D74B" }}
               />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue, Cost & Profit</CardTitle>
-        </CardHeader>
-        <CardContent className={isMobile ? "h-60" : "h-80"}>
+      {/* Revenue, Cost & Profit Chart */}
+      <div className="bg-black p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font">REVENUE & PROFIT</h3>
+        <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={
-                isMobile ? { top: 5, right: 10, left: 0, bottom: 5 } : { top: 20, right: 30, left: 20, bottom: 5 }
-              }
+              margin={getMarginByScreenSize()}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: isMobile ? 10 : 12 }} interval={isMobile ? 1 : 0} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis 
+                dataKey="name" 
+                tick={{ ...chartStyle }} 
+                axisLine={{ stroke: "#FFFFFF" }}
+                interval={isMobile ? 1 : 0} 
+              />
               <YAxis
-                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tick={{ ...chartStyle }}
                 width={isMobile ? 40 : 60}
-                tickFormatter={(value) => (isMobile ? `$${value / 1000}k` : `$${value}`)}
+                axisLine={{ stroke: "#FFFFFF" }}
+                tickFormatter={(value) => isMobile ? `$${value/1000}k` : `$${value}`}
               />
               <Tooltip
-                contentStyle={{ fontSize: isMobile ? "10px" : "12px" }}
-                formatter={(value: any) => [`$${value}`, ""]}
+                contentStyle={tooltipStyle}
+                formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
               />
               <Legend
-                wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
+                wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
                 verticalAlign={isMobile ? "top" : "bottom"}
+                iconType="square"
               />
-              <Bar dataKey="revenue" name="Monthly Revenue" fill="#8884d8" barSize={isMobile ? 15 : 20} />
-              <Bar dataKey="cost" name="Monthly Cost" fill="#82ca9d" barSize={isMobile ? 15 : 20} />
-              <Bar dataKey="profit" name="Net Profit" fill="#ffc658" barSize={isMobile ? 15 : 20} />
+              <Bar 
+                dataKey="revenue" 
+                name="Monthly Revenue" 
+                fill="#9C4AFF" 
+                barSize={isMobile ? 15 : 30} 
+              />
+              <Bar 
+                dataKey="cost" 
+                name="Monthly Cost" 
+                fill="#32D74B" 
+                barSize={isMobile ? 15 : 30} 
+              />
+              <Bar 
+                dataKey="profit" 
+                name="Net Profit" 
+                fill="#FFFFFF" 
+                barSize={isMobile ? 15 : 30} 
+              />
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Profit Margin Percentage</CardTitle>
-        </CardHeader>
-        <CardContent className={isMobile ? "h-60" : "h-80"}>
+      {/* Profit Margin Percentage Chart */}
+      <div className="bg-black p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font">PROFIT MARGIN PERCENTAGE</h3>
+        <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              margin={
-                isMobile ? { top: 5, right: 10, left: 0, bottom: 5 } : { top: 20, right: 30, left: 20, bottom: 5 }
-              }
+              margin={getMarginByScreenSize()}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: isMobile ? 10 : 12 }} interval={isMobile ? 1 : 0} />
-              <YAxis tick={{ fontSize: isMobile ? 10 : 12 }} width={isMobile ? 40 : 60} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <XAxis 
+                dataKey="name" 
+                tick={{ ...chartStyle }} 
+                axisLine={{ stroke: "#FFFFFF" }}
+                interval={isMobile ? 1 : 0} 
+              />
+              <YAxis 
+                tick={{ ...chartStyle }} 
+                width={isMobile ? 40 : 60}
+                axisLine={{ stroke: "#FFFFFF" }}
+                tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+              />
               <Tooltip
-                contentStyle={{ fontSize: isMobile ? "10px" : "12px" }}
-                formatter={(value: any) => [`${(value * 100).toFixed(1)}%`, "Profit Margin"]}
+                contentStyle={tooltipStyle}
+                formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Profit Margin"]}
               />
               <Legend
-                wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
+                wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
                 verticalAlign={isMobile ? "top" : "bottom"}
+                iconType="square"
               />
               <Line
                 type="monotone"
                 dataKey={(data) => data.margin / data.retailPrice}
                 name="Profit Margin %"
-                stroke="#ff7300"
-                activeDot={{ r: isMobile ? 4 : 8 }}
-                strokeWidth={2}
-                dot={isMobile ? false : { r: 3 }}
+                stroke="#FF9F0A"
+                activeDot={{ r: isMobile ? 4 : 8, fill: "#FF9F0A" }}
+                strokeWidth={3}
+                dot={isMobile ? false : { r: 3, fill: "#FF9F0A" }}
               />
             </LineChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

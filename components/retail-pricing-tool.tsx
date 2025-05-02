@@ -1,210 +1,202 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
+import { useState, useMemo } from "react"
+import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import PriceGenerator from "@/components/price-generator"
 import PriceTable from "@/components/price-table"
 import PriceCharts from "@/components/price-charts"
-import { calculatePricePoints, gramsToOunces } from "@/lib/utils"
-import { defaultMarkupPercentages, type PricePoint, type BusinessData, defaultBusinessData } from "@/lib/data"
+import { HustleTip } from "@/components/hustle-tip"
+import { Button } from "@/components/ui/button"
+import { Download, Save, RefreshCw } from "lucide-react"
+import type { ScenarioData, PricePoint } from "@/lib/data"
 
-const formSchema = z.object({
-  wholesalePrice: z.coerce.number().positive("Wholesale price must be positive"),
-  unit: z.enum(["gram", "ounce"]),
-  targetProfit: z.coerce.number().positive("Target profit must be positive"),
-})
-
-interface RetailPricingToolProps {
-  businessData?: BusinessData
-  pricePoints?: PricePoint[]
-  selectedPricePointId?: string | null
-  onPricePointsUpdate?: (points: PricePoint[]) => void
-  onPricePointSelect?: (id: string) => void
-  showTips?: boolean
-  onHideTips?: () => void
-}
-
-export default function RetailPricingTool({
-  businessData,
-  pricePoints = [],
-  selectedPricePointId = null,
-  onPricePointsUpdate = () => {},
-  onPricePointSelect = () => {},
-  showTips = true,
-  onHideTips = () => {},
-}: RetailPricingToolProps) {
-  const [localPricePoints, setLocalPricePoints] = useState<PricePoint[]>(pricePoints)
-  const [localSelectedPricePointId, setLocalSelectedPricePointId] = useState<string | null>(selectedPricePointId)
-  const [markupPercentages, setMarkupPercentages] = useState<number[]>(defaultMarkupPercentages)
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      wholesalePrice: 10,
-      unit: "gram",
-      targetProfit: businessData?.targetProfitPerMonth || 2000,
-    },
-  })
-
-  // Update form when businessData changes
-  useEffect(() => {
-    if (businessData?.targetProfitPerMonth) {
-      form.setValue("targetProfit", businessData.targetProfitPerMonth)
-    }
-  }, [businessData, form])
-
-  // Calculate price points when form values change
-  const calculatePrices = (data: z.infer<typeof formSchema>) => {
-    const { wholesalePrice, unit, targetProfit } = data
-    // Convert wholesale price to per ounce if needed
-    let wholesalePricePerOz = wholesalePrice
-    if (unit === "gram") {
-      wholesalePricePerOz = wholesalePrice * 28.35
-    }
-    // Use default or provided business data for operating expenses
-    const businessDataForCalculation: BusinessData = {
-      targetProfitPerMonth: targetProfit,
-      targetProfit: 0, // Not used in calculation
-      wholesalePricePerOz,
-      operatingExpenses: businessData?.operatingExpenses ?? defaultBusinessData.operatingExpenses,
-    }
-    const newPricePoints = calculatePricePoints(
-      markupPercentages,
-      targetProfit,
-      businessDataForCalculation
-    )
-    setLocalPricePoints(newPricePoints)
-    onPricePointsUpdate(newPricePoints)
-
-    // Select the middle price point by default
+export default function RetailPricingTool() {
+  const [pricePoints, setPricePoints] = useState<PricePoint[]>([])
+  const [selectedPricePointId, setSelectedPricePointId] = useState<string>("")
+  const [activeTab, setActiveTab] = useState("generate")
+  
+  // Process generated scenarios into price points
+  const handleGenerateScenarios = (scenarios: ScenarioData[]) => {
+    const newPricePoints: PricePoint[] = scenarios.map((scenario) => {
+      const wholesalePricePerGram = scenario.retailPriceG - scenario.grossMarginG
+      const retailPricePerGram = scenario.retailPriceG
+      const profitPerGram = scenario.grossMarginG
+      const markupPercentage = Math.round((profitPerGram / wholesalePricePerGram) * 100)
+      
+      const breakEvenGramsPerMonth = scenario.netProfit / profitPerGram
+      const breakEvenOuncesPerMonth = breakEvenGramsPerMonth / 28.35
+      
+      const monthlyRevenue = retailPricePerGram * breakEvenGramsPerMonth
+      const monthlyCost = wholesalePricePerGram * breakEvenGramsPerMonth
+      const monthlyProfit = profitPerGram * breakEvenGramsPerMonth
+      const roi = (monthlyProfit / monthlyCost) * 100
+      const retailPrice = retailPricePerGram * 28.35 // convert price per gram to price per ounce
+      
+      return {
+        id: uuidv4(),
+        markupPercentage,
+        wholesalePricePerGram,
+        retailPricePerGram,
+        profitPerGram,
+        breakEvenGramsPerMonth,
+        breakEvenOuncesPerMonth,
+        monthlyRevenue,
+        monthlyCost,
+        monthlyProfit,
+        roi,
+        retailPrice
+      }
+    })
+    
+    setPricePoints(newPricePoints)
     if (newPricePoints.length > 0) {
-      const middleIndex = Math.floor(newPricePoints.length / 2)
-      setLocalSelectedPricePointId(newPricePoints[middleIndex].id)
-      onPricePointSelect(newPricePoints[middleIndex].id)
+      // Select the middle price point by default (the base price)
+      setSelectedPricePointId(newPricePoints[Math.floor(newPricePoints.length / 2)].id)
+      setActiveTab("view")
     }
   }
-
-  // Initial calculation
-  useEffect(() => {
-    const { wholesalePrice, unit, targetProfit } = form.getValues()
-    calculatePrices({ wholesalePrice, unit, targetProfit })
-  }, [])
-
-  // Handle price point selection
-  const handlePricePointSelect = (id: string) => {
-    setLocalSelectedPricePointId(id)
-    onPricePointSelect(id)
+  
+  const selectedPricePoint = useMemo(() => {
+    return pricePoints.find(point => point.id === selectedPricePointId)
+  }, [pricePoints, selectedPricePointId])
+  
+  const handleClearData = () => {
+    setPricePoints([])
+    setSelectedPricePointId("")
+    setActiveTab("generate")
   }
-
-  const selectedPricePoint =
-    localPricePoints.find((p) => p.id === localSelectedPricePointId) ||
-    (localPricePoints.length > 0 ? localPricePoints[Math.floor(localPricePoints.length / 2)] : null)
+  
+  const handleSavePricePoint = () => {
+    // In a real app, this would save to a database
+    alert("Price point saved! (Demo functionality)")
+  }
+  
+  const handleExportData = () => {
+    // Create a CSV or JSON export
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(pricePoints, null, 2))
+    const downloadAnchorNode = document.createElement('a')
+    downloadAnchorNode.setAttribute("href", dataStr)
+    downloadAnchorNode.setAttribute("download", "price-points.json")
+    document.body.appendChild(downloadAnchorNode)
+    downloadAnchorNode.click()
+    downloadAnchorNode.remove()
+  }
 
   return (
     <div className="space-y-6">
-      <Card className="border-0 shadow-none">
-        <CardHeader className="px-6 py-5">
-          <CardTitle>Retail Pricing Tool</CardTitle>
-          <CardDescription className="max-w-3xl">
-            Enter your wholesale cost and target profit. The tool will show you different markup levels and how they affect your profit, break-even, and ROI. Choose the price that works best for your business.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-6 py-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(calculatePrices)} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <FormField
-                control={form.control}
-                name="wholesalePrice"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Wholesale Price</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" min="0.01" {...field} className="border-white focus:border-white" />
-                    </FormControl>
-                    <FormDescription className="text-xs">The price you pay per gram/ounce</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="unit"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="gram" id="gram" className="border-white" />
-                          <Label htmlFor="gram">Per Gram</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="ounce" id="ounce" className="border-white" />
-                          <Label htmlFor="ounce">Per Ounce</Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="targetProfit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Monthly Net Profit</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="100" min="100" {...field} className="border-white focus:border-white" />
-                    </FormControl>
-                    <FormDescription className="text-xs">Your target monthly profit</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="md:col-span-3">
-                <Button type="submit" className="border-white px-6">Calculate Prices</Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="table" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 border-white">
-          <TabsTrigger value="table" className="border-white">Price Table</TabsTrigger>
-          <TabsTrigger value="charts" className="border-white">Price Charts</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="table">
-          <Card className="border-0 shadow-none">
-            <CardContent className="pt-8 px-6">
-              <PriceTable
-                pricePoints={localPricePoints}
-                onSelectPricePoint={handlePricePointSelect}
-                selectedPricePointId={localSelectedPricePointId || ""}
-              />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="border rounded-md border-white bg-black p-0 mb-4 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2 gap-0 bg-transparent p-0 overflow-hidden">
+            <TabsTrigger
+              value="generate"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent' }}
+            >
+              GENERATE PRICING
+            </TabsTrigger>
+            <TabsTrigger
+              value="view"
+              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
+              style={{ borderBottom: '2px solid transparent' }}
+              disabled={pricePoints.length === 0}
+            >
+              VIEW RESULTS
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        
+        <TabsContent value="generate" className="space-y-4 mt-4 px-1 sm:px-0">
+          <Card className="card-sharp border-white">
+            <CardContent className="pt-6">
+              <PriceGenerator onGenerate={handleGenerateScenarios} />
             </CardContent>
           </Card>
+          
+          {pricePoints.length > 0 && (
+            <HustleTip title="PRICING GENERATED">
+              <p>
+                Your pricing scenarios have been generated! Click the "VIEW RESULTS" tab to see detailed analysis and charts.
+              </p>
+            </HustleTip>
+          )}
         </TabsContent>
-
-        <TabsContent value="charts">
-          <Card className="border-0 shadow-none">
-            <CardContent className="pt-8 px-6">
-              <PriceCharts pricePoints={localPricePoints} />
-            </CardContent>
-          </Card>
+        
+        <TabsContent value="view" className="space-y-6 mt-4 px-1 sm:px-0">
+          {pricePoints.length > 0 ? (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold gangster-font">PRICING ANALYSIS</h2>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-white text-white hover:bg-white/10 button-sharp"
+                    onClick={handleClearData}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-white text-white hover:bg-white/10 button-sharp"
+                    onClick={handleExportData}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  {selectedPricePoint && (
+                    <Button 
+                      size="sm"
+                      className="bg-white hover:bg-white/90 text-black button-sharp border-white"
+                      onClick={handleSavePricePoint}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Selected
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              <Card className="card-sharp border-white">
+                <CardContent className="pt-6 overflow-x-auto">
+                  <PriceTable 
+                    pricePoints={pricePoints} 
+                    onSelectPricePoint={setSelectedPricePointId}
+                    selectedPricePointId={selectedPricePointId}
+                  />
+                </CardContent>
+              </Card>
+              
+              {selectedPricePoint && (
+                <HustleTip title="SELECTED PRICE POINT">
+                  <p>
+                    You've selected a markup of <strong>{selectedPricePoint.markupPercentage}%</strong> with a retail price of <strong>${selectedPricePoint.retailPricePerGram.toFixed(2)}/g</strong>.
+                    This would require selling <strong>{selectedPricePoint.breakEvenGramsPerMonth.toFixed(0)} grams</strong> per month to reach your profit target.
+                  </p>
+                </HustleTip>
+              )}
+              
+              <Card className="card-sharp border-white">
+                <CardContent className="pt-6">
+                  <PriceCharts pricePoints={pricePoints} />
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <div className="text-center py-12 bg-smoke card-sharp">
+              <p className="gangster-font text-white mb-4">NO PRICING DATA YET</p>
+              <p className="text-muted-foreground">Generate pricing scenarios first</p>
+              <Button 
+                onClick={() => setActiveTab("generate")} 
+                className="mt-4 bg-white hover:bg-white/90 text-black button-sharp border-white"
+              >
+                Generate Pricing
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

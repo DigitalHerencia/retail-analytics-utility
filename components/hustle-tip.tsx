@@ -32,7 +32,7 @@ export function HustleTip({ title, children }: HustleTipProps) {
       </Button>
       <CardContent className="p-4 pr-10">
         <div className="flex flex-col gap-1">
-          <h4 className="font-medium text-white gangster-font text-lg border-l-4 border-red-600 pl-2">{title}</h4>
+          <h4 className="font-medium text-white gangster-font text-lg pl-2">{title}</h4>
           <div className="text-sm text-white/80 ml-2">{children}</div>
         </div>
       </CardContent>

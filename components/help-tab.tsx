@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calculator, Users, Package } from "lucide-react"
+import { Calculator, Users, Package, BarChart3, ShoppingCart, Calendar } from "lucide-react"
 import { HustleTip } from "@/components/hustle-tip"
 
 export default function HelpTab() {
@@ -26,17 +26,20 @@ export default function HelpTab() {
       </div>
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
-          {["overview", "calculator", "inventory", "customers", "register", "forecast"].map((tab) => (
-            <TabsTrigger 
-              key={tab}
-              value={tab} 
-              className={`gangster-font border-white border ${activeTab === tab ? 'bg-white text-black' : ''}`}
-            >
-              {tab.toUpperCase()}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="border rounded-md border-white bg-black p-0 mb-4 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-0 bg-transparent p-0 overflow-hidden">
+            {["overview", "calculator", "inventory", "customers", "register", "forecast"].map((tab) => (
+              <TabsTrigger 
+                key={tab}
+                value={tab} 
+                className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
+                style={{ borderBottom: '2px solid transparent', borderRadius: 0 }}
+              >
+                {tab.toUpperCase()}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
           <Card className="card-sharp border-white">
@@ -44,14 +47,6 @@ export default function HelpTab() {
               <CardTitle className="gangster-font text-white">WELCOME TO HUSTLE CALCULATOR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-smoke flex items-center justify-center">
-                <img
-                  src="/hustle-calculator-dashboard.png"
-                  alt="Hustle Calculator Dashboard"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <p>
                 Hustle Calculator is your all-in-one business management tool designed specifically for street
                 entrepreneurs. Track your inventory, manage clients, record sales, and forecast profits - all with an
@@ -114,7 +109,7 @@ export default function HelpTab() {
                 <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                 <p className="text-sm">
                   Use the hamburger menu in the top left to quickly navigate between sections. You can also change the
-                  theme and accent color to match your style.
+                  theme and accent color in settings to match your style.
                 </p>
               </div>
             </CardContent>
@@ -137,9 +132,10 @@ export default function HelpTab() {
 
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>Enter your wholesale cost per ounce in the setup tab</li>
-                  <li>The calculator will show you different markup percentages</li>
-                  <li>See how each price point affects your profit and break-even point</li>
-                  <li>Choose the price that works best for your business</li>
+                  <li>Adjust the markup percentage slider to see how different price points affect your profits</li>
+                  <li>The calculator will automatically show you different markup options from 50% to 200%</li>
+                  <li>See how each price point affects your profit margin and break-even quantity</li>
+                  <li>Click "SAVE PRICING SETTINGS" to apply the selected markup to all calculations</li>
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
@@ -157,6 +153,9 @@ export default function HelpTab() {
                       <strong className="text-white">ROI</strong>: Return on Investment - how hard your money is working
                       for you
                     </div>
+                    <div>
+                      <strong className="text-white">Profit Margin</strong>: The percentage of your retail price that is profit
+                    </div>
                   </div>
                 </div>
               </div>
@@ -172,25 +171,25 @@ export default function HelpTab() {
             <CardContent className="space-y-4">
               <p>
                 The Inventory tab helps you keep track of your product. You can add new inventory, update quantities,
-                and see what's running low.
+                and see what's running low to avoid stockouts.
               </p>
 
               <div className="space-y-4 mt-4">
                 <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
-                  <li>Click "Add Product" to add new inventory</li>
-                  <li>Enter the product name, quantity, and cost</li>
-                  <li>Your inventory will automatically update when you make sales</li>
-                  <li>The system will warn you when inventory is running low</li>
-                  <li>Click the delete button to remove a product</li>
+                  <li>Click "Add Product" to add new inventory items</li>
+                  <li>Enter the product name, quantity (in grams or ounces), purchase date, and cost</li>
+                  <li>Set reorder thresholds to get alerts when inventory is running low</li>
+                  <li>Your inventory will automatically update when you make sales through the Register</li>
+                  <li>View total inventory value and quantity at the top of the page</li>
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
                   <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
-                    Keep your inventory updated in real-time. Knowing exactly what you have on hand prevents missed
-                    sales and helps you restock at the right time.
+                    Keep your inventory updated in real-time. Track both grams and ounces for precision. The system will 
+                    automatically highlight items that are running low with a "Low Stock" badge.
                   </p>
                 </div>
               </div>
@@ -204,28 +203,28 @@ export default function HelpTab() {
               <CardTitle className="gangster-font text-white">CLIENT MANAGEMENT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-smoke flex items-center justify-center">
               <p>
                 The Clients tab helps you manage your customer relationships. Keep track of who owes you money, when
-                payments are due, and payment history.
+                payments are due, and view payment history to maintain strong business relationships.
               </p>
-              </div>
+              
               <div className="space-y-4 mt-4">
                 <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
-                  <li>Click "Add Client" to add a new customer</li>
-                  <li>Enter their contact information and any notes</li>
+                  <li>Click "Add Client" to create a new customer profile</li>
+                  <li>Enter their contact information, payment terms, and any notes</li>
                   <li>When a client buys on credit, their balance will update automatically</li>
-                  <li>Use the Register tab to record payments</li>
+                  <li>Use the Register tab to record payments from clients</li>
                   <li>View payment history and current balance for each client</li>
+                  <li>Use the Analytics view to see overall client metrics like collection rate and overdue amounts</li>
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
                   <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
-                    Always set clear due dates for payments and follow up consistently. Respect in this business comes
-                    from getting paid on time.
+                    Always set clear due dates for payments and follow up consistently. The client analytics page shows your
+                    collection rate and average days to payment to help you monitor your cash flow.
                   </p>
                 </div>
               </div>
@@ -241,25 +240,26 @@ export default function HelpTab() {
             <CardContent className="space-y-4">
               <p>
                 The Cash Register tab is where you record your daily sales and collect payments from clients. It
-                automatically updates your inventory and client balances.
+                automatically updates your inventory and client balances to keep everything in sync.
               </p>
 
               <div className="space-y-4 mt-4">
                 <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
-                  <li>Select "Quick Sale" to record a product sale</li>
-                  <li>Choose the product, quantity, and payment method</li>
-                  <li>Select a client if the sale is for a specific customer</li>
-                  <li>Use "Collect Payment" to record payments from clients who owe money</li>
-                  <li>All transactions are automatically tracked for your reports</li>
+                  <li>Use the "QUICK SALE" tab to record product sales</li>
+                  <li>Select the product, quantity, and payment method (cash or credit)</li>
+                  <li>If selling to a specific customer, select them from the dropdown</li>
+                  <li>Switch to "COLLECT PAYMENT" tab to record payments from clients with outstanding balances</li>
+                  <li>Select the client, enter the payment amount, and choose the payment method</li>
+                  <li>All transactions are tracked automatically for your financial reports</li>
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
                   <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
-                    Record every transaction immediately. Accurate records keep your business running smooth and help
-                    you spot trends in your sales.
+                    Record every transaction immediately. The register shows your daily revenue, profit, and number of
+                    transactions at the top of the page to give you a quick overview of your day's business.
                   </p>
                 </div>
               </div>
@@ -274,26 +274,26 @@ export default function HelpTab() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                The Forecast tab shows you where your business is heading. Track your progress toward monthly goals,
-                identify trends, and make data-driven decisions.
+                The Forecast tab gives you a comprehensive view of your business performance. Track your progress toward monthly goals,
+                analyze sales trends, and make data-driven decisions to grow your profits.
               </p>
 
               <div className="space-y-4 mt-4">
                 <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
-                  <li>View your projected revenue and profit for the month</li>
-                  <li>See how close you are to hitting your target profit</li>
-                  <li>Check your inventory levels and days remaining</li>
-                  <li>Analyze sales by product to identify your best sellers</li>
-                  <li>Track your accounts receivable and overdue payments</li>
+                  <li>View your monthly revenue, profit, and projected profit at the top of the page</li>
+                  <li>Use the "OVERVIEW" tab to see your profit target progress and monthly financial summary</li>
+                  <li>The "SALES" tab shows your sales by product and daily revenue/profit chart</li>
+                  <li>Check "INVENTORY" to monitor your inventory levels and get low stock alerts</li>
+                  <li>The "ACCOUNTS" tab displays outstanding balances and overdue payments</li>
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
                   <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
-                    Use the forecast data to plan your inventory purchases. Buy more of what sells best and adjust your
-                    prices based on demand.
+                    Pay close attention to your top-selling products in the sales breakdown chart. This data helps you
+                    make smarter inventory purchases and pricing decisions to maximize your profits.
                   </p>
                 </div>
               </div>

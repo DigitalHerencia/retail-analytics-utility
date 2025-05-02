@@ -2,6 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { formatCurrency } from "@/lib/utils"
 import { type PricePoint } from "@/lib/data"
 
 interface PriceTableProps {
@@ -15,42 +16,56 @@ export default function PriceTable({
   onSelectPricePoint = () => {},
   selectedPricePointId = "",
 }: PriceTableProps) {
+  // Find the recommended price point (middle one)
+  const recommendedIndex = Math.floor(pricePoints.length / 2)
+  
   return (
-    <div className="overflow-x-auto py-4 px-2">
-      <Table className="w-full">
+    <div className="overflow-x-auto py-2">
+      <Table className="w-full border-collapse">
         <TableHeader>
-          <TableRow className="border-white">
-            <TableHead className="px-6">Markup %</TableHead>
-            <TableHead className="px-6">Wholesale<br />(per g)</TableHead>
-            <TableHead className="px-6">Retail<br />(per g)</TableHead>
-            <TableHead className="px-6">Profit<br />(per g)</TableHead>
-            <TableHead className="px-6">Qty/month<br />(g)</TableHead>
-            <TableHead className="px-6">Qty/month<br />(oz)</TableHead>
-            <TableHead className="px-6">Monthly<br />revenue</TableHead>
-            <TableHead className="px-6">Monthly<br />cost</TableHead>
-            <TableHead className="px-6">Monthly<br />profit</TableHead>
+          <TableRow className="border-white border-b-2 hover:bg-transparent">
+            <TableHead className="px-4 py-3 gangster-font">MARKUP %</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">WHOLESALE<br />(PER G)</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">RETAIL<br />(PER G)</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">PROFIT<br />(PER G)</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">QTY/MONTH<br />(G)</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">QTY/MONTH<br />(OZ)</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">MONTHLY<br />REVENUE</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">MONTHLY<br />COST</TableHead>
+            <TableHead className="px-4 py-3 gangster-font">MONTHLY<br />PROFIT</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {pricePoints.map((point) => {
+          {pricePoints.map((point, index) => {
             const isSelected = point.id === selectedPricePointId
+            const isRecommended = index === recommendedIndex
+            
             return (
               <TableRow
                 key={point.id}
-                className={`cursor-pointer border-white ${
-                  isSelected ? "bg-primary/20 hover:bg-primary/20" : "hover:bg-accent"
+                className={`cursor-pointer border-white border-b ${
+                  isSelected 
+                    ? "bg-white/20 hover:bg-white/20" 
+                    : isRecommended 
+                      ? "bg-white/5 hover:bg-white/15" 
+                      : "hover:bg-white/5"
                 }`}
                 onClick={() => onSelectPricePoint(point.id)}
               >
-                <TableCell className="font-medium px-6">{point.markupPercentage}%</TableCell>
-                <TableCell className="px-6">${point.wholesalePricePerGram.toFixed(2)}</TableCell>
-                <TableCell className="px-6">${point.retailPricePerGram.toFixed(2)}</TableCell>
-                <TableCell className="px-6">${point.profitPerGram.toFixed(2)}</TableCell>
-                <TableCell className="px-6">{point.breakEvenGramsPerMonth.toFixed(1)}</TableCell>
-                <TableCell className="px-6">{point.breakEvenOuncesPerMonth.toFixed(2)}oz</TableCell>
-                <TableCell className="px-6">${point.monthlyRevenue.toFixed(2)}</TableCell>
-                <TableCell className="px-6">${point.monthlyCost.toFixed(2)}</TableCell>
-                <TableCell className="px-6">${point.monthlyProfit.toFixed(2)}</TableCell>
+                <TableCell className="font-medium px-4 py-3">
+                  {point.markupPercentage}%
+                  {isRecommended && (
+                    <Badge className="ml-2 bg-white text-black border-none">RECOMMENDED</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="px-4 py-3">{formatCurrency(point.wholesalePricePerGram)}</TableCell>
+                <TableCell className="px-4 py-3 font-medium">{formatCurrency(point.retailPricePerGram)}</TableCell>
+                <TableCell className="px-4 py-3">{formatCurrency(point.profitPerGram)}</TableCell>
+                <TableCell className="px-4 py-3">{point.breakEvenGramsPerMonth.toFixed(1)}</TableCell>
+                <TableCell className="px-4 py-3">{point.breakEvenOuncesPerMonth.toFixed(2)}oz</TableCell>
+                <TableCell className="px-4 py-3">{formatCurrency(point.monthlyRevenue)}</TableCell>
+                <TableCell className="px-4 py-3">{formatCurrency(point.monthlyCost)}</TableCell>
+                <TableCell className="px-4 py-3 font-medium">{formatCurrency(point.monthlyProfit)}</TableCell>
               </TableRow>
             )
           })}
