@@ -1,5 +1,5 @@
 import type React from "react"
-import "@/app/globals.css"
+import "@/app/auth/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { Permanent_Marker, Inter } from "next/font/google"
