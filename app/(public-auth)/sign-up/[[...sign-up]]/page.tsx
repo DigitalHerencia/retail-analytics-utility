@@ -57,6 +57,7 @@ export default function CustomSignUp() {
                 onChange={e => setPassword(e.target.value)}
                 required
                 className="bg-black/80 border-white text-white placeholder-white/60"
+                autoComplete="current-password"
               />
               <div>
                 <Label htmlFor="secret-code" className="text-white mb-1 block">Secret Code</Label>

@@ -86,6 +86,7 @@ export default function ResetPassword() {
                   onChange={e => setNewPassword(e.target.value)}
                   required
                   className="bg-black/80 border-white text-white placeholder-white/60"
+                  autoComplete="current-password"
                 />
                 {error && <div className="text-red-400 text-sm">{error}</div>}
                 <Button type="submit" className="w-full bg-white text-black font-bold hover:bg-white/80" disabled={loading}>
