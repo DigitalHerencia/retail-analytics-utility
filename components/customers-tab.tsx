@@ -174,9 +174,10 @@ export default function CustomersTab({
         {view === "list" && !selectedCustomer && (
           <Button
             onClick={() => setIsAddCustomerOpen(true)}
-            className="bg-white hover:bg-white/90 text-black button-sharp"
+            className="bg-white hover:bg-white/90 text-black font-medium rounded-md shadow button-sharp flex items-center justify-center"
+            size="default"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Client
+            <Plus className="mr-2 h-4 w-4" /> Add Customer
           </Button>
         )}
       </div>
@@ -191,7 +192,7 @@ export default function CustomersTab({
           </Button>
 
           <CustomerDetails
-            customer={selectedCustomer}
+            customer={selectedCustomer!}
             onEdit={() => setIsEditCustomerOpen(true)}
             onDelete={() => setIsDeleteDialogOpen(true)}
             onAddPayment={() => setIsPaymentOpen(true)}

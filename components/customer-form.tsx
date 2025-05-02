@@ -1,9 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-import * as z from "zod"
 import { v4 as uuidv4 } from "uuid"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,44 +24,39 @@ interface CustomerFormProps {
   initialData?: Customer | null
 }
 
-const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  phone: z.string().optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-  address: z.string().optional(),
-  amountOwed: z.coerce.number().nonnegative("Amount must be non-negative"),
-  dueDate: z.string().min(1, "Due date is required"),
-  notes: z.string().optional(),
-})
+interface CustomerFormValues {
+  name?: string
+  phone?: string
+  amountOwed: number
+  dueDate?: string
+  notes?: string
+}
 
 export default function CustomerForm({ isOpen, onClose, onSave, initialData }: CustomerFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CustomerFormValues>({
     defaultValues: {
       name: initialData?.name || "",
       phone: initialData?.phone || "",
-      email: initialData?.email || "",
-      address: initialData?.address || "",
       amountOwed: initialData?.amountOwed || 0,
-      dueDate: initialData?.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      dueDate: initialData?.dueDate || "",
       notes: initialData?.notes || "",
     },
   })
 
-  const handleSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = (values: CustomerFormValues) => {
     setIsLoading(true)
 
     const customer: Customer = {
       id: initialData?.id || uuidv4(),
-      name: values.name,
+      name: values.name || "Anonymous Client",
       phone: values.phone || "",
-      email: values.email || "",
-      address: values.address || "",
-      amountOwed: values.amountOwed,
-      dueDate: values.dueDate,
-      status: values.amountOwed === 0 ? "paid" : "unpaid",
+      email: "", // Keep empty for anonymity
+      address: "", // Keep empty for anonymity
+      amountOwed: values.amountOwed || 0,
+      dueDate: values.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      status: (values.amountOwed || 0) === 0 ? "paid" : "unpaid",
       paymentHistory: initialData?.paymentHistory || [],
       notes: values.notes || "",
       createdAt: initialData?.createdAt || new Date().toISOString(),
@@ -84,8 +77,8 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
           </DialogTitle>
           <DialogDescription>
             {initialData
-              ? "Update the client's information and payment details."
-              : "Enter the client's information and payment details."}
+              ? "Update the client's information with privacy in mind."
+              : "Enter minimal client information. All fields are optional for anonymity."}
           </DialogDescription>
         </DialogHeader>
 
@@ -96,55 +89,23 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="gangster-font">NAME</FormLabel>
+                  <FormLabel className="gangster-font">NAME (OPTIONAL)</FormLabel>
                   <FormControl>
-                    <Input {...field} className="input-sharp" placeholder="John Doe" />
+                    <Input {...field} className="input-sharp" placeholder="Anonymous" />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">PHONE</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="input-sharp" placeholder="555-123-4567" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">EMAIL</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="input-sharp" placeholder="client@example.com" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
-              name="address"
+              name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="gangster-font">ADDRESS</FormLabel>
+                  <FormLabel className="gangster-font">PHONE (OPTIONAL)</FormLabel>
                   <FormControl>
-                    <Input {...field} className="input-sharp" placeholder="123 Main St, City" />
+                    <Input {...field} className="input-sharp" placeholder="Optional contact number" />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -157,9 +118,16 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                   <FormItem>
                     <FormLabel className="gangster-font">AMOUNT OWED</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" step="0.01" min="0" className="input-sharp" placeholder="0.00" />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        className="input-sharp" 
+                        placeholder="0.00"
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
+                      />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -169,11 +137,10 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                 name="dueDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="gangster-font">DUE DATE</FormLabel>
+                    <FormLabel className="gangster-font">DUE DATE (OPTIONAL)</FormLabel>
                     <FormControl>
                       <Input {...field} type="date" className="input-sharp" />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -184,15 +151,14 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="gangster-font">NOTES</FormLabel>
+                  <FormLabel className="gangster-font">NOTES (OPTIONAL)</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       className="input-sharp resize-none"
-                      placeholder="Additional notes about this client..."
+                      placeholder="Additional notes (private)"
                     />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />

@@ -212,6 +212,124 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
                   <Plus className="mr-2 h-4 w-4" /> Add Inventory
                 </Button>
               </DialogTrigger>
+              <DialogContent className="bg-smoke border-white card-sharp">
+                <DialogHeader>
+                  <DialogTitle className="gangster-font text-white">ADD NEW PRODUCT</DialogTitle>
+                  <DialogDescription>Enter the details of the new product for your inventory.</DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleAddItem)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font">PRODUCT NAME</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Premium, Standard, etc." className="input-sharp" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font">DESCRIPTION</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Optional description" className="input-sharp resize-none" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="quantity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="gangster-font">QUANTITY</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="unit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="gangster-font">UNIT</FormLabel>
+                            <select
+                              className="flex h-10 w-full rounded-none border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 input-sharp"
+                              {...field}
+                            >
+                              <option value="g">Grams (g)</option>
+                              <option value="oz">Ounces (oz)</option>
+                              <option value="kg">Kilograms (kg)</option>
+                            </select>
+                            <FormDescription>Select the unit of measurement</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="costPerOz"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="gangster-font">COST PER OUNCE</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
+                            </FormControl>
+                            <FormDescription>Wholesale cost per ounce</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="purchaseDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="gangster-font">PURCHASE DATE</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} className="input-sharp" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="reorderThresholdG"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font">REORDER THRESHOLD (GRAMS)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="1" min="0" {...field} className="input-sharp" />
+                          </FormControl>
+                          <FormDescription>When to reorder (in grams)</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <DialogFooter>
+                      <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white">
+                        ADD PRODUCT
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
