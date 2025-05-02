@@ -134,10 +134,12 @@ export default function CashRegister({
     onUpdateCustomers(updatedCustomers)
     onAddTransaction(transaction)
 
-    // Reset form
+    // Reset form for next sale
+    setSelectedInventoryId(null) // Reset selected product
     setQuantity(1)
     setCustomPrice(null)
     setNotes("")
+    setPaymentMethod("cash") // Reset payment method
   }
 
   // Handle customer payment
@@ -210,9 +212,11 @@ export default function CashRegister({
     onUpdateCustomers(updatedCustomers)
     onAddTransaction(transaction)
 
-    // Reset form
+    // Reset form after payment
     setCustomPrice(null)
     setNotes("")
+    setSelectedCustomerId(null) // Reset selected customer after payment
+    setPaymentMethod("cash") // Reset payment method
   }
 
   // Reset daily stats at midnight
@@ -222,9 +226,9 @@ export default function CashRegister({
       now.getFullYear(),
       now.getMonth(),
       now.getDate() + 1, // tomorrow
-      0,
-      0,
-      0, // midnight
+       0, // hour
+       0, // minute
+       0 // second
     )
     const msToMidnight = night.getTime() - now.getTime()
 

@@ -13,8 +13,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import PriceTable from "@/components/price-table"
 import PriceCharts from "@/components/price-charts"
-import { calculatePricePoints } from "@/lib/utils"
-import { defaultMarkupPercentages, type PricePoint, type BusinessData } from "@/lib/data"
+import { calculatePricePoints, gramsToOunces } from "@/lib/utils"
+import { defaultMarkupPercentages, type PricePoint, type BusinessData, defaultBusinessData } from "@/lib/data"
 
 const formSchema = z.object({
   wholesalePrice: z.coerce.number().positive("Wholesale price must be positive"),
@@ -64,15 +64,21 @@ export default function RetailPricingTool({
   // Calculate price points when form values change
   const calculatePrices = (data: z.infer<typeof formSchema>) => {
     const { wholesalePrice, unit, targetProfit } = data
+    // Convert wholesale price to per ounce if needed
+    let wholesalePricePerOz = wholesalePrice
+    if (unit === "gram") {
+      wholesalePricePerOz = wholesalePrice * 28.35
+    }
+    // Use default or provided business data for operating expenses
     const businessDataForCalculation: BusinessData = {
       targetProfitPerMonth: targetProfit,
-      targetProfit: 0, // Provide a default value
-      wholesalePricePerOz: 0, // Provide a default value
-      operatingExpenses: 0, // Provide a default value
-    };
+      targetProfit: 0, // Not used in calculation
+      wholesalePricePerOz,
+      operatingExpenses: businessData?.operatingExpenses ?? defaultBusinessData.operatingExpenses,
+    }
     const newPricePoints = calculatePricePoints(
       markupPercentages,
-      wholesalePrice,
+      targetProfit,
       businessDataForCalculation
     )
     setLocalPricePoints(newPricePoints)
@@ -104,7 +110,7 @@ export default function RetailPricingTool({
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="border-white">
         <CardHeader>
           <CardTitle>Retail Pricing Tool</CardTitle>
           <CardDescription>
@@ -168,7 +174,7 @@ export default function RetailPricingTool({
               />
 
               <div className="md:col-span-3">
-                <Button type="submit">Calculate Prices</Button>
+                <Button type="submit" className="border-white">Calculate Prices</Button>
               </div>
             </form>
           </Form>
@@ -176,13 +182,13 @@ export default function RetailPricingTool({
       </Card>
 
       <Tabs defaultValue="table" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="table">Price Table</TabsTrigger>
-          <TabsTrigger value="charts">Price Charts</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 border-white">
+          <TabsTrigger value="table" className="border-white">Price Table</TabsTrigger>
+          <TabsTrigger value="charts" className="border-white">Price Charts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="table">
-          <Card>
+          <Card className="border-white">
             <CardContent className="pt-6">
               <PriceTable
                 pricePoints={localPricePoints}
@@ -194,7 +200,7 @@ export default function RetailPricingTool({
         </TabsContent>
 
         <TabsContent value="charts">
-          <Card>
+          <Card className="border-white">
             <CardContent className="pt-6">
               <PriceCharts pricePoints={localPricePoints} />
             </CardContent>

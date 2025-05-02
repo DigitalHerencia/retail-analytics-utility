@@ -13,8 +13,8 @@ export default function HelpTab() {
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-gold border-2">
-          <h1 className="text-4xl font-bold text-gold graffiti-font text-shadow">HELP & GUIDE</h1>
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">HELP & GUIDE</h1>
           <p className="text-white/80 mt-1">LEARN THE GAME. MASTER THE HUSTLE.</p>
         </div>
 
@@ -49,9 +49,9 @@ export default function HelpTab() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">WELCOME TO HUSTLE CALCULATOR</CardTitle>
+              <CardTitle className="gangster-font text-white">WELCOME TO HUSTLE CALCULATOR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
@@ -70,58 +70,58 @@ export default function HelpTab() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <div className="bg-smoke p-4 flex flex-col items-center text-center">
-                  <Calculator className="h-10 w-10 text-gold mb-2" />
-                  <h3 className="gangster-font text-gold">PRICE CALCULATOR</h3>
+                  <Calculator className="h-10 w-10 text-white mb-2" />
+                  <h3 className="gangster-font text-white">PRICE CALCULATOR</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Find your optimal price points to maximize profits
                   </p>
                 </div>
 
                 <div className="bg-smoke p-4 flex flex-col items-center text-center">
-                  <Package className="h-10 w-10 text-gold mb-2" />
-                  <h3 className="gangster-font text-gold">INVENTORY TRACKER</h3>
+                  <Package className="h-10 w-10 text-white mb-2" />
+                  <h3 className="gangster-font text-white">INVENTORY TRACKER</h3>
                   <p className="text-sm text-muted-foreground mt-1">Keep track of your product and never run dry</p>
                 </div>
 
                 <div className="bg-smoke p-4 flex flex-col items-center text-center">
-                  <Users className="h-10 w-10 text-gold mb-2" />
-                  <h3 className="gangster-font text-gold">CLIENT MANAGEMENT</h3>
+                  <Users className="h-10 w-10 text-white mb-2" />
+                  <h3 className="gangster-font text-white">CLIENT MANAGEMENT</h3>
                   <p className="text-sm text-muted-foreground mt-1">Manage your clients and collect what's owed</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">GETTING STARTED</CardTitle>
+              <CardTitle className="gangster-font text-white">GETTING STARTED</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <ol className="list-decimal pl-5 space-y-2">
                 <li>
-                  <strong className="text-gold">Set up your business</strong> - Go to the Setup tab and enter your
+                  <strong className="text-white">Set up your business</strong> - Go to the Setup tab and enter your
                   wholesale costs and target profit
                 </li>
                 <li>
-                  <strong className="text-gold">Add your inventory</strong> - Track what you have on hand in the
+                  <strong className="text-white">Add your inventory</strong> - Track what you have on hand in the
                   Inventory tab
                 </li>
                 <li>
-                  <strong className="text-gold">Add your clients</strong> - Keep track of who owes you money in the
+                  <strong className="text-white">Add your clients</strong> - Keep track of who owes you money in the
                   Clients tab
                 </li>
                 <li>
-                  <strong className="text-gold">Record transactions</strong> - Use the Register to record sales and
+                  <strong className="text-white">Record transactions</strong> - Use the Register to record sales and
                   payments
                 </li>
                 <li>
-                  <strong className="text-gold">Check your forecast</strong> - See how your business is performing in
+                  <strong className="text-white">Check your forecast</strong> - See how your business is performing in
                   the Forecast tab
                 </li>
               </ol>
 
               <div className="bg-smoke p-4 mt-4">
-                <h3 className="gangster-font text-gold mb-2">PRO TIP</h3>
+                <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                 <p className="text-sm">
                   Use the hamburger menu in the top left to quickly navigate between sections. You can also change the
                   theme and accent color to match your style.
@@ -132,9 +132,9 @@ export default function HelpTab() {
         </TabsContent>
 
         <TabsContent value="calculator" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">PRICE CALCULATOR</CardTitle>
+              <CardTitle className="gangster-font text-white">PRICE CALCULATOR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
@@ -151,7 +151,7 @@ export default function HelpTab() {
               </p>
 
               <div className="space-y-4 mt-4">
-                <h3 className="gangster-font text-gold">HOW TO USE</h3>
+                <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>Enter your wholesale cost per ounce in the setup tab</li>
@@ -161,18 +161,18 @@ export default function HelpTab() {
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
-                  <h3 className="gangster-font text-gold mb-2">KEY TERMS</h3>
+                  <h3 className="gangster-font text-white mb-2">KEY TERMS</h3>
 
                   <div className="space-y-2">
                     <div>
-                      <strong className="text-gold">Markup</strong>: The percentage added to your cost to set your price
+                      <strong className="text-white">Markup</strong>: The percentage added to your cost to set your price
                     </div>
                     <div>
-                      <strong className="text-gold">Break-even</strong>: How much product you need to move to cover
+                      <strong className="text-white">Break-even</strong>: How much product you need to move to cover
                       costs
                     </div>
                     <div>
-                      <strong className="text-gold">ROI</strong>: Return on Investment - how hard your money is working
+                      <strong className="text-white">ROI</strong>: Return on Investment - how hard your money is working
                       for you
                     </div>
                   </div>
@@ -183,9 +183,9 @@ export default function HelpTab() {
         </TabsContent>
 
         <TabsContent value="inventory" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">INVENTORY MANAGEMENT</CardTitle>
+              <CardTitle className="gangster-font text-white">INVENTORY MANAGEMENT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
@@ -202,7 +202,7 @@ export default function HelpTab() {
               </p>
 
               <div className="space-y-4 mt-4">
-                <h3 className="gangster-font text-gold">HOW TO USE</h3>
+                <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>Click "Add Product" to add new inventory</li>
@@ -213,7 +213,7 @@ export default function HelpTab() {
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
-                  <h3 className="gangster-font text-gold mb-2">PRO TIP</h3>
+                  <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
                     Keep your inventory updated in real-time. Knowing exactly what you have on hand prevents missed
                     sales and helps you restock at the right time.
@@ -225,9 +225,9 @@ export default function HelpTab() {
         </TabsContent>
 
         <TabsContent value="customers" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">CLIENT MANAGEMENT</CardTitle>
+              <CardTitle className="gangster-font text-white">CLIENT MANAGEMENT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
@@ -244,7 +244,7 @@ export default function HelpTab() {
               </p>
 
               <div className="space-y-4 mt-4">
-                <h3 className="gangster-font text-gold">HOW TO USE</h3>
+                <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>Click "Add Client" to add a new customer</li>
@@ -255,7 +255,7 @@ export default function HelpTab() {
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
-                  <h3 className="gangster-font text-gold mb-2">PRO TIP</h3>
+                  <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
                     Always set clear due dates for payments and follow up consistently. Respect in this business comes
                     from getting paid on time.
@@ -267,9 +267,9 @@ export default function HelpTab() {
         </TabsContent>
 
         <TabsContent value="register" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">CASH REGISTER</CardTitle>
+              <CardTitle className="gangster-font text-white">CASH REGISTER</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
@@ -286,7 +286,7 @@ export default function HelpTab() {
               </p>
 
               <div className="space-y-4 mt-4">
-                <h3 className="gangster-font text-gold">HOW TO USE</h3>
+                <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>Select "Quick Sale" to record a product sale</li>
@@ -297,7 +297,7 @@ export default function HelpTab() {
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
-                  <h3 className="gangster-font text-gold mb-2">PRO TIP</h3>
+                  <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
                     Record every transaction immediately. Accurate records keep your business running smooth and help
                     you spot trends in your sales.
@@ -309,9 +309,9 @@ export default function HelpTab() {
         </TabsContent>
 
         <TabsContent value="forecast" className="space-y-6 mt-6">
-          <Card className="card-sharp border-gold">
+          <Card className="card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-gold">MONTHLY FORECAST</CardTitle>
+              <CardTitle className="gangster-font text-white">MONTHLY FORECAST</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
@@ -328,7 +328,7 @@ export default function HelpTab() {
               </p>
 
               <div className="space-y-4 mt-4">
-                <h3 className="gangster-font text-gold">HOW TO USE</h3>
+                <h3 className="gangster-font text-white">HOW TO USE</h3>
 
                 <ol className="list-decimal pl-5 space-y-2">
                   <li>View your projected revenue and profit for the month</li>
@@ -339,7 +339,7 @@ export default function HelpTab() {
                 </ol>
 
                 <div className="bg-smoke p-4 mt-4">
-                  <h3 className="gangster-font text-gold mb-2">PRO TIP</h3>
+                  <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
                   <p className="text-sm">
                     Use the forecast data to plan your inventory purchases. Buy more of what sells best and adjust your
                     prices based on demand.

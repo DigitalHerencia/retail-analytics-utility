@@ -180,7 +180,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
             <div className="grid grid-cols-2 gap-4">
               <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="w-full bg-white hover:bg-white/90 text-white-foreground button-sharp">
+                  <Button className="w-full bg-white hover:bg-white/90 text-black button-sharp">
                     <Save className="mr-2 h-4 w-4" /> SAVE DATA
                   </Button>
                 </DialogTrigger>
@@ -209,7 +209,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
                     <Button
                       onClick={handleSaveData}
                       disabled={isLoading}
-                      className="bg-white hover:bg-white/90 text-white-foreground button-sharp"
+                      className="bg-white hover:bg-white/90 text-black button-sharp"
                     >
                       {isLoading ? "SAVING..." : "SAVE DATA"}
                     </Button>
@@ -283,7 +283,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="button-sharp">
+                  <Button variant="outline" className="button-sharp">
                     <RotateCcw className="mr-2 h-4 w-4" /> Reset All Data
                   </Button>
                 </AlertDialogTrigger>
@@ -337,7 +337,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
             </p>
             <div className="flex items-center justify-between bg-smoke p-3">
               <span className="text-sm gangster-font">VERSION</span>
-              <span className="text-sm font-medium text-white">2.0</span>
+              <span className="text-sm font-medium text-white">1.0</span>
             </div>
             <div className="flex items-center justify-between bg-smoke p-3">
               <span className="text-sm gangster-font">DATA STORAGE</span>
