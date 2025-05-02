@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import { saveUserSecret } from "@/app/(root)/actions"
 import Head from "next/head"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function CustomSignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
@@ -19,6 +19,8 @@ export default function CustomSignUp() {
   const [loading, setLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect_url') || '/'
 
   // Mount Clerk CAPTCHA widget on load and listen for token
   useEffect(() => {
@@ -44,25 +46,31 @@ export default function CustomSignUp() {
     setLoading(true)
     setError("")
     try {
-      // Use the captchaToken if available for enhanced security
+      // Create the user account
       const result = await signUp.create({ 
         username, 
         password
       })
       
-      // Note: The captchaToken is automatically used when creating the signup
-      // We don't need to explicitly verify it with attemptVerification
-      
       if (result.status === "complete" && result.createdSessionId) {
+        // Activate the session
         await setActive({ session: result.createdSessionId })
-        // Save the user's secret code for password reset
-        await saveUserSecret({ username, secretQuestion: 'code', secretAnswer: secretCode })
+        
+        try {
+          // Save the user's secret code for password reset
+          await saveUserSecret({ username, secretQuestion: 'code', secretAnswer: secretCode })
+        } catch (secretError) {
+          console.error("Error saving user secret:", secretError)
+          // Continue anyway as this shouldn't block signup
+        }
+        
         // Redirect to home page after successful sign-up
-        router.push("/(root)")
+        router.push(redirectUrl)
       } else {
         setError("Sign up incomplete. Please try again.")
       }
     } catch (err: any) {
+      console.error("Sign-up error:", err)
       setError(err.errors?.[0]?.message || "Sign up failed")
     } finally {
       setLoading(false)

@@ -26,7 +26,7 @@ export default function CustomSignIn() {
   const [captchaToken, setCaptchaToken] = useState("")
   const router = useRouter()
   const searchParams = useSearchParams()
-  const returnBackUrl = searchParams.get('returnBackUrl')
+  const redirectUrl = searchParams.get('redirect_url') || '/'
 
   // Mount Clerk CAPTCHA widget on load and listen for token
   useEffect(() => {
@@ -83,12 +83,8 @@ export default function CustomSignIn() {
           // Continue anyway, as this shouldn't block login
         }
         
-        // Redirect to the original URL if available, otherwise to the home page
-        if (returnBackUrl) {
-          router.push(returnBackUrl)
-        } else {
-          router.push("/(root)")
-        }
+        // Redirect to the target URL
+        router.push(redirectUrl)
       } else if (result.status === "needs_first_factor" || result.status === "needs_second_factor") {
         setError("Additional authentication required. Please check your email or phone.")
       } else {
