@@ -1,5 +1,5 @@
 import type React from "react"
-import "@/app/(auth)/globals.css"
+import "@/app/(public-auth)/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { Permanent_Marker, Inter } from "next/font/google"
@@ -19,8 +19,7 @@ const inter = Inter({
   display: "swap",
 })
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
@@ -31,13 +30,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </head>
         <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-            <div className="flex min-h-screen flex-col">
-              <main className="flex-1 pb-16">{children}</main>
-            </div>
+            {/* No header or footer here */}
+            <main className="flex-1">{children}</main>
           </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
   )
 }
-
