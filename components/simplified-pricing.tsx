@@ -24,22 +24,25 @@ export default function SimplifiedPricing() {
 
   const [saveSuccess, setSaveSuccess] = useState(false)
   
-  // Calculate profit per gram
+  // Calculate profit per gram (revenue - cost)
   const profitPerGram = retailPricePerGram - wholesalePricePerGram
   
-  // Calculate profit margin percentage
+  // Calculate profit margin percentage (profit / revenue) * 100
+  // This follows GAAP principles for margin calculation
   const profitMarginPercentage = (profitPerGram / retailPricePerGram) * 100
   
-  // Calculate retail price per ounce
+  // Calculate retail price per ounce (convert from grams)
   const retailPricePerOunce = retailPricePerGram * 28.35
   
   // Calculate profit per ounce
   const profitPerOunce = profitPerGram * 28.35
 
+  // Handle markup slider changes
   const handleMarkupChange = (value: number[]) => {
     setMarkupPercentage(value[0])
   }
 
+  // Handle wholesale price input changes
   const handleWholesalePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value)
     if (!isNaN(value) && value >= 0) {
@@ -47,6 +50,7 @@ export default function SimplifiedPricing() {
     }
   }
 
+  // Handle retail price input changes
   const handleRetailPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value)
     if (!isNaN(value) && value >= 0) {
@@ -54,6 +58,7 @@ export default function SimplifiedPricing() {
     }
   }
 
+  // Display success message when pricing is saved
   const handleSavePricing = () => {
     // The data is already saved in localStorage through the context
     // Show success message

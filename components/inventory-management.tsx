@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -78,6 +78,21 @@ export default function InventoryManagement({
       reorderThresholdG: 100,
     },
   })
+
+  // Reset form when the add dialog opens or closes
+  useEffect(() => {
+    if (isAddDialogOpen) {
+      form.reset({
+        name: "",
+        description: "",
+        quantity: 0,
+        unit: "oz",
+        costPerOz: 0,
+        purchaseDate: new Date().toISOString().split("T")[0],
+        reorderThresholdG: 100,
+      })
+    }
+  }, [isAddDialogOpen, form])
 
   const handleAddItem = (values: z.infer<typeof formSchema>) => {
     // Convert quantity to grams based on selected unit

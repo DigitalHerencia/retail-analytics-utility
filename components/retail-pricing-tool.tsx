@@ -20,19 +20,31 @@ export default function RetailPricingTool() {
   // Process generated scenarios into price points
   const handleGenerateScenarios = (scenarios: ScenarioData[]) => {
     const newPricePoints: PricePoint[] = scenarios.map((scenario) => {
-      const wholesalePricePerGram = scenario.retailPriceG - scenario.grossMarginG
+      // Calculate wholesale price based on retail price and margin
       const retailPricePerGram = scenario.retailPriceG
-      const profitPerGram = scenario.grossMarginG
+      const grossMargin = scenario.grossMarginG
+      
+      // Using GAAP principles:
+      // Wholesale price = Retail price - Gross margin
+      const wholesalePricePerGram = retailPricePerGram - grossMargin
+      
+      // Profit per gram is the same as gross margin
+      const profitPerGram = grossMargin
+      
+      // Calculate markup percentage: (Retail - Wholesale)/Wholesale * 100
       const markupPercentage = Math.round((profitPerGram / wholesalePricePerGram) * 100)
       
+      // Break-even calculation - how much product needed to sell to meet target profit
       const breakEvenGramsPerMonth = scenario.netProfit / profitPerGram
       const breakEvenOuncesPerMonth = breakEvenGramsPerMonth / 28.35
       
+      // Revenue and cost calculations
       const monthlyRevenue = retailPricePerGram * breakEvenGramsPerMonth
       const monthlyCost = wholesalePricePerGram * breakEvenGramsPerMonth
-      const monthlyProfit = profitPerGram * breakEvenGramsPerMonth
+      const monthlyProfit = monthlyRevenue - monthlyCost
+      
+      // ROI calculation: Profit / Cost * 100
       const roi = (monthlyProfit / monthlyCost) * 100
-      const retailPrice = retailPricePerGram * 28.35 // convert price per gram to price per ounce
       
       return {
         id: uuidv4(),
@@ -45,8 +57,7 @@ export default function RetailPricingTool() {
         monthlyRevenue,
         monthlyCost,
         monthlyProfit,
-        roi,
-        retailPrice
+        roi
       }
     })
     

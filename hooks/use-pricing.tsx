@@ -46,35 +46,39 @@ export function PricingProvider({ children }: { children: ReactNode }) {
     )
   }, [retailPricePerGram, markupPercentage, wholesalePricePerGram])
 
-  // Update retail price
+  // Update retail price with GAAP-compliant calculation
   const setRetailPrice = (price: number) => {
     setRetailPricePerGram(price)
     // If retail price is updated, recalculate markup while keeping wholesale price stable
     if (wholesalePricePerGram > 0) {
+      // Formula: Markup % = ((Retail Price - Wholesale Price) / Wholesale Price) * 100
       const newMarkup = ((price - wholesalePricePerGram) / wholesalePricePerGram) * 100
       setMarkupPercentage(Math.round(newMarkup))
     }
   }
 
-  // Update markup percentage
+  // Update markup percentage with GAAP-compliant calculation
   const updateMarkupPercentage = (percentage: number) => {
     setMarkupPercentage(percentage)
     // When markup changes, recalculate retail price while keeping wholesale price stable
-    const newRetailPrice = calculateRetailPrice(wholesalePricePerGram, percentage)
-    setRetailPricePerGram(newRetailPrice)
+    // Formula: Retail Price = Wholesale Price * (1 + Markup % / 100)
+    const newRetailPrice = wholesalePricePerGram * (1 + percentage / 100)
+    setRetailPricePerGram(parseFloat(newRetailPrice.toFixed(2)))
   }
-
-  // Update wholesale price
+  
+  // Update wholesale price with GAAP-compliant calculation
   const setWholesalePrice = (price: number) => {
     setWholesalePricePerGram(price)
-    // When wholesale price changes, recalculate retail price based on current markup
-    const newRetailPrice = calculateRetailPrice(price, markupPercentage)
-    setRetailPricePerGram(newRetailPrice)
+    // When wholesale price changes, recalculate retail price using current markup
+    // Formula: Retail Price = Wholesale Price * (1 + Markup % / 100)
+    const newRetailPrice = price * (1 + markupPercentage / 100)
+    setRetailPricePerGram(parseFloat(newRetailPrice.toFixed(2)))
   }
-
-  // Helper to calculate retail price from wholesale price and markup
-  const calculateRetailPrice = (wholesalePricePerGram: number, markup: number) => {
-    return wholesalePricePerGram * (1 + markup / 100)
+  
+  // Calculate retail price based on wholesale price and markup (used by other components)
+  const calculateRetailPrice = (wholesalePrice: number, markup: number) => {
+    // Formula: Retail Price = Wholesale Price * (1 + Markup % / 100)
+    return wholesalePrice * (1 + markup / 100)
   }
 
   return (
