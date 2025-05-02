@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import sql from "@/lib/db";
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // Save user secret question and hashed answer
 type SaveUserSecretParams = {
