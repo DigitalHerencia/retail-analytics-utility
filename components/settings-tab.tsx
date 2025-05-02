@@ -283,7 +283,7 @@ export default function SettingsTab({ businessData, inventory, customers, onData
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="button-sharp">
+                  <Button variant="outline" className="button-sharp border-2 border-white">
                     <RotateCcw className="mr-2 h-4 w-4" /> Reset All Data
                   </Button>
                 </AlertDialogTrigger>

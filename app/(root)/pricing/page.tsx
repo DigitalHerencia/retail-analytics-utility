@@ -1,4 +1,3 @@
-import Header from "@/components/header"
 import { HustleStat } from "@/components/hustle-stat"
 import { HustleTip } from "@/components/hustle-tip"
 import { DollarSign, TrendingUp, Calculator } from "lucide-react"
@@ -26,7 +25,6 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-6">
-      <Header />
       <div className="text-center mb-4">
         <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
           <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">PRICING TOOLS</h1>

@@ -20,7 +20,7 @@ export function HustleTip({ title, children }: HustleTipProps) {
   }
 
   return (
-    <Card className={cn("relative border-0 border-l-4 bg-smoke card-sharp")}>
+    <Card className={cn("relative border-0 border-l-4 bg-smoke card-sharp max-w-xs")}>
       <Button
         variant="ghost"
         size="icon"
@@ -30,11 +30,11 @@ export function HustleTip({ title, children }: HustleTipProps) {
         <X className="h-4 w-4" />
         <span className="sr-only">Dismiss tip</span>
       </Button>
-      <CardContent className="p-4 pr-8">
-        <div className="flex items-start gap-3">
+      <CardContent className="p-3 pr-7">
+        <div className="flex flex-col items-center text-center gap-2">
           <div>
-            <h4 className="font-medium text-white gangster-font [text-shadow:_1px_1px_2px_rgb(0_0_0_/_50%)]">{title}</h4>
-            <div className="text-sm mt-1 text-white line-clamp-3">{children}</div>
+            <h4 className="font-medium text-white text-sm gangster-font [text-shadow:_1px_1px_2px_rgb(0_0_0_/_50%)]">{title}</h4>
+            <div className="text-xs mt-0.5 text-white line-clamp-3">{children}</div>
           </div>
         </div>
       </CardContent>

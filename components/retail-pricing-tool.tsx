@@ -110,16 +110,16 @@ export default function RetailPricingTool({
 
   return (
     <div className="space-y-6">
-      <Card className="border-white">
-        <CardHeader>
+      <Card className="border-0 shadow-none">
+        <CardHeader className="px-6 py-5">
           <CardTitle>Retail Pricing Tool</CardTitle>
-          <CardDescription>
-            Calculate retail prices based on wholesale cost and analyze profit at different markup levels
+          <CardDescription className="max-w-3xl">
+            Enter your wholesale cost and target profit. The tool will show you different markup levels and how they affect your profit, break-even, and ROI. Choose the price that works best for your business.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6 py-4">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(calculatePrices)} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <form onSubmit={form.handleSubmit(calculatePrices)} className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <FormField
                 control={form.control}
                 name="wholesalePrice"
@@ -127,9 +127,9 @@ export default function RetailPricingTool({
                   <FormItem>
                     <FormLabel>Wholesale Price</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" min="0.01" {...field} />
+                      <Input type="number" step="0.01" min="0.01" {...field} className="border-white focus:border-white" />
                     </FormControl>
-                    <FormDescription>The price you pay per gram/ounce</FormDescription>
+                    <FormDescription className="text-xs">The price you pay per gram/ounce</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -144,11 +144,11 @@ export default function RetailPricingTool({
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="gram" id="gram" />
+                          <RadioGroupItem value="gram" id="gram" className="border-white" />
                           <Label htmlFor="gram">Per Gram</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="ounce" id="ounce" />
+                          <RadioGroupItem value="ounce" id="ounce" className="border-white" />
                           <Label htmlFor="ounce">Per Ounce</Label>
                         </div>
                       </RadioGroup>
@@ -165,16 +165,16 @@ export default function RetailPricingTool({
                   <FormItem>
                     <FormLabel>Target Monthly Net Profit</FormLabel>
                     <FormControl>
-                      <Input type="number" step="100" min="100" {...field} />
+                      <Input type="number" step="100" min="100" {...field} className="border-white focus:border-white" />
                     </FormControl>
-                    <FormDescription>Your target monthly profit</FormDescription>
+                    <FormDescription className="text-xs">Your target monthly profit</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
               <div className="md:col-span-3">
-                <Button type="submit" className="border-white">Calculate Prices</Button>
+                <Button type="submit" className="border-white px-6">Calculate Prices</Button>
               </div>
             </form>
           </Form>
@@ -188,8 +188,8 @@ export default function RetailPricingTool({
         </TabsList>
 
         <TabsContent value="table">
-          <Card className="border-white">
-            <CardContent className="pt-6">
+          <Card className="border-0 shadow-none">
+            <CardContent className="pt-8 px-6">
               <PriceTable
                 pricePoints={localPricePoints}
                 onSelectPricePoint={handlePricePointSelect}
@@ -200,8 +200,8 @@ export default function RetailPricingTool({
         </TabsContent>
 
         <TabsContent value="charts">
-          <Card className="border-white">
-            <CardContent className="pt-6">
+          <Card className="border-0 shadow-none">
+            <CardContent className="pt-8 px-6">
               <PriceCharts pricePoints={localPricePoints} />
             </CardContent>
           </Card>

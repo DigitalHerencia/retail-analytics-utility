@@ -3,8 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, Settings, HelpCircle, DollarSign, Code } from "lucide-react"
-import { UserButton } from "@clerk/nextjs"
+import { Menu, Settings, HelpCircle, DollarSign, Code, LogOut } from "lucide-react"
+import { UserButton, useUser, useClerk } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
@@ -13,12 +13,19 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
 
   const menuItems = [
     { id: "pricing", href: "/pricing", label: "PRICING", icon: <DollarSign className="h-5 w-5" /> },
     { id: "settings", href: "/settings", label: "SETTINGS", icon: <Settings className="h-5 w-5" /> },
     { id: "help", href: "/help", label: "HELP", icon: <HelpCircle className="h-5 w-5" /> },
   ]
+
+  const handleLogout = () => {
+    signOut(() => router.push('/sign-in'));
+    setIsOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white bg-black">
@@ -27,7 +34,16 @@ export default function Header() {
           <Code className="h-6 w-6 text-white" />
           Hustlers Code
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {isLoaded && user && (
+            <Link 
+              href="/profile" 
+              className="text-white hover:text-white/80 hidden md:flex items-center gap-2 transition"
+            >
+              <span className="gangster-font text-sm">{user.fullName || user.username}</span>
+            </Link>
+          )}
+          <UserButton afterSignOutUrl="/sign-in" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white">
@@ -64,11 +80,43 @@ export default function Header() {
                         </Link>
                       </li>
                     ))}
+                    
+                    {isLoaded && user && (
+                      <>
+                        <li>
+                          <Link
+                            href="/profile"
+                            className="flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            <span className="ml-3">PROFILE</span>
+                          </Link>
+                        </li>
+                        <li>
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center w-full px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10 text-left"
+                          >
+                            <LogOut className="h-5 w-5" />
+                            <span className="ml-3">LOGOUT</span>
+                          </button>
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </nav>
 
                 <div className="p-6 border-t border-white">
-                  <UserButton afterSignOutUrl="/login" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
+                  {isLoaded && user ? (
+                    <div className="flex flex-col space-y-2">
+                      <p className="text-sm text-white/70">Logged in as <span className="text-white">{user.fullName || user.username}</span></p>
+                      <UserButton afterSignOutUrl="/sign-in" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
+                    </div>
+                  ) : (
+                    <Link href="/sign-in">
+                      <Button className="w-full bg-white text-black hover:bg-white/80">SIGN IN</Button>
+                    </Link>
+                  )}
                   <div className="text-xs text-white/50 pt-2">
                     <p>Hustlers Code v1.0</p>
                     <p>© 2025 Hustlers Code</p>

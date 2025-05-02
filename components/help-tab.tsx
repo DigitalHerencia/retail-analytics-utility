@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
 import { Calculator, Users, Package } from "lucide-react"
 import { HustleTip } from "@/components/hustle-tip"
 
@@ -28,24 +27,15 @@ export default function HelpTab() {
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
-          <TabsTrigger value="overview" className="gangster-font">
-            OVERVIEW
-          </TabsTrigger>
-          <TabsTrigger value="calculator" className="gangster-font">
-            CALCULATOR
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="gangster-font">
-            INVENTORY
-          </TabsTrigger>
-          <TabsTrigger value="customers" className="gangster-font">
-            CLIENTS
-          </TabsTrigger>
-          <TabsTrigger value="register" className="gangster-font">
-            REGISTER
-          </TabsTrigger>
-          <TabsTrigger value="forecast" className="gangster-font">
-            FORECAST
-          </TabsTrigger>
+          {["overview", "calculator", "inventory", "customers", "register", "forecast"].map((tab) => (
+            <TabsTrigger 
+              key={tab}
+              value={tab} 
+              className={`gangster-font border-white border ${activeTab === tab ? 'bg-white text-black' : ''}`}
+            >
+              {tab.toUpperCase()}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">

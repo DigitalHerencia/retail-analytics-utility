@@ -1,143 +1,59 @@
 "use client"
 
-import { useState, useMemo } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowUpDown } from "lucide-react"
-import type { PricePoint } from "@/lib/data"
-import { formatCurrency, formatGrams, formatOunces, formatPercentage } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { type PricePoint } from "@/lib/data"
 
 interface PriceTableProps {
   pricePoints: PricePoint[]
-  onSelectPricePoint: (id: string) => void
-  selectedPricePointId: string
+  onSelectPricePoint?: (id: string) => void
+  selectedPricePointId?: string
 }
 
-type SortKey = keyof PricePoint
-type SortOrder = "asc" | "desc"
-
-export default function PriceTable({ pricePoints, onSelectPricePoint, selectedPricePointId }: PriceTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey>("markupPercentage")
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
-
-  // Ensure pricePoints is an array before sorting
-  const validPricePoints = Array.isArray(pricePoints) ? pricePoints : []
-
-  const sortedData = useMemo(() => {
-    return [...validPricePoints].sort((a, b) => {
-      const valA = a[sortKey]
-      const valB = b[sortKey]
-
-      if (valA < valB) {
-        return sortOrder === "asc" ? -1 : 1
-      }
-      if (valA > valB) {
-        return sortOrder === "asc" ? 1 : -1
-      }
-      return 0
-    })
-  }, [validPricePoints, sortKey, sortOrder])
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-    } else {
-      setSortKey(key)
-      setSortOrder("asc")
-    }
-  }
-
-  // Highlight the middle row (median price point)
-  const middleIndex = Math.floor(validPricePoints.length / 2)
-  const isMiddleRow = (index: number) => index === middleIndex
-
+export default function PriceTable({
+  pricePoints,
+  onSelectPricePoint = () => {},
+  selectedPricePointId = "",
+}: PriceTableProps) {
   return (
-    <div className="overflow-x-auto">
-      <Table>
+    <div className="overflow-x-auto py-4 px-2">
+      <Table className="w-full">
         <TableHeader>
-          <TableRow>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("markupPercentage")}>
-              <div className="flex items-center">
-                Markup %
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("wholesalePricePerGram")}>
-              <div className="flex items-center">
-                Wholesale (per g)
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("retailPricePerGram")}>
-              <div className="flex items-center">
-                Retail (per g)
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("profitPerGram")}>
-              <div className="flex items-center">
-                Margin (per g)
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("breakEvenGramsPerMonth")}>
-              <div className="flex items-center">
-                Qty/month (g)
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("breakEvenOuncesPerMonth")}>
-              <div className="flex items-center">
-                Qty/month (oz)
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("monthlyRevenue")}>
-              <div className="flex items-center">
-                Monthly revenue
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("monthlyCost")}>
-              <div className="flex items-center">
-                Monthly cost
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
-            <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort("monthlyProfit")}>
-              <div className="flex items-center">
-                Net profit
-                <ArrowUpDown className="ml-1 h-4 w-4" />
-              </div>
-            </TableHead>
+          <TableRow className="border-white">
+            <TableHead className="px-6">Markup %</TableHead>
+            <TableHead className="px-6">Wholesale<br />(per g)</TableHead>
+            <TableHead className="px-6">Retail<br />(per g)</TableHead>
+            <TableHead className="px-6">Profit<br />(per g)</TableHead>
+            <TableHead className="px-6">Qty/month<br />(g)</TableHead>
+            <TableHead className="px-6">Qty/month<br />(oz)</TableHead>
+            <TableHead className="px-6">Monthly<br />revenue</TableHead>
+            <TableHead className="px-6">Monthly<br />cost</TableHead>
+            <TableHead className="px-6">Monthly<br />profit</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedData.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={9} className="text-center">
-                No price points found. Please calculate prices first.
-              </TableCell>
-            </TableRow>
-          ) : (
-            sortedData.map((row, index) => (
+          {pricePoints.map((point) => {
+            const isSelected = point.id === selectedPricePointId
+            return (
               <TableRow
-                key={row.id}
-                className={`${row.id === selectedPricePointId ? "bg-muted/50" : ""} 
-                           ${isMiddleRow(index) ? "font-medium border-l-4 border-primary" : ""}`}
-                onClick={() => onSelectPricePoint(row.id)}
+                key={point.id}
+                className={`cursor-pointer border-white ${
+                  isSelected ? "bg-primary/20 hover:bg-primary/20" : "hover:bg-accent"
+                }`}
+                onClick={() => onSelectPricePoint(point.id)}
               >
-                <TableCell>{formatPercentage(row.markupPercentage)}</TableCell>
-                <TableCell>{formatCurrency(row.wholesalePricePerGram)}</TableCell>
-                <TableCell>{formatCurrency(row.retailPricePerGram)}</TableCell>
-                <TableCell>{formatCurrency(row.profitPerGram)}</TableCell>
-                <TableCell>{formatGrams(row.breakEvenGramsPerMonth)}</TableCell>
-                <TableCell>{formatOunces(row.breakEvenOuncesPerMonth)}</TableCell>
-                <TableCell>{formatCurrency(row.monthlyRevenue)}</TableCell>
-                <TableCell>{formatCurrency(row.monthlyCost)}</TableCell>
-                <TableCell>{formatCurrency(row.monthlyProfit)}</TableCell>
+                <TableCell className="font-medium px-6">{point.markupPercentage}%</TableCell>
+                <TableCell className="px-6">${point.wholesalePricePerGram.toFixed(2)}</TableCell>
+                <TableCell className="px-6">${point.retailPricePerGram.toFixed(2)}</TableCell>
+                <TableCell className="px-6">${point.profitPerGram.toFixed(2)}</TableCell>
+                <TableCell className="px-6">{point.breakEvenGramsPerMonth.toFixed(1)}</TableCell>
+                <TableCell className="px-6">{point.breakEvenOuncesPerMonth.toFixed(2)}oz</TableCell>
+                <TableCell className="px-6">${point.monthlyRevenue.toFixed(2)}</TableCell>
+                <TableCell className="px-6">${point.monthlyCost.toFixed(2)}</TableCell>
+                <TableCell className="px-6">${point.monthlyProfit.toFixed(2)}</TableCell>
               </TableRow>
-            ))
-          )}
+            )
+          })}
         </TableBody>
       </Table>
     </div>
