@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/router"
+import { useRouter } from "next/navigation" // Changed from next/router to next/navigation
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,25 +14,20 @@ import { formatCurrency, formatGrams, formatOunces, gramsToOunces, ouncesToGrams
 import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
 import { usePricing } from "@/hooks/use-pricing"
+import { usePersistentState } from "@/hooks/use-persistent-state"
 import type { Customer, InventoryItem, Payment, Transaction } from "@/lib/data"
 
-interface CashRegisterProps {
-  inventory: InventoryItem[];
-  customers: Customer[];
-  onUpdateInventory: (inventory: InventoryItem[]) => void;
-  onUpdateCustomers: (customers: Customer[]) => void;
-  onAddTransaction: (transaction: Transaction) => void;
-  isLoading?: boolean;
-}
+export default function CashRegister() {
+  // Get data directly from persistent state
+  const {
+    inventory = [],
+    customers = [],
+    setInventory: onUpdateInventory,
+    setCustomers: onUpdateCustomers,
+    addTransaction: onAddTransaction,
+    isLoading = false,
+  } = usePersistentState();
 
-export default function CashRegister({
-  inventory = [],
-  customers = [],
-  onUpdateInventory,
-  onUpdateCustomers,
-  onAddTransaction,
-  isLoading = false,
-}: CashRegisterProps) {
   const router = useRouter()
   const { retailPricePerGram } = usePricing()
   
