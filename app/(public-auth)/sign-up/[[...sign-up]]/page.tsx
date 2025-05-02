@@ -1,6 +1,6 @@
 "use client"
 import { useSignUp } from "@clerk/nextjs"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,25 @@ export default function CustomSignUp() {
   const [secretCode, setSecretCode] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
+
+  // Mount Clerk CAPTCHA widget on load and listen for token
+  useEffect(() => {
+    function handleCaptchaToken(e: any) {
+      setCaptchaToken(e.detail.token)
+    }
+    if (typeof window !== "undefined" && window.Clerk && window.Clerk.mountCaptcha) {
+      window.Clerk.mountCaptcha("#clerk-captcha")
+      window.addEventListener("clerk:capture-captcha-token", handleCaptchaToken)
+    }
+    // Cleanup
+    return () => {
+      if (typeof window !== "undefined" && window.Clerk && window.Clerk.unmountCaptcha) {
+        window.Clerk.unmountCaptcha("#clerk-captcha")
+      }
+      window.removeEventListener("clerk:capture-captcha-token", handleCaptchaToken)
+    }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,9 +42,11 @@ export default function CustomSignUp() {
     setLoading(true)
     setError("")
     try {
+      // Clerk signUp.create does not accept captchaToken directly
       const result = await signUp.create({ username, password })
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
+        // Save the user's secret code for password reset
         await saveUserSecret({ username, secretQuestion: 'code', secretAnswer: secretCode })
       } else {
         setError("Sign up incomplete. Please try again.")
@@ -79,6 +100,7 @@ export default function CustomSignUp() {
                     className="bg-black/80 border-white text-white placeholder-white/60"
                   />
                 </div>
+                <div id="clerk-captcha" className="mb-4"></div>
                 {error && <div className="text-red-400 text-sm">{error}</div>}
                 <Button type="submit" className="w-full bg-white text-black font-bold hover:bg-white/80" disabled={loading}>
                   {loading ? "Signing Up..." : "Sign Up"}

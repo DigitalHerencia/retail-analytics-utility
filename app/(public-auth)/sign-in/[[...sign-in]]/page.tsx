@@ -1,6 +1,6 @@
 "use client"
 import { useSignIn } from "@clerk/nextjs"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,13 +9,40 @@ import Head from "next/head"
 import sql from "@/lib/db"
 import { useRouter } from "next/navigation"
 
+// Add a type declaration for window.Clerk to avoid TypeScript errors
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare global {
+  interface Window {
+    Clerk?: any;
+  }
+}
+
 export default function CustomSignIn() {
   const { signIn, setActive, isLoaded } = useSignIn()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState("")
   const router = useRouter()
+
+  // Mount Clerk CAPTCHA widget on load and listen for token
+  useEffect(() => {
+    function handleCaptchaToken(e: any) {
+      setCaptchaToken(e.detail.token);
+    }
+    if (typeof window !== "undefined" && window.Clerk && window.Clerk.mountCaptcha) {
+      window.Clerk.mountCaptcha("#clerk-captcha");
+      window.addEventListener("clerk:capture-captcha-token", handleCaptchaToken);
+    }
+    // Cleanup
+    return () => {
+      if (typeof window !== "undefined" && window.Clerk && window.Clerk.unmountCaptcha) {
+        window.Clerk.unmountCaptcha("#clerk-captcha");
+      }
+      window.removeEventListener("clerk:capture-captcha-token", handleCaptchaToken);
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -62,6 +89,8 @@ export default function CustomSignIn() {
           <Card className="w-full bg-white/10 border-white text-white shadow-lg">
             <CardContent className="py-8">
               <h1 className="text-3xl font-bold mb-6 text-center font-graffiti">Sign In</h1>
+              {/* Clerk CAPTCHA element for bot protection */}
+              <div id="clerk-captcha" style={{ marginBottom: '1rem' }} />
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
                   type="text"

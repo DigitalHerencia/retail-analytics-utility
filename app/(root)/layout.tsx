@@ -24,7 +24,15 @@ const inter = Inter({
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        captcha: {
+          theme: 'dark',
+          size: 'flexible',
+          language: 'en-US',
+        }
+      }}
+    >
       <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
         <head>
           <title>Hustlers Code</title>
