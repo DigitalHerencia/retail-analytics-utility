@@ -2,59 +2,60 @@
 
 import { HustleStat } from "@/components/hustle-stat"
 import { HustleTip } from "@/components/hustle-tip"
-import { DollarSign, TrendingUp, Calculator } from "lucide-react"
-import RetailPricingTool from "@/components/retail-pricing-tool"
-import { useState } from "react"
+import { DollarSign, TrendingUp, FileStack } from "lucide-react"
+import SimplifiedPricing from "@/components/simplified-pricing"
+import { usePricing } from "@/hooks/use-pricing"
+import { formatCurrency } from "@/lib/utils"
 
 export default function PricingPage() {
-  // State for tracking stats (these would be updated by actions in a real app)
-  const [stats, setStats] = useState([
-    {
-      title: "PRICING SCENARIOS",
-      value: "5+",
-      icon: <Calculator className="h-5 w-5 text-white" />,
-    },
-    {
-      title: "MAX PROFIT POTENTIAL",
-      value: "$10,000+",
-      icon: <TrendingUp className="h-5 w-5 text-white" />,
-    },
-    {
-      title: "AVG. MARKUP",
-      value: "100%",
-      icon: <DollarSign className="h-5 w-5 text-white" />,
-    },
-  ])
+  // Get pricing data from context
+  const { retailPricePerGram, wholesalePricePerGram, markupPercentage } = usePricing()
+
+  // Calculate profit per gram and profit margin
+  const profitPerGram = retailPricePerGram - wholesalePricePerGram
+  const profitMarginPercentage = (profitPerGram / retailPricePerGram) * 100
+  
+  // Calculate retail price per ounce
+  const retailPricePerOunce = retailPricePerGram * 28.35
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-4">
+    <div className="container py-4 px-6">
+      <div className="text-center mb-6">
         <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
-          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">PRICING TOOLS</h1>
-          <p className="text-white/80 mt-1">Calculate retail prices, analyze profit, and optimize your markup strategy</p>
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">PRICING</h1>
+          <p className="text-white/80 mt-1">Set your product pricing and maximize your profits</p>
         </div>
-        <HustleTip title="RETAIL PRICING STRATEGY">
+        <HustleTip title="PRODUCT PRICING">
           <p>
-            Use this tool to calculate optimal retail prices based on your wholesale costs. Generate multiple pricing scenarios,
-            analyze profit margins, and see how different markups affect your bottom line. Find the right balance between 
-            volume and profit for your business.
+            Set your wholesale cost and markup percentage to automatically calculate your retail price.
+            Your pricing will be applied site-wide, affecting inventory valuation, sales calculations,
+            and profit forecasting.
           </p>
         </HustleTip>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {stats.map((stat, i) => (
-          <HustleStat 
-            key={i} 
-            title={stat.title} 
-            value={stat.value} 
-            icon={stat.icon} 
-            className="border-white" 
-          />
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <HustleStat 
+          title="RETAIL PRICE"
+          value={formatCurrency(retailPricePerGram) + "/g"}
+          icon={<DollarSign className="h-5 w-5 text-white" />}
+          className="border-white"
+        />
+        <HustleStat 
+          title="PROFIT MARGIN"
+          value={`${Math.round(profitMarginPercentage)}%`}
+          icon={<TrendingUp className="h-5 w-5 text-white" />}
+          className="border-white"
+        />
+        <HustleStat 
+          title="PRICE PER OZ"
+          value={formatCurrency(retailPricePerOunce)}
+          icon={<FileStack className="h-5 w-5 text-white" />}
+          className="border-white"
+        />
       </div>
       
-      <RetailPricingTool />
+      <SimplifiedPricing />
     </div>
   )
 }

@@ -12,12 +12,12 @@ import { v4 as uuidv4 } from "uuid"
 import { formatCurrency, formatGrams, formatOunces, gramsToOunces, ouncesToGrams } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
+import { usePricing } from "@/hooks/use-pricing"
 import type { Customer, InventoryItem, Payment, Transaction } from "@/lib/data"
 
 interface CashRegisterProps {
   inventory: InventoryItem[]
   customers: Customer[]
-  retailPricePerGram: number
   onUpdateInventory: (inventory: InventoryItem[]) => void
   onUpdateCustomers: (customers: Customer[]) => void
   onAddTransaction: (transaction: Transaction) => void
@@ -26,11 +26,12 @@ interface CashRegisterProps {
 export default function CashRegister({
   inventory = [],
   customers = [],
-  retailPricePerGram,
   onUpdateInventory,
   onUpdateCustomers,
   onAddTransaction,
 }: CashRegisterProps) {
+  const { retailPricePerGram } = usePricing()
+  
   const [activeTab, setActiveTab] = useState("quick-sale")
   const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(null)
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)

@@ -21,7 +21,6 @@ export default function Home() {
         <CashRegister
           inventory={inventory}
           customers={customers}
-          retailPricePerGram={15}
           onUpdateInventory={setInventory}
           onUpdateCustomers={setCustomers}
           onAddTransaction={handleAddTransaction}

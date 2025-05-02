@@ -80,7 +80,6 @@ export default function ForecastPage() {
             inventory={inventory || []}
             customers={customers || []}
             transactions={transactions || []}
-            retailPricePerGram={100} // Default value
           />
         )}
     </div>

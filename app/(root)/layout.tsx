@@ -6,6 +6,7 @@ import { Permanent_Marker, Inter } from "next/font/google"
 import Header from "@/components/header"
 import BottomNav from "@/components/bottom-nav"
 import { ClerkProvider } from '@clerk/nextjs'
+import { PricingProvider } from "@/hooks/use-pricing"
 
 // Configure the fonts
 const permanentMarker = Permanent_Marker({
@@ -42,11 +43,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </head>
         <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1 pb-16">{children}</main>
-              <BottomNav />
-            </div>
+            <PricingProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1 pb-16">{children}</main>
+                <BottomNav />
+              </div>
+            </PricingProvider>
           </ThemeProvider>
         </body>
       </html>

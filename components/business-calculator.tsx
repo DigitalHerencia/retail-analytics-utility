@@ -73,7 +73,6 @@ export default function BusinessCalculator() {
             <CashRegister
               inventory={inventory}
               customers={customers}
-              retailPricePerGram={retailPricePerGram}
               onUpdateInventory={setInventory}
               onUpdateCustomers={setCustomers}
               onAddTransaction={handleAddTransaction}
@@ -103,7 +102,6 @@ export default function BusinessCalculator() {
               inventory={inventory}
               customers={customers}
               transactions={transactions}
-              retailPricePerGram={retailPricePerGram}
             />
           </TabsContent>
 

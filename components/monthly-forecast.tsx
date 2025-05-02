@@ -29,13 +29,13 @@ import { formatCurrency, formatPercentage } from "@/lib/utils"
 import { DollarSign, TrendingUp, Calendar, AlertTriangle } from "lucide-react"
 import type { BusinessData, InventoryItem, Customer, Transaction } from "@/lib/data"
 import { useMediaQuery } from "@/hooks/use-mobile"
+import { usePricing } from "@/hooks/use-pricing"
 
 export interface MonthlyForecastProps {
   businessData: BusinessData
   inventory: InventoryItem[]
   customers: Customer[]
   transactions: Transaction[]
-  retailPricePerGram: number
 }
 
 export default function MonthlyForecast({
@@ -43,8 +43,8 @@ export default function MonthlyForecast({
   inventory,
   customers,
   transactions,
-  retailPricePerGram,
 }: MonthlyForecastProps) {
+  const { retailPricePerGram } = usePricing()
   const [activeTab, setActiveTab] = useState("overview")
   const isMobile = useMediaQuery("(max-width: 640px)")
   const isTablet = useMediaQuery("(max-width: 768px)")

@@ -63,7 +63,7 @@ export default function Header() {
                             "flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font text-white",
                             pathname === item.href
                               ? "bg-white text-black"
-                              : "text-white/70 hover:text-white hover:bg-white/10",
+                              : "text-white/70 hover:text-white hover:bg-white/10"
                           )}
                           onClick={() => setIsOpen(false)}
                         >
@@ -72,18 +72,6 @@ export default function Header() {
                         </Link>
                       </li>
                     ))}
-                    
-                    {isLoaded && user && (
-                      <li>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center w-full px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10 text-left"
-                        >
-                          <LogOut className="h-5 w-5" />
-                          <span className="ml-3">LOGOUT</span>
-                        </button>
-                      </li>
-                    )}
                   </ul>
                 </nav>
 
