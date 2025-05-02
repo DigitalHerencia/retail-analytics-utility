@@ -6,11 +6,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-
-
-  experimental: {
-    reactCompiler: true, // Example: Enable the experimental React Compiler
-   },
 };
 
 export default nextConfig;
