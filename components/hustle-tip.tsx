@@ -1,9 +1,11 @@
+"use client";
+
 import type React from "react";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils"; // Import cn utility
+import { cn } from "@/lib/utils";
 
 interface HustleTipProps {
   title: string;
@@ -18,7 +20,6 @@ export function HustleTip({ title, children }: HustleTipProps) {
   }
 
   return (
-    // Use CSS variables for border and text color
     <Card className={cn("relative border-0 border-l-4 bg-smoke card-sharp")}>
       <Button
         variant="ghost"
@@ -32,7 +33,6 @@ export function HustleTip({ title, children }: HustleTipProps) {
       <CardContent className="p-4 pr-8">
         <div className="flex items-start gap-3">
           <div>
-            {/* Use CSS variable for title color */}
             <h4 className="font-medium text-white gangster-font [text-shadow:_1px_1px_2px_rgb(0_0_0_/_50%)]">{title}</h4>
             <div className="text-sm mt-1 text-white line-clamp-3">{children}</div>
           </div>
