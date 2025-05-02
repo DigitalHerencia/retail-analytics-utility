@@ -29,6 +29,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
           language: 'en-US',
         }
       }}
+      signInFallbackRedirectUrl="/"
     >
       <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
         <head>

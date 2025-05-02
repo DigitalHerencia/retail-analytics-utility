@@ -52,25 +52,35 @@ export default function CustomSignIn() {
     setLoading(true)
     setError("")
     try {
-      // Use the captchaToken if available for enhanced security
+      // Simplified approach - don't specify strategy unless specifically required by your Clerk setup
       const result = await signIn.create({
         identifier: username,
-        password,
-        ...(captchaToken ? { strategy: "captcha_verification", captchaToken } : {})
+        password
       })
       
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        // Fetch tenant_id for the user from the database
-        // NOTE: This requires an API route or server action; here we use fetch as an example
-        const res = await fetch("/api/get-tenant-id", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username })
-        })
-        const data = await res.json()
-        if (data.tenant_id) {
-          localStorage.setItem("tenant_id", data.tenant_id)
+        
+        try {
+          // Fetch tenant_id for the user from the database with better error handling
+          const res = await fetch("/api/get-tenant-id", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+          })
+          
+          if (res.ok) {
+            const data = await res.json()
+            if (data.tenant_id) {
+              localStorage.setItem("tenant_id", data.tenant_id)
+            }
+          } else {
+            console.error("Failed to fetch tenant_id:", await res.text())
+            // Continue anyway, as this shouldn't block login
+          }
+        } catch (apiError) {
+          console.error("API error:", apiError)
+          // Continue anyway, as this shouldn't block login
         }
         
         // Redirect to the original URL if available, otherwise to the home page
@@ -85,6 +95,7 @@ export default function CustomSignIn() {
         setError("Sign in incomplete. Please try again.")
       }
     } catch (err: any) {
+      console.error("Sign-in error:", err)
       setError(err.errors?.[0]?.message || "Sign in failed")
     } finally {
       setLoading(false)
