@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { saveData, getSavedDataList, loadData, deleteData } from "@/app/actions"
+import { saveData, getSavedDataList, loadData, deleteData } from "@/app/(root)/actions"
 import type { BusinessData, InventoryItem, Customer } from "@/lib/data"
 import { HustleTip } from "@/components/hustle-tip"
 import { useTheme } from "next-themes"

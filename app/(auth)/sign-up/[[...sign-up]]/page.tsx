@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Select } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { saveUserSecret } from "@/app/actions"
+import { saveUserSecret } from "@/app/(root)/actions"
 
 export default function CustomSignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
