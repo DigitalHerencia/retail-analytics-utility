@@ -184,12 +184,19 @@ export default function MonthlyForecast({
 
   // Handle empty data
   const hasData = useMemo(() => {
-    return (
-      (transactions?.length || 0) > 0 || 
-      (customers?.length || 0) > 0 || 
-      (inventory?.length || 0) > 0
-    )
-  }, [transactions, customers, inventory])
+    // Make sure each array exists and has items
+    const hasTransactions = Array.isArray(transactions) && transactions.length > 0;
+    const hasCustomers = Array.isArray(customers) && customers.length > 0;
+    const hasInventory = Array.isArray(inventory) && inventory.length > 0;
+    
+    // Ensure business data exists
+    const hasBusinessData = businessData && 
+      typeof businessData === 'object' && 
+      Object.keys(businessData).length > 0;
+    
+    // Either has transactions directly or has other data to display
+    return hasTransactions || hasInventory || (hasCustomers && hasBusinessData);
+  }, [transactions, customers, inventory, businessData])
 
   if (!hasData) {
     return (
