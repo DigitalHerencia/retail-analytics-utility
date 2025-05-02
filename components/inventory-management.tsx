@@ -41,6 +41,7 @@ interface InventoryManagementProps {
   inventory: InventoryItem[]
   onUpdateInventory: (inventory: InventoryItem[]) => void
   onAddTransaction: (transaction: Transaction) => void
+  isLoading?: boolean // Add isLoading prop
 }
 
 const formSchema = z.object({
@@ -57,6 +58,7 @@ export default function InventoryManagement({
   inventory,
   onUpdateInventory,
   onAddTransaction,
+  isLoading = false, // Destructure isLoading with a default value
 }: InventoryManagementProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)

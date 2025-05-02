@@ -1,41 +1,14 @@
 "use client"
 
 import InventoryTable from "@/components/inventory-table"
-import { useState, useEffect } from "react"
-import { generateDemoData } from "@/lib/demo-data"
-import { sampleInventory } from "@/lib/data"
-import type { InventoryItem } from "@/lib/data"
 import { HustleStat } from "@/components/hustle-stat"
 import { HustleTip } from "@/components/hustle-tip"
 import { Boxes, Scale, Weight, Package } from "lucide-react"
+import { usePersistentState } from "@/hooks/use-persistent-state"
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState<InventoryItem[]>(sampleInventory)
-
-  // Generate demo data on first load
-  useEffect(() => {
-    try {
-      const demoData = generateDemoData()
-      setInventory(demoData?.inventory || sampleInventory)
-    } catch (error) {
-      console.error("Error generating demo data:", error)
-      setInventory(sampleInventory)
-    }
-  }, [])
-
-  const handleAddItem = (item: InventoryItem) => {
-    setInventory((prev) => [...(prev || []), item])
-  }
-
-  const handleUpdateItem = (updatedItem: InventoryItem) => {
-    setInventory((prev) =>
-      (prev || []).map((item) => (item.id === updatedItem.id ? updatedItem : item))
-    )
-  }
-
-  const handleDeleteItem = (id: string) => {
-    setInventory((prev) => (prev || []).filter((item) => item.id !== id))
-  }
+  // Replace useState and manual loading with usePersistentState
+  const { inventory, setInventory, addTransaction, isLoading } = usePersistentState();
 
   return (
     <div className="container py-4 space-y-6">
@@ -86,10 +59,13 @@ export default function InventoryPage() {
       </div>
 
       <InventoryTable
-        inventory={inventory || []}
-        onAddItem={handleAddItem}
-        onUpdateItem={handleUpdateItem}
-        onDeleteItem={handleDeleteItem}
+        inventory={inventory}
+        onAdd={(item) => setInventory(prev => [...prev, item])}
+        onUpdate={(updatedItem) => 
+          setInventory(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item))
+        }
+        onDelete={(id) => setInventory(prev => prev.filter(item => item.id !== id))}
+        isLoading={isLoading}
       />
     </div>
   )

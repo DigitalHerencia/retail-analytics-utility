@@ -35,9 +35,10 @@ import {
 
 interface InventoryTableProps {
   inventory: InventoryItem[]
-  onAddItem: (item: InventoryItem) => void
-  onUpdateItem: (item: InventoryItem) => void
-  onDeleteItem: (id: string) => void
+  onAdd: (item: InventoryItem) => void
+  onUpdate: (item: InventoryItem) => void
+  onDelete: (id: string) => void
+  isLoading?: boolean
 }
 
 const formSchema = z.object({
@@ -50,7 +51,7 @@ const formSchema = z.object({
   reorderThresholdG: z.coerce.number().nonnegative("Threshold must be non-negative"),
 })
 
-export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onDeleteItem }: InventoryTableProps) {
+export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, isLoading = false }: InventoryTableProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
@@ -69,7 +70,6 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
   })
 
   const handleAddItem = (values: z.infer<typeof formSchema>) => {
-    // Convert quantity to grams based on selected unit
     let quantityG: number
 
     if (values.unit === "oz") {
@@ -98,7 +98,7 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
       reorderThresholdG: values.reorderThresholdG,
     }
 
-    onAddItem(newItem)
+    onAdd(newItem)
     setIsAddDialogOpen(false)
     form.reset()
   }
@@ -106,7 +106,6 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
   const handleEditItem = (values: z.infer<typeof formSchema>) => {
     if (!editingItem) return
 
-    // Convert quantity to grams based on selected unit
     let quantityG: number
 
     if (values.unit === "oz") {
@@ -135,7 +134,7 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
       reorderThresholdG: values.reorderThresholdG,
     }
 
-    onUpdateItem(updatedItem)
+    onUpdate(updatedItem)
     setIsEditDialogOpen(false)
     setEditingItem(null)
   }
@@ -143,7 +142,6 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
   const openEditDialog = (item: InventoryItem) => {
     setEditingItem(item)
 
-    // Default to showing quantity in ounces since that's how it's purchased
     form.reset({
       name: item.name,
       description: item.description,
@@ -161,6 +159,47 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
   const totalQuantityG = inventory.reduce((sum, item) => sum + item.quantityG, 0)
   const totalQuantityOz = inventory.reduce((sum, item) => sum + item.quantityOz, 0)
   const totalQuantityKg = inventory.reduce((sum, item) => sum + item.quantityKg, 0)
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="card-sharp border-white">
+          <CardHeader>
+            <CardTitle className="gangster-font text-white">INVENTORY</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center p-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+              <p className="mt-4">Loading inventory data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (inventory.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className="card-sharp border-white">
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="gangster-font text-white">INVENTORY</CardTitle>
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="bg-white hover:bg-white/90 text-black button-sharp"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center p-8">
+              <p>No inventory items found. Add your first item to get started.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -191,50 +230,41 @@ export default function InventoryTable({ inventory, onAddItem, onUpdateItem, onD
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {inventory?.length === 0 ? (
-                  <TableRow>
-                    {/* Adjust colSpan: 2 columns visible below sm, 7 columns visible sm and up */}
-                    <TableCell colSpan={2} className="text-center sm:colSpan-7">
-                      No inventory found. Add inventory to get started.
+                {inventory?.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{item.description}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="space-y-1">
+                        <div>{formatGrams(item.quantityG)}</div>
+                        <div className="text-xs white hidden sm:block">{formatOunces(item.quantityOz)}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">{formatCurrency(item.totalCost)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{item.purchaseDate}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {item.quantityG <= item.reorderThresholdG ? (
+                        <Badge variant="destructive" className="whitespace-nowrap">
+                          Low Stock
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="whitespace-nowrap">
+                          In Stock
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-1">
+                        <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => onDelete(item.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  inventory?.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{item.description}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <div className="space-y-1">
-                          <div>{formatGrams(item.quantityG)}</div>
-                          <div className="text-xs white hidden sm:block">{formatOunces(item.quantityOz)}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">{formatCurrency(item.totalCost)}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{item.purchaseDate}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        {item.quantityG <= item.reorderThresholdG ? (
-                          <Badge variant="destructive" className="whitespace-nowrap">
-                            Low Stock
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="whitespace-nowrap">
-                            In Stock
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => onDeleteItem(item.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </div>

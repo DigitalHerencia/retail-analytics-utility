@@ -95,3 +95,80 @@ export async function deleteData(name: string) {
     return { success: false, error: "Failed to delete data." };
   }
 }
+
+// Specific type-safe data saving functions
+export async function saveBusinessData(businessData: any) {
+  return saveData("business", businessData);
+}
+
+export async function saveInventory(inventory: any) {
+  return saveData("inventory", inventory);
+}
+
+export async function saveCustomers(customers: any) {
+  return saveData("customers", customers);
+}
+
+export async function saveTransactions(transactions: any) {
+  return saveData("transactions", transactions);
+}
+
+export async function saveScenarios(scenarios: any) {
+  return saveData("scenarios", scenarios);
+}
+
+// Auto-save utility that combines multiple save operations
+export async function saveAllData({ businessData, inventory, customers, transactions, scenarios }: {
+  businessData?: any;
+  inventory?: any;
+  customers?: any;
+  transactions?: any;
+  scenarios?: any;
+}) {
+  const promises = [];
+  if (businessData) promises.push(saveBusinessData(businessData));
+  if (inventory) promises.push(saveInventory(inventory));
+  if (customers) promises.push(saveCustomers(customers));
+  if (transactions) promises.push(saveTransactions(transactions));
+  if (scenarios) promises.push(saveScenarios(scenarios));
+  
+  const results = await Promise.allSettled(promises);
+  const failedOperations = results.filter(result => result.status === 'rejected' || 
+    (result.status === 'fulfilled' && !result.value.success));
+  
+  return {
+    success: failedOperations.length === 0,
+    error: failedOperations.length > 0 ? "Some data could not be saved" : undefined
+  };
+}
+
+// Load all data at once for efficiency
+export async function loadAllData() {
+  const { userId } = (await auth()) || {};
+  if (!userId) throw new Error("User not authenticated");
+  
+  try {
+    const promises = [
+      loadData("business"),
+      loadData("inventory"),
+      loadData("customers"),
+      loadData("transactions"),
+      loadData("scenarios")
+    ];
+    
+    const [businessResult, inventoryResult, customersResult, transactionsResult, scenariosResult] = 
+      await Promise.all(promises);
+    
+    return {
+      success: true,
+      businessData: businessResult.success ? businessResult.data : null,
+      inventory: inventoryResult.success ? inventoryResult.data : [],
+      customers: customersResult.success ? customersResult.data : [],
+      transactions: transactionsResult.success ? transactionsResult.data : [],
+      scenarios: scenariosResult.success ? scenariosResult.data : []
+    };
+  } catch (error) {
+    console.error("Error loading all data:", error);
+    return { success: false, error: "Failed to load data." };
+  }
+}

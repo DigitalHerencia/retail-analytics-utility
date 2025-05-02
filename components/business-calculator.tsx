@@ -5,7 +5,7 @@ import { Package, Users, Settings, TrendingUp, DollarSign } from "lucide-react"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { calculatePricePoints } from "@/lib/utils"
-import { defaultBusinessData, defaultMarkupPercentages, sampleInventory, sampleCustomers } from "@/lib/data"
+import { defaultBusinessData, defaultMarkupPercentages } from "@/lib/data"
 import type { BusinessData, PricePoint, InventoryItem, Customer, Transaction } from "@/lib/data"
 import SettingsTab from "@/components/settings-tab"
 import CustomersTab from "@/components/customers-tab"
@@ -13,17 +13,58 @@ import CashRegister from "@/components/cash-register"
 import MonthlyForecast from "@/components/monthly-forecast"
 import SetupTab from "@/components/setup-tab"
 import InventoryManagement from "@/components/inventory-management"
+import { loadData } from "@/app/(root)/actions"
 
 export default function BusinessCalculator() {
   const [activeTab, setActiveTab] = useState("home")
   const [businessData, setBusinessData] = useState<BusinessData>(defaultBusinessData)
   const [pricePoints, setPricePoints] = useState<PricePoint[]>([])
   const [selectedMarkup, setSelectedMarkup] = useState(100) // Default 100% markup
-  const [inventory, setInventory] = useState(sampleInventory)
-  const [customers, setCustomers] = useState(sampleCustomers)
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [retailPricePerGram, setRetailPricePerGram] = useState(20)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [showTips, setShowTips] = useState(true) // Add state for showing/hiding tips
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load real data on first load
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoading(true)
+        
+        // Load business data
+        const businessResult = await loadData("business")
+        if (businessResult.success && businessResult.data) {
+          setBusinessData(businessResult.data)
+        }
+        
+        // Load inventory
+        const inventoryResult = await loadData("inventory")
+        if (inventoryResult.success && inventoryResult.data) {
+          setInventory(inventoryResult.data)
+        }
+        
+        // Load customers
+        const customersResult = await loadData("customers")
+        if (customersResult.success && customersResult.data) {
+          setCustomers(customersResult.data)
+        }
+        
+        // Load transactions
+        const transactionsResult = await loadData("transactions")
+        if (transactionsResult.success && transactionsResult.data) {
+          setTransactions(transactionsResult.data)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   // Calculate price points when business data changes
   useEffect(() => {
@@ -76,6 +117,7 @@ export default function BusinessCalculator() {
               onUpdateInventory={setInventory}
               onUpdateCustomers={setCustomers}
               onAddTransaction={handleAddTransaction}
+              isLoading={isLoading}
             />
           </TabsContent>
 
@@ -84,6 +126,7 @@ export default function BusinessCalculator() {
               inventory={inventory}
               onUpdateInventory={setInventory}
               onAddTransaction={handleAddTransaction}
+              isLoading={isLoading}
             />
           </TabsContent>
 
@@ -91,8 +134,9 @@ export default function BusinessCalculator() {
             <CustomersTab
               customers={customers}
               onUpdateCustomers={setCustomers}
-              showTips={showTips} // Pass showTips state
-              onHideTips={handleHideTips} // Pass handler function
+              showTips={showTips}
+              onHideTips={handleHideTips}
+              isLoading={isLoading}
             />
           </TabsContent>
 

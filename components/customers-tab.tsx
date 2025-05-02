@@ -25,15 +25,17 @@ import type { Customer, Payment } from "@/lib/data"
 interface CustomersTabProps {
   customers: Customer[]
   onUpdateCustomers: (customers: Customer[]) => void
-  showTips: boolean // Keep showTips property
-  onHideTips: () => void // Keep onHideTips property
+  showTips?: boolean
+  onHideTips?: () => void
+  isLoading?: boolean
 }
 
 export default function CustomersTab({
   customers,
   onUpdateCustomers,
-  showTips, // Destructure showTips
-  onHideTips, // Destructure onHideTips
+  showTips = true,
+  onHideTips,
+  isLoading = false,
 }: CustomersTabProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false)
@@ -86,6 +88,42 @@ export default function CustomersTab({
     }
 
     handleUpdateCustomer(updatedCustomer)
+  }
+
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center p-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+          <p className="mt-4">Loading customer data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle empty customers state
+  if (customers.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center p-8">
+          <p>No customers found. Add your first customer to get started.</p>
+          <Button
+            onClick={() => setIsAddCustomerOpen(true)}
+            className="mt-4"
+          >
+            Add Customer
+          </Button>
+        </div>
+        {isAddCustomerOpen && (
+          <CustomerForm
+            isOpen={isAddCustomerOpen}
+            onClose={() => setIsAddCustomerOpen(false)}
+            onSave={handleAddCustomer}
+          />
+        )}
+      </div>
+    )
   }
 
   return (

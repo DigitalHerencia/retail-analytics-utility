@@ -6,9 +6,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
-}
 
-export default nextConfig
+
+  experimental: {
+    reactCompiler: true, // Example: Enable the experimental React Compiler
+   },
+};
+
+export default nextConfig;

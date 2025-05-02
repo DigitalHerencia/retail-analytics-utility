@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/router"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,11 +17,12 @@ import { usePricing } from "@/hooks/use-pricing"
 import type { Customer, InventoryItem, Payment, Transaction } from "@/lib/data"
 
 interface CashRegisterProps {
-  inventory: InventoryItem[]
-  customers: Customer[]
-  onUpdateInventory: (inventory: InventoryItem[]) => void
-  onUpdateCustomers: (customers: Customer[]) => void
-  onAddTransaction: (transaction: Transaction) => void
+  inventory: InventoryItem[];
+  customers: Customer[];
+  onUpdateInventory: (inventory: InventoryItem[]) => void;
+  onUpdateCustomers: (customers: Customer[]) => void;
+  onAddTransaction: (transaction: Transaction) => void;
+  isLoading?: boolean;
 }
 
 export default function CashRegister({
@@ -29,7 +31,9 @@ export default function CashRegister({
   onUpdateInventory,
   onUpdateCustomers,
   onAddTransaction,
+  isLoading = false,
 }: CashRegisterProps) {
+  const router = useRouter()
   const { retailPricePerGram } = usePricing()
   
   const [activeTab, setActiveTab] = useState("quick-sale")
@@ -42,6 +46,50 @@ export default function CashRegister({
   const [dailyRevenue, setDailyRevenue] = useState(0)
   const [dailyTransactions, setDailyTransactions] = useState(0)
   const [dailyProfit, setDailyProfit] = useState(0)
+
+  // Add loading state handling
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="card-sharp border-white">
+          <CardHeader>
+            <CardTitle className="gangster-font text-white">CASH REGISTER</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center p-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+              <p className="mt-4">Loading data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Handle empty inventory state
+  if (inventory.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className="card-sharp border-white">
+          <CardHeader>
+            <CardTitle className="gangster-font text-white">CASH REGISTER</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-smoke p-4 mb-4 rounded-md">
+              <h3 className="text-lg font-semibold mb-2">No Inventory Available</h3>
+              <p>You need to add inventory items before you can process sales.</p>
+              <Button
+                className="mt-4 bg-white hover:bg-white/90 text-black button-sharp"
+                onClick={() => router.push('/inventory')}
+              >
+                Go to Inventory
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // Get selected inventory item
   const selectedInventory = selectedInventoryId ? inventory.find((item) => item.id === selectedInventoryId) : null

@@ -1,15 +1,44 @@
 import { neon } from '@neondatabase/serverless';
+import { env, validateEnv } from './env';
 
-// Ensure the DATABASE_URL environment variable is set
-// You can get this from your Neon project settings.
-const sql = neon(process.env.DATABASE_URL!);
+/**
+ * Creates a database connection with error handling
+ */
+function createDatabaseConnection() {
+  const validation = validateEnv();
+  
+  if (!validation.success) {
+    console.error(validation.message);
+    throw new Error(`Database connection failed: ${validation.message}`);
+  }
+  
+  try {
+    return neon(env.DATABASE_URL);
+  } catch (error) {
+    console.error('Failed to initialize database connection:', error);
+    throw new Error('Database connection failed. See server logs for details.');
+  }
+}
 
-// --- User Secret Table ---
-// CREATE TABLE IF NOT EXISTS user_secrets (
-//   id SERIAL PRIMARY KEY,
-//   username VARCHAR(255) UNIQUE NOT NULL,
-//   secret_question VARCHAR(255) NOT NULL,
-//   secret_answer_hash VARCHAR(255) NOT NULL
-// );
+// Initialize database connection
+const sql = createDatabaseConnection();
 
 export default sql;
+
+/**
+ * Execute a database query with error handling
+ * @param queryFn Function that executes the database query
+ * @returns Result of the query
+ */
+export async function executeQuery<T>(queryFn: () => Promise<T>): Promise<{ success: boolean; data?: T; error?: string }> {
+  try {
+    const result = await queryFn();
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Database query error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown database error' 
+    };
+  }
+}

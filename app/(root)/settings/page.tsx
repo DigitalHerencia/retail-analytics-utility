@@ -1,36 +1,40 @@
 "use client"
 
-import { useState } from "react"
-import { UserButton } from "@clerk/nextjs"
 import SettingsTab from "@/components/settings-tab"
-import { defaultBusinessData, sampleInventory, sampleCustomers } from "@/lib/data"
-import type { BusinessData, InventoryItem, Customer } from "@/lib/data"
+import { usePersistentState } from "@/hooks/use-persistent-state"
 
 export default function SettingsPage() {
-  const [businessData, setBusinessData] = useState<BusinessData>(defaultBusinessData)
-  const [inventory, setInventory] = useState<InventoryItem[]>(sampleInventory)
-  const [customers, setCustomers] = useState<Customer[]>(sampleCustomers)
+  // Use the persistent state hook instead of manual state management
+  const { 
+    businessData, 
+    setBusinessData,
+    inventory, 
+    setInventory,
+    customers, 
+    setCustomers,
+    isLoading,
+    saveAllChanges
+  } = usePersistentState();
 
   const handleDataLoad = (
-    loadedBusinessData: BusinessData,
-    loadedInventory: InventoryItem[],
-    loadedCustomers: Customer[],
+    loadedBusinessData: any,
+    loadedInventory: any,
+    loadedCustomers: any,
   ) => {
-    setBusinessData(loadedBusinessData || defaultBusinessData)
-    setInventory(loadedInventory || sampleInventory)
-    setCustomers(loadedCustomers || sampleCustomers)
-  }
+    setBusinessData(loadedBusinessData || setBusinessData);
+    setInventory(loadedInventory || []);
+    setCustomers(loadedCustomers || []);
+  };
 
   return (
     <div className="container py-4 flex flex-col gap-4">
-      <div className="flex justify-end">
-        <UserButton afterSignOutUrl="/login" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
-      </div>
       <SettingsTab
         businessData={businessData}
         inventory={inventory}
         customers={customers}
         onDataLoaded={handleDataLoad}
+        isLoading={isLoading}
+        saveAllChanges={saveAllChanges}
       />
     </div>
   )

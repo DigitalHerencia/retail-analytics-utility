@@ -23,7 +23,6 @@ import {
   Pie,
   Cell,
   LabelList,
-  TooltipProps,
 } from "recharts"
 import { formatCurrency, formatPercentage } from "@/lib/utils"
 import { DollarSign, TrendingUp, Calendar, AlertTriangle } from "lucide-react"
@@ -51,113 +50,173 @@ export default function MonthlyForecast({
 
   // Calculate monthly stats
   const monthlyStats = useMemo(() => {
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
+    // Use try-catch to handle potential errors in calculations
+    try {
+      const now = new Date()
+      const currentMonth = now.getMonth()
+      const currentYear = now.getFullYear()
 
-    // Filter transactions for current month
-    const monthTransactions =
-      transactions?.filter((t) => {
-        if (!t.date) return false
-        const transactionDate = new Date(t.date)
-        return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear
-      }) || []
+      // Filter transactions for current month
+      const monthTransactions =
+        transactions?.filter((t) => {
+          if (!t?.date) return false
+          try {
+            const transactionDate = new Date(t.date)
+            return transactionDate.getMonth() === currentMonth && transactionDate.getFullYear() === currentYear
+          } catch (e) {
+            return false
+          }
+        }) || []
 
-    // Calculate revenue, profit, and costs
-    const revenue = monthTransactions.reduce((sum, t) => {
-      if (t.type === "sale" || t.type === "payment") {
-        return sum + (t.totalPrice || 0)
-      }
-      return sum
-    }, 0)
-
-    const profit = monthTransactions.reduce((sum, t) => {
-      if (t.type === "sale") {
-        return sum + (t.profit || 0)
-      }
-      return sum
-    }, 0)
-
-    const costs = monthTransactions.reduce((sum, t) => {
-      if (t.type === "purchase") {
-        return sum + (t.totalPrice || 0)
-      }
-      return sum
-    }, 0)
-
-    // Calculate sales by product
-    const salesByProduct: Record<string, { quantity: number; revenue: number; profit: number }> = {}
-    monthTransactions.forEach((t) => {
-      if (t.type === "sale" && t.inventoryName) {
-        if (!salesByProduct[t.inventoryName]) {
-          salesByProduct[t.inventoryName] = { quantity: 0, revenue: 0, profit: 0 }
+      // Calculate revenue, profit, and costs with null checks
+      const revenue = monthTransactions.reduce((sum, t) => {
+        if (t.type === "sale" || t.type === "payment") {
+          return sum + (t.totalPrice || 0)
         }
-        salesByProduct[t.inventoryName].quantity += t.quantityGrams || 0
-        salesByProduct[t.inventoryName].revenue += t.totalPrice || 0
-        salesByProduct[t.inventoryName].profit += t.profit || 0
-      }
-    })
+        return sum
+      }, 0)
 
-    // Calculate daily sales data
-    const dailySales: Record<string, { date: string; revenue: number; profit: number }> = {}
-    monthTransactions.forEach((t) => {
-      if (t.type === "sale" || t.type === "payment") {
-        const date = t.date.split("T")[0]
-        if (!dailySales[date]) {
-          dailySales[date] = { date, revenue: 0, profit: 0 }
-        }
-        dailySales[date].revenue += t.totalPrice
+      const profit = monthTransactions.reduce((sum, t) => {
         if (t.type === "sale") {
-          dailySales[date].profit += t.profit
+          return sum + (t.profit || 0)
         }
+        return sum
+      }, 0)
+
+      const costs = monthTransactions.reduce((sum, t) => {
+        if (t.type === "purchase") {
+          return sum + (t.totalPrice || 0)
+        }
+        return sum
+      }, 0)
+
+      // Calculate sales by product
+      const salesByProduct: Record<string, { quantity: number; revenue: number; profit: number }> = {}
+      monthTransactions.forEach((t) => {
+        if (t.type === "sale" && t.inventoryName) {
+          if (!salesByProduct[t.inventoryName]) {
+            salesByProduct[t.inventoryName] = { quantity: 0, revenue: 0, profit: 0 }
+          }
+          salesByProduct[t.inventoryName].quantity += t.quantityGrams || 0
+          salesByProduct[t.inventoryName].revenue += t.totalPrice || 0
+          salesByProduct[t.inventoryName].profit += t.profit || 0
+        }
+      })
+
+      // Calculate daily sales data
+      const dailySales: Record<string, { date: string; revenue: number; profit: number }> = {}
+      monthTransactions.forEach((t) => {
+        if (t.type === "sale" || t.type === "payment") {
+          const date = t.date.split("T")[0]
+          if (!dailySales[date]) {
+            dailySales[date] = { date, revenue: 0, profit: 0 }
+          }
+          dailySales[date].revenue += t.totalPrice
+          if (t.type === "sale") {
+            dailySales[date].profit += t.profit
+          }
+        }
+      })
+
+      // Sort daily sales by date
+      const dailySalesArray = Object.values(dailySales).sort((a, b) => a.date.localeCompare(b.date))
+
+      // For mobile, reduce the number of data points if there are too many
+      const optimizedDailySales =
+        dailySalesArray.length > 10
+          ? dailySalesArray.filter((_, i) => i % Math.ceil(dailySalesArray.length / 10) === 0)
+          : dailySalesArray
+
+      // Calculate accounts receivable with null check
+      const accountsReceivable = customers?.reduce((sum, c) => sum + (c.amountOwed || 0), 0) || 0
+
+      // Calculate inventory value with null check
+      const inventoryValue = inventory?.reduce((sum, i) => sum + (i.quantityOz || 0) * (i.costPerOz || 0), 0) || 0
+
+      // Calculate inventory retail value with null checks
+      const inventoryRetailValue = inventory?.reduce((sum, i) => {
+        const gramsTotal = (i.quantityOz || 0) * 28.35
+        return sum + gramsTotal * (retailPricePerGram || 0)
+      }, 0) || 0
+
+      // Calculate projected monthly profit
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
+      const daysPassed = Math.min(now.getDate(), daysInMonth)
+      const projectedProfit = (profit / daysPassed) * daysInMonth
+
+      // Calculate progress towards target profit
+      const targetProfit = businessData?.targetProfit || 0
+      const profitProgress = targetProfit > 0 ? (profit / targetProfit) * 100 : 0
+
+      return {
+        revenue,
+        profit,
+        costs,
+        salesByProduct: salesByProduct || {},
+        dailySales: dailySalesArray || [],
+        optimizedDailySales: optimizedDailySales || [],
+        accountsReceivable,
+        inventoryValue,
+        inventoryRetailValue,
+        projectedProfit,
+        targetProfit,
+        profitProgress,
       }
-    })
-
-    // Sort daily sales by date
-    const dailySalesArray = Object.values(dailySales).sort((a, b) => a.date.localeCompare(b.date))
-
-    // For mobile, reduce the number of data points if there are too many
-    const optimizedDailySales =
-      dailySalesArray.length > 10
-        ? dailySalesArray.filter((_, i) => i % Math.ceil(dailySalesArray.length / 10) === 0)
-        : dailySalesArray
-
-    // Calculate accounts receivable
-    const accountsReceivable = customers.reduce((sum, c) => sum + (c.amountOwed || 0), 0)
-
-    // Calculate inventory value
-    const inventoryValue = inventory.reduce((sum, i) => sum + i.quantityOz * i.costPerOz, 0)
-
-    // Calculate inventory retail value
-    const inventoryRetailValue = inventory.reduce((sum, i) => {
-      const gramsTotal = i.quantityOz * 28.35
-      return sum + gramsTotal * retailPricePerGram
-    }, 0)
-
-    // Calculate projected monthly profit
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
-    const daysPassed = Math.min(now.getDate(), daysInMonth)
-    const projectedProfit = (profit / daysPassed) * daysInMonth
-
-    // Calculate progress towards target profit
-    const targetProfit = businessData.targetProfit
-    const profitProgress = targetProfit > 0 ? (profit / targetProfit) * 100 : 0
-
-    return {
-      revenue,
-      profit,
-      costs,
-      salesByProduct,
-      dailySales: dailySalesArray,
-      optimizedDailySales,
-      accountsReceivable,
-      inventoryValue,
-      inventoryRetailValue,
-      projectedProfit,
-      targetProfit,
-      profitProgress,
+    } catch (error) {
+      console.error("Error calculating monthly stats:", error)
+      // Return default values in case of error
+      return {
+        revenue: 0,
+        profit: 0,
+        costs: 0,
+        salesByProduct: {},
+        dailySales: [],
+        optimizedDailySales: [],
+        accountsReceivable: 0,
+        inventoryValue: 0,
+        inventoryRetailValue: 0,
+        projectedProfit: 0,
+        targetProfit: 0,
+        profitProgress: 0,
+      }
     }
   }, [transactions, customers, inventory, businessData, retailPricePerGram])
+
+  // Handle empty data
+  const hasData = useMemo(() => {
+    return (
+      (transactions?.length || 0) > 0 || 
+      (customers?.length || 0) > 0 || 
+      (inventory?.length || 0) > 0
+    )
+  }, [transactions, customers, inventory])
+
+  if (!hasData) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-4">
+          <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+            <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">MONTHLY FORECAST</h1>
+            <p className="text-white/80 mt-1">TRACK YOUR PROGRESS. PLAN YOUR MOVES.</p>
+          </div>
+        </div>
+        
+        <Card className="card-sharp border-white">
+          <CardHeader>
+            <CardTitle className="gangster-font text-white text-center">NO DATA AVAILABLE</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center p-8">
+              <p>Start by adding inventory items, customers, or recording transactions.</p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Your business metrics and forecasts will appear here once you have data to analyze.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   // Format sales by product for chart
   const salesByProductChart = useMemo(() => {

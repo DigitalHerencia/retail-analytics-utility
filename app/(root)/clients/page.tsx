@@ -1,42 +1,26 @@
 "use client"
 
+import { useState } from "react"
 import CustomersTab from "@/components/customers-tab"
-import { useState, useEffect } from "react"
-import { generateDemoData } from "@/lib/demo-data"
-import { sampleInventory, sampleCustomers } from "@/lib/data"
-import type { Customer } from "@/lib/data"
+import { usePersistentState } from "@/hooks/use-persistent-state"
 
 export default function ClientsPage() {
-  const [customers, setCustomers] = useState<Customer[]>(sampleCustomers)
-  const [showTips, setShowTips] = useState(true)
-
-  // Generate demo data on first load
-  useEffect(() => {
-    try {
-      const demoData = generateDemoData()
-      setCustomers(demoData.customers || sampleCustomers)
-    } catch (error) {
-      console.error("Error generating demo data:", error)
-      // Fallback to sample data
-      setCustomers(sampleCustomers)
-    }
-  }, [])
-
-  const handleUpdateCustomers = (updatedCustomers: Customer[]) => {
-    setCustomers(updatedCustomers || [])
-  }
+  // Use persistent state for customers
+  const { customers, setCustomers, isLoading } = usePersistentState();
+  const [showTips, setShowTips] = useState(true);
 
   const handleHideTips = () => {
-    setShowTips(false)
-  }
+    setShowTips(false);
+  };
 
   return (
     <div className="container py-4">
       <CustomersTab
         customers={customers || []}
-        onUpdateCustomers={handleUpdateCustomers}
+        onUpdateCustomers={setCustomers}
         showTips={showTips}
         onHideTips={handleHideTips}
+        isLoading={isLoading}
       />
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Save, Download, Trash2, Check, AlertCircle, Shield, Database, RotateCcw } from "lucide-react"
+import { Save, Download, Trash2, Check, AlertCircle, Shield, Database, RotateCcw, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,12 +25,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { saveData, getSavedDataList, loadData, deleteData } from "@/app/(root)/actions"
 import type { BusinessData, InventoryItem, Customer } from "@/lib/data"
-import { HustleTip } from "@/components/hustle-tip"
-import { useTheme } from "next-themes"
 
 interface SettingsTabProps {
   businessData: BusinessData
@@ -38,6 +35,8 @@ interface SettingsTabProps {
   customers: Customer[]
   onDataLoaded: (businessData: BusinessData, inventory: InventoryItem[], customers: Customer[]) => void
   isNewAccount?: boolean
+  isLoading?: boolean
+  saveAllChanges?: () => Promise<boolean> // Add the new prop
 }
 
 interface SavedFile {
@@ -47,13 +46,22 @@ interface SavedFile {
   uploadedAt: string
 }
 
-export default function SettingsTab({ businessData, inventory, customers, onDataLoaded, isNewAccount = false }: SettingsTabProps) {
+export default function SettingsTab({ 
+  businessData, 
+  inventory, 
+  customers, 
+  onDataLoaded, 
+  isNewAccount = false, 
+  isLoading: pageIsLoading = false,
+  saveAllChanges // Receive the saveAllChanges prop
+}: SettingsTabProps) {
   const [saveName, setSaveName] = useState("")
   const [savedFiles, setSavedFiles] = useState<SavedFile[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false)
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Load saved files list
   const loadSavedFiles = async () => {
@@ -129,223 +137,296 @@ export default function SettingsTab({ businessData, inventory, customers, onData
     }
   }
 
-  // Placeholder for handleResetData
-  const handleResetData = async () => {
-    console.log("Resetting user data...") // Replace with actual API call
-    setMessage({ type: "success", text: "Demo data reset successfully (placeholder)." })
+  const handleDataExport = async () => {
+    try {
+      // If saveAllChanges is provided, save everything first to ensure latest data
+      if (saveAllChanges) {
+        await saveAllChanges();
+      }
+      
+      // Create a JSON Blob of all data
+      const allData = {
+        businessData,
+        inventory,
+        customers,
+        exportDate: new Date().toISOString(),
+      }
+
+      const jsonString = JSON.stringify(allData, null, 2)
+      const blob = new Blob([jsonString], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      
+      // Create a download link and trigger it
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `retail-analytics-export-${new Date().toISOString().split("T")[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      
+      setMessage({
+        type: "success",
+        text: "Data exported successfully. The file has been downloaded.",
+      })
+    } catch (error) {
+      console.error("Export error:", error)
+      setMessage({
+        type: "error",
+        text: "Failed to export data. Please try again.",
+      })
+    }
+  }
+
+  const handleClearData = async () => {
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmClearData = async () => {
+    setIsLoading(true)
+    setShowDeleteConfirm(false)
+    let allDeleted = true
+    let errorMessages: string[] = []
+
+    try {
+      // Fetch the list of saved files first
+      const listResult = await getSavedDataList()
+
+      if (listResult.success && listResult.list && listResult.list.length > 0) {
+        // Iterate and delete each file
+        for (const fileName of listResult.list) {
+          const deleteResult = await deleteData(fileName)
+          if (!deleteResult.success) {
+            allDeleted = false
+            errorMessages.push(deleteResult.error || `Failed to delete ${fileName}`)
+          }
+        }
+      } else if (!listResult.success) {
+        // Handle error fetching the list
+        allDeleted = false
+        errorMessages.push(listResult.error || "Failed to retrieve list of saved data.")
+      }
+      // If listResult.list is empty, we consider it a success (nothing to delete)
+
+      setIsLoading(false)
+
+      if (allDeleted) {
+        setMessage({ type: "success", text: "All saved data has been cleared successfully." })
+        // Reset local state with default empty BusinessData structure
+        onDataLoaded(
+          { 
+            wholesalePricePerOz: 0, 
+            targetProfitPerMonth: 0, 
+            operatingExpenses: 0,
+            targetProfit: undefined 
+          }, // businessData 
+          [], // inventory
+          []  // customers
+        )
+        loadSavedFiles() // Refresh the list of saved files
+      } else {
+        setMessage({ type: "error", text: `Failed to delete some data: ${errorMessages.join(", ")}` })
+      }
+    } catch (error) {
+      console.error("Error clearing data:", error)
+      setIsLoading(false)
+      setMessage({ type: "error", text: "An unexpected error occurred while clearing data." })
+    }
   }
 
   return (
     <div className="space-y-6 p-4">
-      {isNewAccount && (
-        <HustleTip title="Clear Demo Data">
-          Welcome! Your account includes demo data to help you get started. You can clear this demo data in the 'Database Management' section below.
-        </HustleTip>
-      )}
+      {pageIsLoading ? (
+        <Card className="card-sharp border-white">
+          <CardContent className="py-8">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-4"></div>
+              <p className="text-white">Loading your data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="mb-6">
+            <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 text-center">
+              <h1 className="text-4xl font-bold text-white gangster-font text-shadow">SETTINGS</h1>
+              <p className="text-white/80 mt-1">SECURE YOUR DATA. PROTECT YOUR EMPIRE.</p>
+            </div>
+          </div>
 
-      <div className="mb-6">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 text-center">
-          <h1 className="text-4xl font-bold text-white gangster-font text-shadow">SETTINGS</h1>
-          <p className="text-white/80 mt-1">SECURE YOUR DATA. PROTECT YOUR EMPIRE.</p>
-        </div>
+          {message && (
+            <Alert
+              variant={message.type === "success" ? "default" : "destructive"}
+              className={`mb-6 card-sharp ${
+                message.type === "success" ? "bg-white/10 text-white border-white/20" : "bg-blood/10 text-blood border-blood/20"
+              }`}
+            >
+              {message.type === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+              <AlertTitle className="gangster-font">{message.type === "success" ? "SUCCESS" : "ERROR"}</AlertTitle>
+              <AlertDescription>{message.text}</AlertDescription>
+            </Alert>
+          )}
 
-        <div className="mt-6">
-          <HustleTip title="DATA SECURITY">
-            <p>Back up your business data regularly. Smart hustlers never lose track of their numbers.</p>
-          </HustleTip>
-        </div>
-      </div>
-
-      {message && (
-        <Alert
-          variant={message.type === "success" ? "default" : "destructive"}
-          className={`mb-6 card-sharp ${
-            message.type === "success" ? "bg-white/10 text-white border-white/20" : "bg-blood/10 text-blood border-blood/20"
-          }`}
-        >
-          {message.type === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-          <AlertTitle className="gangster-font">{message.type === "success" ? "SUCCESS" : "ERROR"}</AlertTitle>
-          <AlertDescription>{message.text}</AlertDescription>
-        </Alert>
-      )}
-
-      <Card className="card-sharp border-white">
-        <CardHeader>
-          <CardTitle className="gangster-font text-white flex items-center">
-            <Database className="h-5 w-5 mr-2" /> DATA MANAGEMENT
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full bg-white hover:bg-white/90 text-black button-sharp">
-                  <Save className="h-4 w-4 mr-2" /> SAVE DATA
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-smoke border-white card-sharp">
-                <DialogHeader>
-                  <DialogTitle className="gangster-font text-white">SAVE YOUR DATA</DialogTitle>
-                  <DialogDescription className="text-white/80">
-                    Enter a name to identify this save. This will secure your current business data.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="saveName" className="gangster-font text-white">
-                      SAVE NAME
-                    </Label>
-                    <Input
-                      id="saveName"
-                      placeholder="My Business Data"
-                      value={saveName}
-                      onChange={(e) => setSaveName(e.target.value)}
-                      className="input-sharp bg-black/50 text-white border-white/50 focus:border-white"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    onClick={handleSaveData}
-                    disabled={isLoading}
-                    className="bg-white hover:bg-white/90 text-black button-sharp"
-                  >
-                    {isLoading ? "SAVING..." : "SAVE DATA"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full button-sharp border-white text-white hover:bg-white/10" variant="outline">
-                  <Download className="h-4 w-4 mr-2" /> LOAD DATA
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-smoke border-white card-sharp">
-                <DialogHeader>
-                  <DialogTitle className="gangster-font text-white">LOAD SAVED DATA</DialogTitle>
-                  <DialogDescription className="text-white/80">
-                    Select a previously saved file to load. This will replace your current data.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4 max-h-[300px] overflow-y-auto">
-                  {isLoading ? (
-                    <div className="text-center py-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
-                      <p className="mt-2 text-white/70">LOADING DATA...</p>
+          <Card className="card-sharp border-white">
+            <CardHeader>
+              <CardTitle className="gangster-font text-white flex items-center">
+                <Database className="h-5 w-5 mr-2" /> DATA MANAGEMENT
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-white hover:bg-white/90 text-black button-sharp">
+                      <Save className="h-4 w-4 mr-2" /> SAVE DATA
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-smoke border-white card-sharp">
+                    <DialogHeader>
+                      <DialogTitle className="gangster-font text-white">SAVE YOUR DATA</DialogTitle>
+                      <DialogDescription className="text-white/80">
+                        Enter a name to identify this save. This will secure your current business data.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="saveName" className="gangster-font text-white">
+                          SAVE NAME
+                        </Label>
+                        <Input
+                          id="saveName"
+                          placeholder="My Business Data"
+                          value={saveName}
+                          onChange={(e) => setSaveName(e.target.value)}
+                          className="input-sharp bg-black/50 text-white border-white/50 focus:border-white"
+                        />
+                      </div>
                     </div>
-                  ) : savedFiles.length === 0 ? (
-                    <p className="text-center text-white/70 py-4">NO SAVED DATA FOUND</p>
-                  ) : (
-                    savedFiles.map((file) => (
-                      <Card key={file.id} className="overflow-hidden card-sharp border-white/20 bg-black/20">
-                        <div className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium gangster-font text-white">SAVE #{file.id.substring(0, 8)}</h4>
-                              <p className="text-sm text-white/60">{file.uploadedAt}</p>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleLoadData(file.url)}
-                                disabled={isLoading}
-                                className="bg-white hover:bg-white/90 text-black button-sharp"
-                              >
-                                LOAD
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteData(file.pathname)}
-                                disabled={isLoading}
-                                className="border-blood text-blood hover:bg-blood/10 button-sharp"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
+                    <DialogFooter>
+                      <Button
+                        onClick={handleSaveData}
+                        disabled={isLoading}
+                        className="bg-white hover:bg-white/90 text-black button-sharp"
+                      >
+                        {isLoading ? "SAVING..." : "SAVE DATA"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full button-sharp border-white text-white hover:bg-white/10" variant="outline">
+                      <Download className="h-4 w-4 mr-2" /> LOAD DATA
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-smoke border-white card-sharp">
+                    <DialogHeader>
+                      <DialogTitle className="gangster-font text-white">LOAD SAVED DATA</DialogTitle>
+                      <DialogDescription className="text-white/80">
+                        Select a previously saved file to load. This will replace your current data.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4 max-h-[300px] overflow-y-auto">
+                      {isLoading ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                          <p className="mt-2 text-white/70">LOADING DATA...</p>
                         </div>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                      ) : savedFiles.length === 0 ? (
+                        <p className="text-center text-white/70 py-4">NO SAVED DATA FOUND</p>
+                      ) : (
+                        savedFiles.map((file) => (
+                          <Card key={file.id} className="overflow-hidden card-sharp border-white/20 bg-black/20">
+                            <div className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h4 className="font-medium gangster-font text-white">SAVE #{file.id.substring(0, 8)}</h4>
+                                  <p className="text-sm text-white/60">{file.uploadedAt}</p>
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleLoadData(file.url)}
+                                    disabled={isLoading}
+                                    className="bg-white hover:bg-white/90 text-black button-sharp"
+                                  >
+                                    LOAD
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteData(file.pathname)}
+                                    disabled={isLoading}
+                                    className="border-blood text-blood hover:bg-blood/10 button-sharp"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
-          <div className="pt-6 border-t border-white/20">
-            <h3 className="text-lg font-semibold gangster-font text-white mb-2">RESET DATA</h3>
-            <p className="text-white/70 mb-4">
-              Reset all your stored data to the initial demo state. This action cannot be undone.
-            </p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="button-sharp border-white text-white hover:bg-white/10">
-                  <RotateCcw className="h-4 w-4 mr-2" /> RESET ALL DATA
+              <div className="bg-smoke p-4 rounded-md mb-4">
+                <h3 className="text-lg font-semibold mb-3">Export Data</h3>
+                <p className="mb-3 text-sm">
+                  Export all your business data in JSON format as a backup or for external analysis.
+                </p>
+                <Button
+                  variant="outline"
+                  className="button-sharp w-full sm:w-auto"
+                  onClick={handleDataExport}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Exporting..." : "Export All Data"}
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-smoke border-white card-sharp">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="gangster-font text-white">ARE YOU ABSOLUTELY SURE?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-white/80">
-                    This action will permanently delete all your current business data, inventory, and customer records, replacing it with the default demo data. This cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="button-sharp bg-smoke text-white border-white hover:bg-white/10">CANCEL</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleResetData}
-                    className="bg-blood text-white hover:bg-blood/90 button-sharp"
-                  >
-                    YES, RESET DATA
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </CardContent>
-      </Card>
+              </div>
 
-      <Card className="card-sharp border-white">
-        <CardHeader>
-          <CardTitle className="gangster-font text-white flex items-center">
-            <Shield className="h-5 w-5 mr-2" /> ACCOUNT SECURITY
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-white/70">
-            Password reset and account management options will appear here once authentication is fully implemented.
-          </p>
-        </CardContent>
-      </Card>
+              <div className="bg-red-900/30 p-4 rounded-md">
+                <h3 className="text-lg font-semibold mb-3 text-red-400">Reset All Data</h3>
+                <p className="mb-3 text-sm text-red-300">
+                  Warning: This will permanently delete all your data including inventory, customers, and transactions. This action cannot be undone.
+                </p>
+                <Button
+                  variant="destructive"
+                  className="button-sharp w-full sm:w-auto"
+                  onClick={handleClearData}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Processing..." : "Clear All Data"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card className="card-sharp border-white">
-        <CardHeader>
-          <CardTitle className="gangster-font text-white flex items-center">
-            <Shield className="h-5 w-5 mr-2" /> ABOUT
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-white/70">
-            Hustle Calculator helps you maximize profits, track inventory, and collect debts. Stay on top of your
-            business and keep your money right.
-          </p>
-          <div className="flex items-center justify-between bg-black/30 p-3 border-l-2 border-white">
-            <span className="text-sm gangster-font text-white">VERSION</span>
-            <span className="text-sm font-medium text-white">1.0</span>
-          </div>
-          <div className="flex items-center justify-between bg-black/30 p-3 border-l-2 border-white">
-            <span className="text-sm gangster-font text-white">DATA STORAGE</span>
-            <span className="text-sm font-medium text-white">VERCEL BLOB</span>
-          </div>
-          <div className="flex items-center justify-between bg-black/30 p-3 border-l-2 border-white">
-            <span className="text-sm gangster-font text-white">THEME</span>
-            <span className="text-sm font-medium text-white">BOSS MODE</span>
-          </div>
-        </CardContent>
-      </Card>
+          <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <AlertDialogContent className="bg-smoke border-white card-sharp">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="gangster-font text-white">CONFIRM DATA DELETION</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete all your data? This action cannot be undone and will permanently erase all your inventory items, customers, and transactions.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="button-sharp" onClick={() => setShowDeleteConfirm(false)}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 hover:bg-red-700 text-white button-sharp"
+                  onClick={confirmClearData}
+                >
+                  Delete All Data
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   )
 }
