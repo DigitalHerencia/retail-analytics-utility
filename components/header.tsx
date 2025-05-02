@@ -23,7 +23,8 @@ export default function Header() {
   ]
 
   const handleLogout = () => {
-    signOut(() => router.push('/sign-in'));
+    // Use the dedicated sign-out page instead of direct signOut
+    router.push('/sign-out');
     setIsOpen(false);
   };
 
@@ -35,15 +36,6 @@ export default function Header() {
           Hustlers Code
         </Link>
         <div className="flex items-center gap-4">
-          {isLoaded && user && (
-            <Link 
-              href="/profile" 
-              className="text-white hover:text-white/80 hidden md:flex items-center gap-2 transition"
-            >
-              <span className="gangster-font text-sm">{user.fullName || user.username}</span>
-            </Link>
-          )}
-          <UserButton afterSignOutUrl="/sign-in" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white">
@@ -82,26 +74,15 @@ export default function Header() {
                     ))}
                     
                     {isLoaded && user && (
-                      <>
-                        <li>
-                          <Link
-                            href="/profile"
-                            className="flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10"
-                            onClick={() => setIsOpen(false)}
-                          >
-                            <span className="ml-3">PROFILE</span>
-                          </Link>
-                        </li>
-                        <li>
-                          <button
-                            onClick={handleLogout}
-                            className="flex items-center w-full px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10 text-left"
-                          >
-                            <LogOut className="h-5 w-5" />
-                            <span className="ml-3">LOGOUT</span>
-                          </button>
-                        </li>
-                      </>
+                      <li>
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10 text-left"
+                        >
+                          <LogOut className="h-5 w-5" />
+                          <span className="ml-3">LOGOUT</span>
+                        </button>
+                      </li>
                     )}
                   </ul>
                 </nav>
@@ -109,8 +90,12 @@ export default function Header() {
                 <div className="p-6 border-t border-white">
                   {isLoaded && user ? (
                     <div className="flex flex-col space-y-2">
-                      <p className="text-sm text-white/70">Logged in as <span className="text-white">{user.fullName || user.username}</span></p>
-                      <UserButton afterSignOutUrl="/sign-in" appearance={{ elements: { userButtonPopoverCard: 'bg-black border-white text-white' } }} />
+                      <button
+                        onClick={handleLogout}
+                        className="w-full bg-white text-black hover:bg-white/80 px-4 py-2 rounded-md text-sm font-medium"
+                      >
+                        SIGN OUT
+                      </button>
                     </div>
                   ) : (
                     <Link href="/sign-in">

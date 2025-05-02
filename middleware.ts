@@ -1,9 +1,9 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Custom middleware to allow public access to /sign-in, /sign-up, /help, and enforce auth elsewhere
+// Custom middleware to allow public access to /sign-in, /sign-up, /sign-out, /help, and enforce auth elsewhere
 export default clerkMiddleware(async (auth, req) => {
-  const publicPaths = ["/sign-in", "/sign-up", "/help"];
+  const publicPaths = ["/sign-in", "/sign-up", "/sign-out", "/help"];
   const { pathname } = req.nextUrl;
 
   // Allow public access to publicPaths

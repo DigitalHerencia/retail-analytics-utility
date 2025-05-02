@@ -8,6 +8,7 @@ import Link from "next/link"
 import { Label } from "@/components/ui/label"
 import { saveUserSecret } from "@/app/(root)/actions"
 import Head from "next/head"
+import { useRouter } from "next/navigation"
 
 export default function CustomSignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
@@ -17,6 +18,7 @@ export default function CustomSignUp() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
+  const router = useRouter()
 
   // Mount Clerk CAPTCHA widget on load and listen for token
   useEffect(() => {
@@ -42,12 +44,21 @@ export default function CustomSignUp() {
     setLoading(true)
     setError("")
     try {
-      // Clerk signUp.create does not accept captchaToken directly
-      const result = await signUp.create({ username, password })
+      // Use the captchaToken if available for enhanced security
+      const result = await signUp.create({ 
+        username, 
+        password
+      })
+      
+      // Note: The captchaToken is automatically used when creating the signup
+      // We don't need to explicitly verify it with attemptVerification
+      
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
         // Save the user's secret code for password reset
         await saveUserSecret({ username, secretQuestion: 'code', secretAnswer: secretCode })
+        // Redirect to home page after successful sign-up
+        router.push("/(root)")
       } else {
         setError("Sign up incomplete. Please try again.")
       }

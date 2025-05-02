@@ -127,14 +127,6 @@ export default function HelpTab() {
               <CardTitle className="gangster-font text-white">PRICE CALCULATOR</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-smoke flex items-center justify-center">
-                <img
-                  src="/hustle-calculator-price.png"
-                  alt="Price Calculator Screen"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <p>
                 The Price Calculator helps you find the optimal price points for your product. It shows you different
                 markup percentages and how they affect your profit, break-even point, and ROI.
@@ -178,14 +170,6 @@ export default function HelpTab() {
               <CardTitle className="gangster-font text-white">INVENTORY MANAGEMENT</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-smoke flex items-center justify-center">
-                <img
-                  src="/hustle-calculator-inventory.png"
-                  alt="Inventory Management Screen"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <p>
                 The Inventory tab helps you keep track of your product. You can add new inventory, update quantities,
                 and see what's running low.
@@ -221,18 +205,11 @@ export default function HelpTab() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="aspect-video bg-smoke flex items-center justify-center">
-                <img
-                  src="/hustle-calculator-clients.png"
-                  alt="Client Management Screen"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <p>
                 The Clients tab helps you manage your customer relationships. Keep track of who owes you money, when
                 payments are due, and payment history.
               </p>
-
+              </div>
               <div className="space-y-4 mt-4">
                 <h3 className="gangster-font text-white">HOW TO USE</h3>
 
@@ -262,14 +239,6 @@ export default function HelpTab() {
               <CardTitle className="gangster-font text-white">CASH REGISTER</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-smoke flex items-center justify-center">
-                <img
-                  src="/hustle-calculator-cash-register.png"
-                  alt="Cash Register Screen"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <p>
                 The Cash Register tab is where you record your daily sales and collect payments from clients. It
                 automatically updates your inventory and client balances.
@@ -304,14 +273,6 @@ export default function HelpTab() {
               <CardTitle className="gangster-font text-white">MONTHLY FORECAST</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="aspect-video bg-smoke flex items-center justify-center">
-                <img
-                  src="/placeholder.svg?height=400&width=800&query=Hustle Calculator forecast screen with profit charts and projections"
-                  alt="Forecast Screen"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
               <p>
                 The Forecast tab shows you where your business is heading. Track your progress toward monthly goals,
                 identify trends, and make data-driven decisions.

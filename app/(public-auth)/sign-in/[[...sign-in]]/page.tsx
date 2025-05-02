@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Head from "next/head"
 import sql from "@/lib/db"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 // Add a type declaration for window.Clerk to avoid TypeScript errors
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,6 +25,8 @@ export default function CustomSignIn() {
   const [loading, setLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnBackUrl = searchParams.get('returnBackUrl')
 
   // Mount Clerk CAPTCHA widget on load and listen for token
   useEffect(() => {
@@ -50,7 +52,13 @@ export default function CustomSignIn() {
     setLoading(true)
     setError("")
     try {
-      const result = await signIn.create({ identifier: username, password })
+      // Use the captchaToken if available for enhanced security
+      const result = await signIn.create({
+        identifier: username,
+        password,
+        ...(captchaToken ? { strategy: "captcha_verification", captchaToken } : {})
+      })
+      
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
         // Fetch tenant_id for the user from the database
@@ -64,8 +72,13 @@ export default function CustomSignIn() {
         if (data.tenant_id) {
           localStorage.setItem("tenant_id", data.tenant_id)
         }
-        // Redirect to home or intended page
-        router.push("/")
+        
+        // Redirect to the original URL if available, otherwise to the home page
+        if (returnBackUrl) {
+          router.push(returnBackUrl)
+        } else {
+          router.push("/(root)")
+        }
       } else if (result.status === "needs_first_factor" || result.status === "needs_second_factor") {
         setError("Additional authentication required. Please check your email or phone.")
       } else {
