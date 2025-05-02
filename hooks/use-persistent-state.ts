@@ -17,14 +17,21 @@ export interface UsePersistentStateOptions {
   autoSave?: boolean;
   autoSaveDelay?: number; // in milliseconds
   showToasts?: boolean;
+  useApi?: boolean; // Flag to use API endpoints instead of server actions
 }
 
 // Default options
 const DEFAULT_OPTIONS: UsePersistentStateOptions = {
   autoSave: true,
   autoSaveDelay: 2000, // 2 seconds
-  showToasts: true
+  showToasts: true,
+  useApi: true // Default to using API endpoints
 };
+
+// Helper functions for unit conversions
+const gramsToOunces = (grams: number) => grams / 28.3495;
+const gramsToKilograms = (grams: number) => grams / 1000;
+const ouncesToGrams = (ounces: number) => ounces * 28.3495;
 
 export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_OPTIONS) {
   // Toast notifications
@@ -38,6 +45,7 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
   const [scenarios, setScenariosInternal] = useState<ScenarioData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
 
   // Auto-save management
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -52,29 +60,109 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
   // Merged options
   const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
 
-  // Load data on initial render
+  // Load tenant ID on mount
+  useEffect(() => {
+    async function fetchTenantId() {
+      try {
+        // Fetch tenant ID from the API
+        const response = await fetch('/api/get-tenant-id');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch tenant ID: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.tenantId) {
+          setTenantId(data.tenantId);
+          // Store it in localStorage for other components to use
+          localStorage.setItem("tenant_id", data.tenantId);
+        } else {
+          // Fallback to a default tenant ID
+          const defaultTenantId = "default-tenant";
+          setTenantId(defaultTenantId);
+          localStorage.setItem("tenant_id", defaultTenantId);
+        }
+      } catch (err) {
+        console.error("Error fetching tenant ID:", err);
+        // Fallback to a default tenant ID
+        const defaultTenantId = "default-tenant";
+        setTenantId(defaultTenantId);
+        localStorage.setItem("tenant_id", defaultTenantId);
+      }
+    }
+    
+    fetchTenantId();
+  }, []);
+
+  // Load data on initial render or when tenant ID changes
   useEffect(() => {
     async function fetchAllData() {
       try {
         setIsLoading(true);
         setError(null);
-        
-        const result = await loadAllData();
-        
-        if (result.success) {
-          if (result.businessData) setBusinessDataInternal(result.businessData);
-          if (result.inventory) setInventoryInternal(result.inventory);
-          if (result.customers) setCustomersInternal(result.customers);
-          if (result.transactions) setTransactionsInternal(result.transactions);
-          if (result.scenarios) setScenariosInternal(result.scenarios);
+
+        if (mergedOptions.useApi && tenantId) {
+          // Fetch from API endpoints
+          try {
+            // Fetch inventory data
+            const invResponse = await fetch(`/api/inventory?tenant_id=${tenantId}`);
+            if (!invResponse.ok) {
+              throw new Error(`Failed to fetch inventory: ${invResponse.status}`);
+            }
+            const invData = await invResponse.json();
+            if (invData.inventory) {
+              setInventoryInternal(invData.inventory);
+            }
+
+            // Fetch customer data - would be implemented similarly
+            // const custResponse = await fetch(`/api/customers?tenant_id=${tenantId}`);
+            // ...
+
+            // Fetch transactions data - would be implemented similarly
+            // const txnResponse = await fetch(`/api/transactions?tenant_id=${tenantId}`);
+            // ...
+
+            setIsLoading(false);
+          } catch (apiErr) {
+            console.error("API fetch error:", apiErr);
+            
+            // Fallback to server actions if API fails
+            const result = await loadAllData();
+            
+            if (result.success) {
+              if (result.businessData) setBusinessDataInternal(result.businessData);
+              if (result.inventory) setInventoryInternal(result.inventory);
+              if (result.customers) setCustomersInternal(result.customers);
+              if (result.transactions) setTransactionsInternal(result.transactions);
+              if (result.scenarios) setScenariosInternal(result.scenarios);
+            } else {
+              setError(result.error || "Failed to load data");
+              if (mergedOptions.showToasts) {
+                toast({
+                  title: "Error loading data",
+                  description: result.error || "Failed to load data",
+                  variant: "destructive"
+                });
+              }
+            }
+          }
         } else {
-          setError(result.error || "Failed to load data");
-          if (mergedOptions.showToasts) {
-            toast({
-              title: "Error loading data",
-              description: result.error || "Failed to load data",
-              variant: "destructive"
-            });
+          // Use server actions as fallback
+          const result = await loadAllData();
+          
+          if (result.success) {
+            if (result.businessData) setBusinessDataInternal(result.businessData);
+            if (result.inventory) setInventoryInternal(result.inventory);
+            if (result.customers) setCustomersInternal(result.customers);
+            if (result.transactions) setTransactionsInternal(result.transactions);
+            if (result.scenarios) setScenariosInternal(result.scenarios);
+          } else {
+            setError(result.error || "Failed to load data");
+            if (mergedOptions.showToasts) {
+              toast({
+                title: "Error loading data",
+                description: result.error || "Failed to load data",
+                variant: "destructive"
+              });
+            }
           }
         }
       } catch (err) {
@@ -85,11 +173,45 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
       }
     }
     
-    fetchAllData();
-  }, [mergedOptions.showToasts, toast]);
+    if (tenantId || !mergedOptions.useApi) {
+      fetchAllData();
+    }
+  }, [mergedOptions.showToasts, mergedOptions.useApi, tenantId, toast]);
+
+  // Save data using API endpoints
+  const saveDataToApi = useCallback(async (dataType: string, data: any) => {
+    if (!tenantId) return { success: false, error: "No tenant ID available" };
+    
+    try {
+      const endpoint = `/api/${dataType.toLowerCase()}`;
+      const method = "POST"; // Use UPSERT pattern with POST
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenant_id: tenantId,
+          ...data
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error (${response.status}): ${errorText}`);
+      }
+      
+      return { success: true };
+    } catch (err) {
+      console.error(`Error saving ${dataType} data:`, err);
+      return { 
+        success: false, 
+        error: err instanceof Error ? err.message : `Unknown error saving ${dataType}`
+      };
+    }
+  }, [tenantId]);
 
   // Schedule an auto-save with throttling
-  const scheduleSave = useCallback(() => {
+  const scheduleSave = useCallback(async () => {
     if (!mergedOptions.autoSave) return;
     
     // Clear existing timeout if there is one
@@ -100,22 +222,77 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
     // Set a new timeout
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const savePayload = {
-          businessData: pendingSaves.current.businessData ? businessData : undefined,
-          inventory: pendingSaves.current.inventory ? inventory : undefined,
-          customers: pendingSaves.current.customers ? customers : undefined,
-          transactions: pendingSaves.current.transactions ? transactions : undefined,
-          scenarios: pendingSaves.current.scenarios ? scenarios : undefined
-        };
-        
-        const result = await saveAllData(savePayload);
-        
-        if (!result.success && mergedOptions.showToasts) {
-          toast({
-            title: "Error saving changes",
-            description: result.error || "Your changes couldn't be saved",
-            variant: "destructive"
-          });
+        if (mergedOptions.useApi && tenantId) {
+          // Use API endpoints
+          const savePromises = [];
+          
+          if (pendingSaves.current.businessData) {
+            savePromises.push(saveDataToApi('business', businessData));
+          }
+          
+          if (pendingSaves.current.inventory) {
+            // Save each inventory item individually
+            const inventoryPromises = inventory.map(item => 
+              saveDataToApi('inventory', item)
+            );
+            savePromises.push(...inventoryPromises);
+          }
+          
+          if (pendingSaves.current.customers) {
+            // Save each customer individually
+            const customerPromises = customers.map(customer => 
+              saveDataToApi('customers', customer)
+            );
+            savePromises.push(...customerPromises);
+          }
+          
+          if (pendingSaves.current.transactions) {
+            // Save each transaction individually
+            const transactionPromises = transactions.map(transaction => 
+              saveDataToApi('transactions', transaction)
+            );
+            savePromises.push(...transactionPromises);
+          }
+          
+          if (pendingSaves.current.scenarios) {
+            // Save each scenario individually
+            const scenarioPromises = scenarios.map(scenario => 
+              saveDataToApi('scenarios', scenario)
+            );
+            savePromises.push(...scenarioPromises);
+          }
+          
+          // Wait for all save operations to complete
+          const results = await Promise.all(savePromises);
+          const failedResults = results.filter(result => !result.success);
+          
+          if (failedResults.length > 0 && mergedOptions.showToasts) {
+            toast({
+              title: "Error saving changes",
+              description: "Some changes couldn't be saved",
+              variant: "destructive"
+            });
+          }
+          
+        } else {
+          // Use server actions as fallback
+          const savePayload = {
+            businessData: pendingSaves.current.businessData ? businessData : undefined,
+            inventory: pendingSaves.current.inventory ? inventory : undefined,
+            customers: pendingSaves.current.customers ? customers : undefined,
+            transactions: pendingSaves.current.transactions ? transactions : undefined,
+            scenarios: pendingSaves.current.scenarios ? scenarios : undefined
+          };
+          
+          const result = await saveAllData(savePayload);
+          
+          if (!result.success && mergedOptions.showToasts) {
+            toast({
+              title: "Error saving changes",
+              description: result.error || "Your changes couldn't be saved",
+              variant: "destructive"
+            });
+          }
         }
         
         // Reset pending saves
@@ -131,7 +308,7 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
         }
       }
     }, mergedOptions.autoSaveDelay);
-  }, [businessData, inventory, customers, transactions, scenarios, mergedOptions, toast]);
+  }, [businessData, inventory, customers, transactions, scenarios, mergedOptions, toast, saveDataToApi, tenantId]);
 
   // Wrapped state setters that trigger auto-save
   const setBusinessData = useCallback((newData: BusinessData | ((prev: BusinessData) => BusinessData)) => {
@@ -169,32 +346,76 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
     try {
       setError(null);
       
-      const result = await saveAllData( {
+      if (mergedOptions.useApi && tenantId) {
+        // Save to API endpoints
+        const promises = [];
+        
+        // Save inventory items
+        for (const item of inventory) {
+          promises.push(saveDataToApi('inventory', item));
+        }
+        
+        // Save customers
+        for (const customer of customers) {
+          promises.push(saveDataToApi('customers', customer));
+        }
+        
+        // Save transactions
+        for (const transaction of transactions) {
+          promises.push(saveDataToApi('transactions', transaction));
+        }
+        
+        const results = await Promise.all(promises);
+        const hasErrors = results.some(result => !result.success);
+        
+        if (!hasErrors) {
+          if (mergedOptions.showToasts) {
+            toast({
+              title: "Changes saved",
+              description: "All your data has been saved successfully"
+            });
+          }
+          return true;
+        } else {
+          setError("Failed to save some data");
+          if (mergedOptions.showToasts) {
+            toast({
+              title: "Error saving changes",
+              description: "Some of your changes couldn't be saved",
+              variant: "destructive"
+            });
+          }
+          return false;
+        }
+      } else {
+        // Use server actions as fallback
+        const result = await saveAllData({
           businessData,
           inventory,
           customers,
           transactions,
           scenarios
-      } );
-      
-      if (result.success) {
-        if (mergedOptions.showToasts) {
-          toast({
-            title: "Changes saved",
-            description: "All your data has been saved successfully"
-          });
+        });
+        
+        if (result.success) {
+          if (mergedOptions.showToasts) {
+            toast({
+              title: "Changes saved",
+              description: "All your data has been saved successfully"
+            });
+          }
+          return true;
+        } else {
+          setError(result.error || "Failed to save data");
+          if (mergedOptions.showToasts) {
+            toast({
+              title: "Error saving changes",
+              description: result.error || "Your changes couldn't be saved",
+              variant: "destructive"
+            });
+          }
+          return false;
         }
-        return true;
-      } else {
-        setError(result.error || "Failed to save data");
-        if (mergedOptions.showToasts) {
-          toast({
-            title: "Error saving changes",
-            description: result.error || "Your changes couldn't be saved",
-            variant: "destructive"
-          });
-        }
-        return false;
       }
     } catch (err) {
       console.error("Error in saveAllChanges:", err);
@@ -208,7 +429,7 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
       }
       return false;
     }
-  }, [businessData, inventory, customers, transactions, scenarios, mergedOptions.showToasts, toast]);
+  }, [businessData, inventory, customers, transactions, scenarios, mergedOptions.showToasts, mergedOptions.useApi, toast, saveDataToApi, tenantId]);
 
   // Add a transaction and update inventory automatically
   const addTransaction = useCallback((transaction: Transaction) => {
@@ -227,8 +448,8 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
                 : transaction.quantityGrams;
                 
               const newQuantityG = item.quantityG + quantityChange;
-              const newQuantityOz = newQuantityG / 28.3495;
-              const newQuantityKg = newQuantityG / 1000;
+              const newQuantityOz = gramsToOunces(newQuantityG);
+              const newQuantityKg = gramsToKilograms(newQuantityG);
               
               return {
                 ...item,
@@ -311,6 +532,7 @@ export function usePersistentState(options: UsePersistentStateOptions = DEFAULT_
     isLoading,
     error,
     saveAllChanges,
-    addTransaction
+    addTransaction,
+    tenantId
   };
 }

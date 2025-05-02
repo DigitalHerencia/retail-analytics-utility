@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { v4 as uuidv4 } from 'uuid';
 import sql from "@/lib/db";
 
-// GET: fetch customers for a tenant
+// GET: get a tenant ID (uses a default for development or fetches from user session)
 export async function GET(req: NextRequest) {
-  const tenant_id = req.nextUrl.searchParams.get("tenant_id");
-  if (!tenant_id) return NextResponse.json({ error: "Missing tenant_id" }, { status: 400 });
-  const rows = await sql`SELECT * FROM customers WHERE tenant_id = ${tenant_id}`;
-  return NextResponse.json({ customers: rows });
+  // In a real app, this would come from authentication/session
+  // For now, we'll use a default or create one if it doesn't exist
+  let tenantId = "default-tenant";
+  
+  // In production, you would get this from user authentication
+  // const session = await getServerSession();
+  // tenantId = session?.user?.tenantId || "default-tenant";
+  
+  return NextResponse.json({ tenantId });
 }
 
 // POST: add customer
