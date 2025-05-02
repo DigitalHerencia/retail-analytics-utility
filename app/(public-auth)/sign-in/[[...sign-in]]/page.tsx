@@ -44,6 +44,7 @@ export default function CustomSignIn() {
                 onChange={e => setUsername(e.target.value)}
                 required
                 className="bg-black/80 border-white text-white placeholder-white/60"
+                autoComplete="username"
               />
               <Input
                 type="password"
