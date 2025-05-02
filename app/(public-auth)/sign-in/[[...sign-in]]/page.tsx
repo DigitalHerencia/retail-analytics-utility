@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Head from "next/head"
+import sql from "@/lib/db"
+import { useRouter } from "next/navigation"
 
 export default function CustomSignIn() {
   const { signIn, setActive, isLoaded } = useSignIn()
@@ -13,6 +15,7 @@ export default function CustomSignIn() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,7 +26,19 @@ export default function CustomSignIn() {
       const result = await signIn.create({ identifier: username, password })
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        // Optionally redirect here
+        // Fetch tenant_id for the user from the database
+        // NOTE: This requires an API route or server action; here we use fetch as an example
+        const res = await fetch("/api/get-tenant-id", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        })
+        const data = await res.json()
+        if (data.tenant_id) {
+          localStorage.setItem("tenant_id", data.tenant_id)
+        }
+        // Redirect to home or intended page
+        router.push("/")
       } else if (result.status === "needs_first_factor" || result.status === "needs_second_factor") {
         setError("Additional authentication required. Please check your email or phone.")
       } else {
