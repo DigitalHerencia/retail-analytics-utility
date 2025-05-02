@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Select } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { saveUserSecret } from "@/app/(root)/actions"
 
@@ -13,8 +12,7 @@ export default function CustomSignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [secretQuestion, setSecretQuestion] = useState("")
-  const [secretAnswer, setSecretAnswer] = useState("")
+  const [secretCode, setSecretCode] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -24,11 +22,10 @@ export default function CustomSignUp() {
     setLoading(true)
     setError("")
     try {
-      // Save secret question and answer as metadata
       const result = await signUp.create({ username, password })
       await setActive({ session: result.createdSessionId })
-      // Save secret question/answer in Neon DB
-      await saveUserSecret({ username, secretQuestion, secretAnswer })
+      // Save secret code in Neon DB (use secretQuestion as 'code' and secretAnswer as the code value for compatibility)
+      await saveUserSecret({ username, secretQuestion: 'code', secretAnswer: secretCode })
       // Optionally redirect here
     } catch (err: any) {
       setError(err.errors?.[0]?.message || "Sign up failed")
@@ -62,24 +59,17 @@ export default function CustomSignUp() {
                 className="bg-black/80 border-white text-white placeholder-white/60"
               />
               <div>
-                <Label htmlFor="secret-question" className="text-white mb-1 block">Secret Question</Label>
-                <Select name="secret-question" value={secretQuestion} onValueChange={setSecretQuestion} required>
-                  <option value="" disabled>Select a question...</option>
-                  <option value="pet">What was the name of your first pet?</option>
-                  <option value="school">What is the name of your elementary school?</option>
-                  <option value="city">In what city were you born?</option>
-                  <option value="nickname">What is your childhood nickname?</option>
-                  <option value="car">What was your first car?</option>
-                </Select>
+                <Label htmlFor="secret-code" className="text-white mb-1 block">Secret Code</Label>
+                <Input
+                  id="secret-code"
+                  type="text"
+                  placeholder="Enter a secret code (for password reset)"
+                  value={secretCode}
+                  onChange={e => setSecretCode(e.target.value)}
+                  required
+                  className="bg-black/80 border-white text-white placeholder-white/60"
+                />
               </div>
-              <Input
-                type="text"
-                placeholder="Secret answer"
-                value={secretAnswer}
-                onChange={e => setSecretAnswer(e.target.value)}
-                required
-                className="bg-black/80 border-white text-white placeholder-white/60"
-              />
               {error && <div className="text-red-400 text-sm">{error}</div>}
               <Button type="submit" className="w-full bg-white text-black font-bold hover:bg-white/80" disabled={loading}>
                 {loading ? "Signing Up..." : "Sign Up"}

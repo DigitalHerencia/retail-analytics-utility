@@ -10,7 +10,7 @@ async function verifySecretAndResetPassword(username: string, secret: string, ne
   // TODO: Replace with real backend call
   // For demonstration, accept any non-empty values and "secret123" as the correct answer
   if (!username || !secret || !newPassword) return { success: false, error: "All fields are required." }
-  if (secret !== "secret123") return { success: false, error: "Incorrect secret answer." }
+  if (secret !== "secret123") return { success: false, error: "Incorrect secret code." }
   return { success: true }
 }
 
@@ -27,7 +27,7 @@ export default function ResetPassword() {
     e.preventDefault()
     setError("")
     setLoading(true)
-    // In a real app, fetch the user's secret question here
+    // No need to fetch a question, just go to code entry
     setStep(2)
     setLoading(false)
   }
@@ -36,6 +36,7 @@ export default function ResetPassword() {
     e.preventDefault()
     setError("")
     setLoading(true)
+    // Use the secret code for verification
     const result = await verifySecretAndResetPassword(username, secret, newPassword)
     if (result.success) {
       setSuccess(true)
@@ -53,9 +54,7 @@ export default function ResetPassword() {
           <CardContent className="py-8">
             <h1 className="text-3xl font-bold mb-6 text-center font-graffiti">Reset Password</h1>
             {success ? (
-              <div className="text-center text-green-400 font-bold">
-                Password reset! <Link href="/sign-in" className="underline text-white">Sign In</Link>
-              </div>
+              <div className="text-green-400 text-center">Password reset successful! You can now <Link href="/sign-in" className="underline text-white font-bold">Sign In</Link>.</div>
             ) : step === 1 ? (
               <form onSubmit={handleVerify} className="space-y-4">
                 <Input
@@ -74,7 +73,7 @@ export default function ResetPassword() {
               <form onSubmit={handleReset} className="space-y-4">
                 <Input
                   type="text"
-                  placeholder="Secret answer"
+                  placeholder="Secret code"
                   value={secret}
                   onChange={e => setSecret(e.target.value)}
                   required
