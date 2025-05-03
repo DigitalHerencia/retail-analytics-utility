@@ -6,7 +6,7 @@ import { InventoryItem } from "@/types";
 export async function getInventory(tenantId: string): Promise<{ inventory: InventoryItem[] }> {
   const rows = await sql`
     SELECT * FROM inventory 
-    WHERE tenant_id = ${tenantId}
+    WHERE tenant_id = ${tenantId}::uuid
     ORDER BY name ASC
   `;
 
@@ -32,16 +32,16 @@ export async function createInventoryItem(tenantId: string, item: Omit<Inventory
       tenant_id, name, description, quantity_g, quantity_oz, quantity_kg,
       cost_per_oz, total_cost, purchase_date, reorder_threshold_g
     ) VALUES (
-      ${tenantId},
+      ${tenantId}::uuid,
       ${item.name},
       ${item.description},
-      ${item.quantityG.toString()},
-      ${item.quantityOz.toString()},
-      ${item.quantityKg.toString()},
-      ${item.costPerOz.toString()},
-      ${item.totalCost.toString()},
+      ${item.quantityG}::decimal,
+      ${item.quantityOz}::decimal,
+      ${item.quantityKg}::decimal,
+      ${item.costPerOz}::decimal,
+      ${item.totalCost}::decimal,
       ${item.purchaseDate},
-      ${item.reorderThresholdG.toString()}
+      ${item.reorderThresholdG}::decimal
     )
     RETURNING *
   `;
@@ -55,14 +55,14 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
     SET 
       name = ${item.name},
       description = ${item.description},
-      quantity_g = ${item.quantityG.toString()},
-      quantity_oz = ${item.quantityOz.toString()},
-      quantity_kg = ${item.quantityKg.toString()},
-      cost_per_oz = ${item.costPerOz.toString()},
-      total_cost = ${item.totalCost.toString()},
+      quantity_g = ${item.quantityG}::decimal,
+      quantity_oz = ${item.quantityOz}::decimal,
+      quantity_kg = ${item.quantityKg}::decimal,
+      cost_per_oz = ${item.costPerOz}::decimal,
+      total_cost = ${item.totalCost}::decimal,
       purchase_date = ${item.purchaseDate},
-      reorder_threshold_g = ${item.reorderThresholdG.toString()}
-    WHERE tenant_id = ${tenantId} AND id = ${item.id}
+      reorder_threshold_g = ${item.reorderThresholdG}::decimal
+    WHERE tenant_id = ${tenantId}::uuid AND id = ${item.id}::uuid
     RETURNING *
   `;
 
@@ -72,6 +72,6 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
 export async function deleteInventoryItem(tenantId: string, itemId: string) {
   await sql`
     DELETE FROM inventory 
-    WHERE tenant_id = ${tenantId} AND id = ${itemId}
+    WHERE tenant_id = ${tenantId}::uuid AND id = ${itemId}::uuid
   `;
 }

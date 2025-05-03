@@ -33,15 +33,17 @@ export async function saveData(name: string, data: any) {
   const { userId } = (await auth()) || {};
   if (!userId) throw new Error("User not authenticated");
   try {
+    const now = new Date().toISOString();
     await sql`
-      INSERT INTO saved_data (user_id, name, data)
-      VALUES (${userId}, ${name}, ${JSON.stringify(data)})
-      ON CONFLICT (user_id, name)
-      DO UPDATE SET data = EXCLUDED.data;
+      INSERT INTO saved_data (user_id, key, value, created_at, updated_at)
+      VALUES (${userId}, ${name}, ${JSON.stringify(data)}, ${now}, ${now})
+      ON CONFLICT (user_id, key)
+      DO UPDATE SET value = ${JSON.stringify(data)}, updated_at = ${now}
     `;
     revalidatePath("/");
     return { success: true };
   } catch (error) {
+    console.error("Failed to save data:", error);
     return { success: false, error: "Failed to save data." };
   }
 }
@@ -51,18 +53,19 @@ export async function loadData(name: string) {
   const { userId } = (await auth()) || {};
   if (!userId) throw new Error("User not authenticated");
   try {
-    // Change the type annotation to expect an array of objects directly
-    const result: { data: any }[] = await sql`
-      SELECT data FROM saved_data WHERE user_id = ${userId} AND name = ${name};
-    ` as { data: any }[];
-    // Access the array directly
+    const result = await sql`
+      SELECT value, key FROM saved_data 
+      WHERE user_id = ${userId} AND key = ${name}
+      LIMIT 1;
+    `;
+    
     if (result.length > 0) {
-      // Access the first element of the array
-      return { success: true, data: result[0].data };
+      return { success: true, data: JSON.parse(result[0].value) };
     } else {
       return { success: false, error: "Data not found." };
     }
   } catch (error) {
+    console.error("Failed to load data:", error);
     return { success: false, error: "Failed to load data." };
   }
 }
