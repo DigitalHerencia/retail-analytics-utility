@@ -33,8 +33,14 @@ export const customers = pgTable('customers', {
   name: text('name'),
   email: varchar('email', { length: 255 }),
   phone: varchar('phone', { length: 32 }),
-  amountOwed: text('amount_owed'),
+  amountOwed: text('amount_owed'), // Consider changing to numeric if supported
   status: varchar('status', { length: 32 }),
+  paymentHistory: text('payment_history'), // JSON string
+  dueDate: text('due_date'),
+  address: text('address'),
+  notes: text('notes'),
+  createdAt: text('created_at'),
+  updatedAt: text('updated_at'),
 });
 
 // Inventory table (multi-tenant)
@@ -42,8 +48,16 @@ export const inventory = pgTable('inventory', {
   id: serial('id').primaryKey(),
   tenantId: serial('tenant_id').notNull(),
   name: text('name'),
+  description: text('description'),
   quantityG: text('quantity_g'),
-  price: text('price'),
+  quantityOz: text('quantity_oz'),
+  quantityKg: text('quantity_kg'),
+  costPerOz: text('cost_per_oz'),
+  totalCost: text('total_cost'),
+  purchaseDate: text('purchase_date'),
+  reorderThresholdG: text('reorder_threshold_g'),
+  createdAt: text('created_at'),
+  updatedAt: text('updated_at'),
 });
 
 // Transactions table (multi-tenant)
@@ -53,11 +67,16 @@ export const transactions = pgTable('transactions', {
   customerId: serial('customer_id'),
   inventoryId: serial('inventory_id'),
   type: varchar('type', { length: 32 }),
+  quantityGrams: text('quantity_grams'),
+  pricePerGram: text('price_per_gram'),
   totalPrice: text('total_price'),
+  cost: text('cost'),
+  profit: text('profit'),
   date: text('date'),
   paymentMethod: varchar('payment_method', { length: 64 }),
   notes: text('notes'),
   createdAt: text('created_at'),
+  updatedAt: text('updated_at'),
 });
 
 // Scenarios table (multi-tenant, for forecasting, etc.)
@@ -133,7 +152,13 @@ export const schemas = {
       email VARCHAR(255),
       phone VARCHAR(32),
       amount_owed TEXT,
-      status VARCHAR(32)
+      status VARCHAR(32),
+      payment_history TEXT,
+      due_date TEXT,
+      address TEXT,
+      notes TEXT,
+      created_at TEXT,
+      updated_at TEXT
     );
   `,
   inventory: `
@@ -141,8 +166,16 @@ export const schemas = {
       id SERIAL PRIMARY KEY,
       tenant_id INTEGER NOT NULL,
       name TEXT,
+      description TEXT,
       quantity_g TEXT,
-      price TEXT
+      quantity_oz TEXT,
+      quantity_kg TEXT,
+      cost_per_oz TEXT,
+      total_cost TEXT,
+      purchase_date TEXT,
+      reorder_threshold_g TEXT,
+      created_at TEXT,
+      updated_at TEXT
     );
   `,
   transactions: `
@@ -152,11 +185,16 @@ export const schemas = {
       customer_id INTEGER,
       inventory_id INTEGER,
       type VARCHAR(32),
+      quantity_grams TEXT,
+      price_per_gram TEXT,
       total_price TEXT,
+      cost TEXT,
+      profit TEXT,
       date TEXT,
       payment_method VARCHAR(64),
       notes TEXT,
-      created_at TEXT
+      created_at TEXT,
+      updated_at TEXT
     );
   `,
   scenarios: `
