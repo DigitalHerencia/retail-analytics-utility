@@ -65,7 +65,7 @@ export async function createTransaction(tenantId: string, transaction: Omit<Tran
     const quantityChange = transaction.type === "sale" ? -transaction.quantityGrams : transaction.quantityGrams;
     await sql`
       UPDATE inventory
-      SET quantity_g = CAST(quantity_g AS DECIMAL) + ${quantityChange}::decimal
+      SET quantity_g = (COALESCE(NULLIF(quantity_g, ''), '0')::decimal + ${quantityChange}::decimal)::text
       WHERE id = ${transaction.inventoryId}::uuid AND tenant_id = ${tenantId}::uuid
     `;
   }
@@ -88,7 +88,7 @@ export async function deleteTransaction(tenantId: string, transactionId: string)
 
     await sql`
       UPDATE inventory
-      SET quantity_g = CAST(quantity_g AS DECIMAL) + ${quantityChange}::decimal
+      SET quantity_g = (COALESCE(NULLIF(quantity_g, ''), '0')::decimal + ${quantityChange}::decimal)::text
       WHERE id = ${transaction.inventory_id}::uuid AND tenant_id = ${tenantId}::uuid
     `;
   }

@@ -35,13 +35,13 @@ export async function createInventoryItem(tenantId: string, item: Omit<Inventory
       ${tenantId}::uuid,
       ${item.name},
       ${item.description},
-      ${item.quantityG}::decimal,
-      ${item.quantityOz}::decimal,
-      ${item.quantityKg}::decimal,
-      ${item.costPerOz}::decimal,
-      ${item.totalCost}::decimal,
+      ${item.quantityG}::decimal::text,
+      ${item.quantityOz}::decimal::text,
+      ${item.quantityKg}::decimal::text,
+      ${item.costPerOz}::decimal::text,
+      ${item.totalCost}::decimal::text,
       ${item.purchaseDate},
-      ${item.reorderThresholdG}::decimal
+      ${item.reorderThresholdG}::decimal::text
     )
     RETURNING *
   `;
@@ -55,13 +55,13 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
     SET 
       name = ${item.name},
       description = ${item.description},
-      quantity_g = ${item.quantityG}::decimal,
-      quantity_oz = ${item.quantityOz}::decimal,
-      quantity_kg = ${item.quantityKg}::decimal,
-      cost_per_oz = ${item.costPerOz}::decimal,
-      total_cost = ${item.totalCost}::decimal,
+      quantity_g = ${item.quantityG}::decimal::text,
+      quantity_oz = ${item.quantityOz}::decimal::text,
+      quantity_kg = ${item.quantityKg}::decimal::text,
+      cost_per_oz = ${item.costPerOz}::decimal::text,
+      total_cost = ${item.totalCost}::decimal::text,
       purchase_date = ${item.purchaseDate},
-      reorder_threshold_g = ${item.reorderThresholdG}::decimal
+      reorder_threshold_g = ${item.reorderThresholdG}::decimal::text
     WHERE tenant_id = ${tenantId}::uuid AND id = ${item.id}::uuid
     RETURNING *
   `;
