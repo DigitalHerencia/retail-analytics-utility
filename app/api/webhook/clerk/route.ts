@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { headers } from "next/headers";
-import sql from "@/lib/db";
+import { sql } from "@vercel/postgres"; // Corrected import assuming @vercel/postgres
+import { clerkClient } from '@clerk/nextjs/server'; // Import clerkClient
 
 // This is the webhook handler for Clerk events
 // It processes events like user creation, updates, and deletions
@@ -76,29 +77,65 @@ async function handleUserCreated(userData: any) {
   const { id, email_addresses, username, first_name, last_name } = userData;
   const primaryEmail = email_addresses?.[0]?.email_address;
 
-  // Insert the new user into your database with a default tenant_id
-  // You might want to create a new tenant as well if your app supports multi-tenancy
+  // --- Tenant Assignment Logic ---
+  // Option 1: Create a new tenant for each user (Example)
+  const tenantName = `${first_name || username || 'User'}'s Tenant`;
+  let tenantId: string;
+  try {
+    // Ensure the sql function returns an object with 'rows'
+    const result = await sql`INSERT INTO tenants (name) VALUES (${tenantName}) RETURNING tenant_id;`;
+    // Check if rows exist and have data
+    if (result.rows && result.rows.length > 0) {
+        tenantId = result.rows[0].tenant_id;
+        console.log(`Created new tenant '${tenantName}' with ID: ${tenantId} for user ${id}`);
+    } else {
+        console.error("Tenant creation query did not return tenant_id.");
+        // Assign a fallback if the query structure is unexpected
+        tenantId = 'fallback-tenant-' + Math.random().toString(36).substring(2, 9);
+        console.warn(`Assigned temporary fallback tenant ID: ${tenantId} due to unexpected DB response.`);
+    }
+  } catch (dbError) {
+    console.error("Database error creating tenant:", dbError);
+    // Assign a temporary fallback if DB fails to create tenant
+    tenantId = 'fallback-tenant-' + Math.random().toString(36).substring(2, 9);
+    console.warn(`Assigned temporary fallback tenant ID: ${tenantId} due to DB error.`);
+  }
+  // --- End Tenant Assignment ---
+
+  // Insert the new user into your database with the assigned tenant_id
   try {
     await sql`
       INSERT INTO users (clerk_id, email, username, first_name, last_name, tenant_id)
-      VALUES (${id}, ${primaryEmail}, ${username || primaryEmail}, ${first_name || null}, ${last_name || null}, 
-              (SELECT COALESCE(
-                (SELECT tenant_id FROM tenants WHERE is_default = true LIMIT 1),
-                (SELECT tenant_id FROM tenants ORDER BY tenant_id LIMIT 1),
-                'default'
-              ))
-            )
+      VALUES (${id}, ${primaryEmail}, ${username || primaryEmail}, ${first_name || null}, ${last_name || null}, ${tenantId})
       ON CONFLICT (clerk_id) DO NOTHING;
     `;
   } catch (error) {
     console.error("Error creating user record:", error);
-    throw error;
+    // Don't re-throw yet, try updating Clerk metadata anyway
   }
+
+  // --- Update Clerk User Metadata ---
+  try {
+    // Correctly call clerkClient if it's a function returning the client
+    const client = await clerkClient();
+    await client.users.updateUser(id, {
+      publicMetadata: {
+        tenantId: tenantId, // Store the assigned tenantId here
+      },
+    });
+    console.log(`Stored tenantId ${tenantId} in Clerk publicMetadata for user ${id}`);
+  } catch (clerkError) {
+    console.error(`Error updating Clerk user ${id} publicMetadata:`, clerkError);
+    // Decide how to handle this - maybe retry later?
+    // For now, we'll just log the error. The user exists in the DB but not in Clerk metadata.
+  }
+  // --- End Clerk Update ---
 }
 
 async function handleUserUpdated(userData: any) {
   // Extract relevant user data from Clerk's payload
-  const { id, email_addresses, username, first_name, last_name } = userData;
+  // Use different variable names to avoid conflict with const declarations
+  const { id: clerkUserId, email_addresses, username: clerkUsername, first_name: clerkFirstName, last_name: clerkLastName } = userData;
   const primaryEmail = email_addresses?.[0]?.email_address;
 
   // Update the user in your database
@@ -107,21 +144,21 @@ async function handleUserUpdated(userData: any) {
       UPDATE users
       SET 
         email = ${primaryEmail},
-        username = ${username || primaryEmail},
-        first_name = ${first_name || null},
-        last_name = ${last_name || null},
+        username = ${clerkUsername || primaryEmail},
+        first_name = ${clerkFirstName || null},
+        last_name = ${clerkLastName || null},
         updated_at = NOW()
-      WHERE clerk_id = ${id};
+      WHERE clerk_id = ${clerkUserId};
     `;
   } catch (error) {
     console.error("Error updating user record:", error);
-    throw error;
+    throw error; // Re-throw error after logging
   }
 }
 
 async function handleUserDeleted(userData: any) {
   // Extract the user ID from Clerk's payload
-  const { id } = userData;
+  const { id: clerkUserId } = userData;
 
   // Mark the user as deleted in your database or actually delete them
   // depending on your application's requirements
@@ -129,14 +166,14 @@ async function handleUserDeleted(userData: any) {
     await sql`
       UPDATE users
       SET is_deleted = true, updated_at = NOW()
-      WHERE clerk_id = ${id};
+      WHERE clerk_id = ${clerkUserId};
     `;
     
     // If you want to actually delete the user instead, use this:
     // await sql`DELETE FROM users WHERE clerk_id = ${id};`;
   } catch (error) {
     console.error("Error deleting user record:", error);
-    throw error;
+    throw error; // Re-throw error after logging
   }
 }
 

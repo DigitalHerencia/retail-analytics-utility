@@ -21,25 +21,17 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import type { InventoryItem } from "@/lib/data"
+import type { InventoryItem } from "@/types"
 import {
   formatCurrency,
   formatGrams,
   formatOunces,
-  formatKilograms,
-  ouncesToGrams,
-  gramsToOunces,
-  gramsToKilograms,
 } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-
-interface InventoryTableProps {
-  inventory: InventoryItem[]
-  onAdd: (item: InventoryItem) => void
-  onUpdate: (item: InventoryItem) => void
-  onDelete: (id: string) => void
-  isLoading?: boolean
-}
+import { useRouter } from "next/navigation"
+import { addInventoryItem, editInventoryItem, removeInventoryItem } from "@/lib/actions/inventoryActions"
+import { useActionState } from "react"
+import { useFormStatus } from "react-dom"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -51,11 +43,26 @@ const formSchema = z.object({
   reorderThresholdG: z.coerce.number().nonnegative("Threshold must be non-negative"),
 })
 
-export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, isLoading = false }: InventoryTableProps) {
+interface InventoryTableProps {
+  inventory: InventoryItem[]
+  tenantId: string
+}
+
+function SubmitButton({ label }: { label: string }) {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white" disabled={pending}>
+      {pending ? (label === "ADD PRODUCT" ? "Adding..." : "Updating...") : label}
+    </Button>
+  )
+}
+
+export default function InventoryTable({ inventory, tenantId }: InventoryTableProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
   const { toast } = useToast()
+  const router = useRouter()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,110 +77,60 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
     },
   })
 
-  const handleAddItem = (values: z.infer<typeof formSchema>) => {
-    try {
-      let quantityG: number
-
-      if (values.unit === "oz") {
-        quantityG = ouncesToGrams(values.quantity)
-      } else if (values.unit === "kg") {
-        quantityG = values.quantity * 1000
-      } else {
-        quantityG = values.quantity
+  const [addState, addAction] = useActionState<
+    { success?: boolean; error?: string },
+    FormData
+  >(
+    async (state, formData) => {
+      try {
+        await addInventoryItem(tenantId, formData)
+        form.reset()
+        setIsAddDialogOpen(false)
+        return { success: true }
+      } catch {
+        return { error: "Failed to add inventory item" }
       }
+    },
+    { success: false }
+  )
 
-      const quantityOz = gramsToOunces(quantityG)
-      const quantityKg = gramsToKilograms(quantityG)
-      const costPerOz = values.costPerOz
-      const totalCost = costPerOz * quantityOz
-
-      const newItem: InventoryItem = {
-        id: uuidv4(),
-        name: values.name,
-        description: values.description || "",
-        quantityG,
-        quantityOz,
-        quantityKg,
-        purchaseDate: values.purchaseDate,
-        costPerOz,
-        totalCost,
-        reorderThresholdG: values.reorderThresholdG,
+  const [editState, editAction] = useActionState<
+    { success?: boolean; error?: string },
+    FormData
+  >(
+    async (_state, formData) => {
+      try {
+        if (!editingItem) return { error: "No item selected" }
+        await editInventoryItem(tenantId, editingItem.id, formData)
+        form.reset()
+        setIsEditDialogOpen(false)
+        setEditingItem(null)
+        return { success: true }
+      } catch {
+        return { error: "Failed to update inventory item" }
       }
+    },
+    { success: false }
+  )
 
-      onAdd(newItem)
-      
-      toast({
-        title: "Item added",
-        description: `${newItem.name} has been added to inventory`,
-      })
-      
-      setIsAddDialogOpen(false)
-      form.reset()
-    } catch (error) {
-      console.error("Error adding inventory item:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add inventory item",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleEditItem = (values: z.infer<typeof formSchema>) => {
-    if (!editingItem) return
-
-    try {
-      let quantityG: number
-
-      if (values.unit === "oz") {
-        quantityG = ouncesToGrams(values.quantity)
-      } else if (values.unit === "kg") {
-        quantityG = values.quantity * 1000
-      } else {
-        quantityG = values.quantity
+  const [deleteState, deleteAction] = useActionState<
+    { success?: boolean; error?: string },
+    string
+  >(
+    async (_state, id) => {
+      try {
+        await removeInventoryItem(tenantId, id)
+        return { success: true }
+      } catch {
+        return { error: "Failed to delete inventory item" }
       }
-
-      const quantityOz = gramsToOunces(quantityG)
-      const quantityKg = gramsToKilograms(quantityG)
-      const costPerOz = values.costPerOz
-      const totalCost = costPerOz * quantityOz
-
-      const updatedItem: InventoryItem = {
-        ...editingItem,
-        name: values.name,
-        description: values.description || "",
-        quantityG,
-        quantityOz,
-        quantityKg,
-        purchaseDate: values.purchaseDate,
-        costPerOz,
-        totalCost,
-        reorderThresholdG: values.reorderThresholdG,
-      }
-
-      onUpdate(updatedItem)
-      
-      toast({
-        title: "Item updated",
-        description: `${updatedItem.name} has been updated`,
-      })
-      
-      setIsEditDialogOpen(false)
-      setEditingItem(null)
-    } catch (error) {
-      console.error("Error updating inventory item:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update inventory item",
-        variant: "destructive",
-      })
-    }
-  }
+    },
+    { success: false }
+  )
 
   const openEditDialog = (item: InventoryItem) => {
     setEditingItem(item)
 
-    // Determine which unit to display based on the largest non-zero value
     let displayUnit = "oz";
     let displayQuantity = item.quantityOz;
 
@@ -198,23 +155,6 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
     setIsEditDialogOpen(true)
   }
 
-  const handleDeleteItem = (id: string) => {
-    try {
-      onDelete(id)
-      toast({
-        title: "Item deleted",
-        description: "Inventory item has been removed",
-      })
-    } catch (error) {
-      console.error("Error deleting inventory item:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete inventory item",
-        variant: "destructive",
-      })
-    }
-  }
-
   const openAddDialog = () => {
     form.reset({
       name: "",
@@ -226,24 +166,6 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
       reorderThresholdG: 100,
     })
     setIsAddDialogOpen(true)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Card className="card-sharp border-white">
-          <CardHeader>
-            <CardTitle className="gangster-font text-white">INVENTORY</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center p-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-              <p className="mt-4">Loading inventory data...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (
@@ -309,10 +231,12 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
                           <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
                             <Edit className="h-3 w-3" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDeleteItem(item.id)}>
+                          <Button variant="outline" size="sm" onClick={() => deleteAction(item.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
+                        {deleteState?.error && <div className="text-red-500 text-sm mt-2">{deleteState.error}</div>}
+                        {deleteState?.success && <div className="text-green-500 text-sm mt-2">Product deleted successfully.</div>}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -331,7 +255,7 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
             <DialogDescription>Enter the details of the new product for your inventory.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleAddItem)} className="space-y-4">
+            <form action={addAction} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -444,10 +368,10 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white">
-                  ADD PRODUCT
-                </Button>
+                <SubmitButton label="ADD PRODUCT" />
               </DialogFooter>
+              {addState?.error && <div className="text-red-500 text-sm mt-2">{addState.error}</div>}
+              {addState?.success && <div className="text-green-500 text-sm mt-2">Product added successfully.</div>}
             </form>
           </Form>
         </DialogContent>
@@ -461,7 +385,7 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
             <DialogDescription>Update the details of this inventory item.</DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleEditItem)} className="space-y-4">
+            <form action={editAction} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -574,10 +498,10 @@ export default function InventoryTable({ inventory, onAdd, onUpdate, onDelete, i
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white">
-                  UPDATE PRODUCT
-                </Button>
+                <SubmitButton label="UPDATE PRODUCT" />
               </DialogFooter>
+              {editState?.error && <div className="text-red-500 text-sm mt-2">{editState.error}</div>}
+              {editState?.success && <div className="text-green-500 text-sm mt-2">Product updated successfully.</div>}
             </form>
           </Form>
         </DialogContent>

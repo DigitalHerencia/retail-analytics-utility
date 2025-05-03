@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { DollarSign, Users, AlertTriangle, Clock } from "lucide-react"
-import type { Customer } from "@/lib/data"
+import type { Customer } from "@/types"
 import { formatCurrency } from "@/lib/utils"
 import { HustleStat } from "@/components/hustle-stat"
 

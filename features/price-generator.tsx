@@ -1,16 +1,18 @@
 "use client"
 
 import { useState } from "react"
+import { useActionState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { v4 as uuidv4 } from "uuid"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
-import { calculateDerivedValues } from "@/lib/utils";
-import { ScenarioData } from "@/lib/data"
+import type { ScenarioData } from "@/types"
+import { generateScenarios } from "@/lib/actions/generateScenarios"
+
+import { useFormStatus } from 'react-dom'
 
 const formSchema = z.object({
   basePrice: z.coerce.number().positive("Base price must be positive"),
@@ -24,6 +26,15 @@ const formSchema = z.object({
 
 interface PriceGeneratorProps {
   onGenerate: (scenarios: ScenarioData[]) => void
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending} className="bg-white hover:bg-white/90 text-black button-sharp border-white">
+      {pending ? "Generating..." : "GENERATE SCENARIOS"}
+    </Button>
+  )
 }
 
 export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
@@ -48,128 +59,50 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
     const basePrice = watchBasePrice || 20
     const priceIncrement = watchPriceIncrement || 1
     const marginPercentage = watchGrossMarginPercentage || 60
-
     const scenarios = []
-
-    // Generate 5 price points below base price
     for (let i = 5; i > 0; i--) {
       const price = Math.max(basePrice - i * priceIncrement, priceIncrement)
       const margin = (price * marginPercentage) / 100
       scenarios.push({ price, margin })
     }
-
-    // Add base price
     scenarios.push({
       price: basePrice,
       margin: (basePrice * marginPercentage) / 100,
     })
-
-    // Generate 5 price points above base price
     for (let i = 1; i <= 5; i++) {
       const price = basePrice + i * priceIncrement
       const margin = (price * marginPercentage) / 100
       scenarios.push({ price, margin })
     }
-
     setPreviewScenarios(scenarios)
   }
-
-  // Update preview when form values change
   useState(() => {
     const subscription = form.watch(() => updatePreview())
-    updatePreview() // Initial update
+    updatePreview()
     return () => subscription.unsubscribe()
   })
 
-  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
-    const { basePrice, priceIncrement, grossMarginPercentage, targetProfit } = values
-
-    const generatedScenarios: ScenarioData[] = []
-
-    // Generate 5 price points below base price
-    for (let i = 5; i > 0; i--) {
-      const price = Math.max(basePrice - i * priceIncrement, priceIncrement)
-      const margin = (price * grossMarginPercentage) / 100
-
-      const derivedValues = calculateDerivedValues(price, margin, targetProfit)
-
-      generatedScenarios.push({
-        id: uuidv4(),
-        scenario: `P${price.toFixed(0)}`,
-        retailPriceG: price,
-        grossMarginG: margin,
-        netProfit: targetProfit,
-        ...derivedValues,
-        monthlyRevenue: 0,
-        monthlyCost: 0,
-        netProfitAfterCommission: 0,
-        totalCommission: 0,
-        salespeople: [],
-        breakEvenGramsPerMonth: 0,
-        breakEvenOuncesPerMonth: 0,
-        profitPerGram: 0,
-        wholesalePricePerGram: 0,
-        retailPricePerGram: 0
-      })
-    }
-
-    // Add base price
-    const baseMargin = (basePrice * grossMarginPercentage) / 100
-    const baseDerivedValues = calculateDerivedValues(basePrice, baseMargin, targetProfit)
-
-    generatedScenarios.push({
-      id: uuidv4(),
-      scenario: `P${basePrice.toFixed(0)}*`,
-      retailPriceG: basePrice,
-      grossMarginG: baseMargin,
-      netProfit: targetProfit,
-      ...baseDerivedValues,
-      monthlyRevenue: 0,
-      monthlyCost: 0,
-      netProfitAfterCommission: 0,
-      totalCommission: 0,
-      salespeople: [],
-      breakEvenGramsPerMonth: 0,
-      breakEvenOuncesPerMonth: 0,
-      profitPerGram: 0,
-      wholesalePricePerGram: 0,
-      retailPricePerGram: 0
-    })
-
-    // Generate 5 price points above base price
-    for (let i = 1; i <= 5; i++) {
-      const price = basePrice + i * priceIncrement
-      const margin = (price * grossMarginPercentage) / 100
-
-      const derivedValues = calculateDerivedValues(price, margin, targetProfit)
-
-      generatedScenarios.push({
-        id: uuidv4(),
-        scenario: `P${price.toFixed(0)}`,
-        retailPriceG: price,
-        grossMarginG: margin,
-        netProfit: targetProfit,
-        ...derivedValues,
-        monthlyRevenue: 0,
-        monthlyCost: 0,
-        netProfitAfterCommission: 0,
-        totalCommission: 0,
-        salespeople: [],
-        breakEvenGramsPerMonth: 0,
-        breakEvenOuncesPerMonth: 0,
-        profitPerGram: 0,
-        wholesalePricePerGram: 0,
-        retailPricePerGram: 0
-      })
-    }
-
-    onGenerate(generatedScenarios)
-  }
+  // Server action state for scenario generation
+  const [state, formAction] = useActionState<
+    { success: boolean; error?: string },
+    FormData
+  >(
+    async (prevState: { success: boolean; error?: string }, formData: FormData) => {
+      try {
+        const scenarios = await generateScenarios(formData)
+        onGenerate(scenarios)
+        return { success: true, error: undefined }
+      } catch (e) {
+        return { success: false, error: "Failed to generate scenarios" }
+      }
+    },
+    { success: false, error: undefined },
+  )
 
   return (
     <div className="space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <form action={formAction} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
@@ -185,7 +118,6 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="priceIncrement"
@@ -200,7 +132,6 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="grossMarginPercentage"
@@ -222,7 +153,6 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="targetProfit"
@@ -238,7 +168,6 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
               )}
             />
           </div>
-
           <div className="space-y-4">
             <h3 className="text-lg font-medium gangster-font">PREVIEW OF PRICE POINTS</h3>
             <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
@@ -255,10 +184,13 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
               ))}
             </div>
           </div>
-
-          <Button type="submit" className="bg-white hover:bg-white/90 text-black button-sharp border-white">
-            GENERATE SCENARIOS
-          </Button>
+          <SubmitButton />
+          {state?.error && (
+            <div className="text-red-500 text-sm mt-2">{state.error}</div>
+          )}
+          {state?.success && (
+            <div className="text-green-500 text-sm mt-2">Scenarios generated successfully.</div>
+          )}
         </form>
       </Form>
     </div>

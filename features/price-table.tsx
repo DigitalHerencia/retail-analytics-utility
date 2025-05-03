@@ -3,7 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
-import { type PricePoint } from "@/lib/data"
+import type { PricePoint } from "@/types"
 
 interface PriceTableProps {
   pricePoints: PricePoint[]

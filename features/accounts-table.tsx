@@ -22,7 +22,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Plus, Edit, Trash2, DollarSign } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown } from "lucide-react"
-import type { Payment } from "@/lib/data"
+import type { Payment } from "@/types"
 import { formatCurrency } from "@/lib/utils"
 
 // Extended interface for Accounts Receivable

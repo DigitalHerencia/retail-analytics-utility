@@ -1,73 +1,83 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { type InventoryItem } from "@/lib/data"
+import { useState, useTransition } from "react"
+import type { InventoryItem } from "@/types"
+import { useRouter } from "next/navigation"
+import { createInventoryItem, updateInventoryItem as updateItem, deleteInventoryItem as deleteItem } from "@/lib/fetchers"
+import { toast } from "sonner"
 
-// This hook provides access to the inventory data
-// In a real application, this would likely fetch from a database or API
-export function useInventory() {
-  const [inventory, setInventory] = useState<InventoryItem[]>([])
+export function useInventory(initialInventory: InventoryItem[] = []) {
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory)
+  const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
-  // Fetch inventory for the current tenant
-  useEffect(() => {
-    const fetchInventory = async () => {
-      const tenant_id = localStorage.getItem("tenant_id")
-      if (!tenant_id) return setInventory([])
-      const res = await fetch(`/api/inventory?tenant_id=${tenant_id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setInventory(data.inventory || [])
-      } else {
-        setInventory([])
+  const addInventoryItem = async (item: Omit<InventoryItem, "id">) => {
+    try {
+      // Create optimistic ID for local state
+      const optimisticItem = {
+        ...item,
+        id: crypto.randomUUID(),
       }
-    }
-    fetchInventory()
-  }, [])
-
-  // Add, update, delete use API endpoints and always include tenant_id
-  const addInventoryItem = async (item: InventoryItem) => {
-    const tenant_id = localStorage.getItem("tenant_id")
-    if (!tenant_id) return
-    await fetch("/api/inventory", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...item, tenant_id })
-    })
-    // Re-fetch inventory
-    const res = await fetch(`/api/inventory?tenant_id=${tenant_id}`)
-    if (res.ok) {
-      const data = await res.json()
-      setInventory(data.inventory || [])
+      
+      // Optimistic update
+      setInventory(prev => [...prev, optimisticItem])
+      
+      startTransition(async () => {
+        // Save via server action
+        await createInventoryItem("your_tenant_id", optimisticItem)
+        router.refresh()
+        toast.success("Item added successfully")
+      })
+    } catch (error) {
+      console.error("Error adding inventory item:", error)
+      // Revert optimistic update
+      setInventory(inventory)
+      toast.error("Failed to add item")
+      throw error
     }
   }
 
   const updateInventoryItem = async (updatedItem: InventoryItem) => {
-    const tenant_id = localStorage.getItem("tenant_id")
-    if (!tenant_id) return
-    await fetch("/api/inventory", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...updatedItem, tenant_id })
-    })
-    // Re-fetch inventory
-    const res = await fetch(`/api/inventory?tenant_id=${tenant_id}`)
-    if (res.ok) {
-      const data = await res.json()
-      setInventory(data.inventory || [])
+    try {
+      // Optimistic update
+      const newInventory = inventory.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      )
+      setInventory(newInventory)
+      
+      startTransition(async () => {
+        // Save via server action
+        await updateItem("your_tenant_id", updatedItem)
+        router.refresh()
+        toast.success("Item updated successfully")
+      })
+    } catch (error) {
+      console.error("Error updating inventory item:", error)
+      // Revert optimistic update
+      setInventory(inventory)
+      toast.error("Failed to update item")
+      throw error
     }
   }
 
   const deleteInventoryItem = async (itemId: string) => {
-    const tenant_id = localStorage.getItem("tenant_id")
-    if (!tenant_id) return
-    await fetch(`/api/inventory?tenant_id=${tenant_id}&id=${itemId}`, {
-      method: "DELETE"
-    })
-    // Re-fetch inventory
-    const res = await fetch(`/api/inventory?tenant_id=${tenant_id}`)
-    if (res.ok) {
-      const data = await res.json()
-      setInventory(data.inventory || [])
+    try {
+      // Optimistic update
+      const newInventory = inventory.filter(item => item.id !== itemId)
+      setInventory(newInventory)
+      
+      startTransition(async () => {
+        // Delete via server action
+        await deleteItem("your_tenant_id", itemId)
+        router.refresh()
+        toast.success("Item deleted successfully")
+      })
+    } catch (error) {
+      console.error("Error deleting inventory item:", error)
+      // Revert optimistic update
+      setInventory(inventory)
+      toast.error("Failed to delete item")
+      throw error
     }
   }
 
@@ -76,6 +86,7 @@ export function useInventory() {
     addInventoryItem,
     updateInventoryItem,
     deleteInventoryItem,
-    setInventory // for manual updates if needed
+    setInventory,
+    isPending
   }
 }

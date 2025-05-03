@@ -1,47 +1,51 @@
 import { NextResponse } from "next/server";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-// Define public paths that don't require authentication
-const publicPaths = [
-  "/sign-in*",
-  "/sign-up*",
-  "/sign-out*",
-  "/help*",
-  "/api/get-tenant-id*"
+// Define public routes (no auth required)
+const publicRoutes = [
+  "/sign-in",
+  "/sign-up",
+  "/sign-out",
+  "/help",
+  "/api/get-tenant-id",
+  "/api/webhook",
+  // Add more public API routes as needed
 ];
 
-// Check if the path is public
-const isPublicPath = (path: string) => {
-  return publicPaths.some(publicPath => {
-    return path.match(new RegExp(`^${publicPath.replace(/\*/g, '.*')}$`));
-  });
-};
+function isPublicRoute(pathname: string) {
+  return publicRoutes.some((route) =>
+    pathname === route || pathname.startsWith(`${route}/`)
+  );
+}
 
 export default clerkMiddleware(async (auth, req) => {
   const { pathname } = req.nextUrl;
-  const isPublic = isPublicPath(pathname);
-  
-  // For public routes, allow access without authentication
-  if (isPublic) {
-    return NextResponse.next();
-  }
-  
-  // Handle routing based on authentication status
-  const { userId } = await auth.protect();
-  
-  // If the user is signed in and trying to access a sign-in/sign-up page, 
-  // redirect them to the home page
-  if (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up')) {
-    return NextResponse.redirect(new URL('/', req.url));
+  const authObject = await auth();
+  const userId = authObject.userId;
+
+  // Redirect signed-in users away from auth pages
+  if (userId && ["/sign-in", "/sign-up", "/sign-out"].some((r) => pathname.startsWith(r))) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
+  // Allow public routes
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Require authentication for all other routes
+  if (!userId) {
+    const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set("redirect_url", req.nextUrl.pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Authenticated and not on an auth page: allow
   return NextResponse.next();
 });
 
-// Export Clerk's matcher configuration
 export const config = {
   matcher: [
-    // Skip Next.js internal routes
     "/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)",
   ],
 };

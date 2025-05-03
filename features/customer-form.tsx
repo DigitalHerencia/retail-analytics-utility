@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { v4 as uuidv4 } from "uuid"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
+import { saveCustomer } from "@/lib/actions/customers";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -12,28 +12,43 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Textarea } from "@/components/ui/textarea"
-import type { Customer } from "@/lib/data"
-
-interface CustomerFormProps {
-  isOpen: boolean
-  onClose: () => void
-  onSave: (customer: Customer) => void
-  initialData?: Customer | null
-}
+} from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import type { Customer } from "@/types";
+import { useForm } from "react-hook-form";
 
 interface CustomerFormValues {
-  name?: string
-  phone?: string
-  amountOwed: number
-  dueDate?: string
-  notes?: string
+  name?: string;
+  phone?: string;
+  amountOwed: number;
+  dueDate?: string;
+  notes?: string;
 }
 
-export default function CustomerForm({ isOpen, onClose, onSave, initialData }: CustomerFormProps) {
-  const [isLoading, setIsLoading] = useState(false)
+interface CustomerFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialData?: Customer | null;
+  onSave: (customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+}
+// ...existing code...
+
+function SubmitButton({ initialData }: { initialData?: Customer | null }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending} className="bg-white hover:bg-white/90 text-black button-sharp">
+      {pending ? "SAVING..." : initialData ? "UPDATE CLIENT" : "ADD CLIENT"}
+    </Button>
+  );
+}
+
+export default function CustomerForm({ isOpen, onClose, initialData }: CustomerFormProps) {
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+    const result = await saveCustomer(formData);
+    if (result.success) onClose();
+    return result;
+  }, { success: false });
 
   const form = useForm<CustomerFormValues>({
     defaultValues: {
@@ -43,30 +58,7 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
       dueDate: initialData?.dueDate || "",
       notes: initialData?.notes || "",
     },
-  })
-
-  const handleSubmit = (values: CustomerFormValues) => {
-    setIsLoading(true)
-
-    const customer: Customer = {
-      id: initialData?.id || uuidv4(),
-      name: values.name || "Anonymous Client",
-      phone: values.phone || "",
-      email: "", // Keep empty for anonymity
-      address: "", // Keep empty for anonymity
-      amountOwed: values.amountOwed || 0,
-      dueDate: values.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      status: (values.amountOwed || 0) === 0 ? "paid" : "unpaid",
-      paymentHistory: initialData?.paymentHistory || [],
-      notes: values.notes || "",
-      createdAt: initialData?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    onSave(customer)
-    setIsLoading(false)
-    onClose()
-  }
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -81,9 +73,11 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
               : "Enter minimal client information. All fields are optional for anonymity."}
           </DialogDescription>
         </DialogHeader>
-
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form action={formAction} className="space-y-4">
+            {initialData && <input type="hidden" name="id" value={initialData.id} />}
+            {initialData && <input type="hidden" name="createdAt" value={initialData.createdAt} />}
+            {initialData && <input type="hidden" name="paymentHistory" value={JSON.stringify(initialData.paymentHistory)} />}
             <FormField
               control={form.control}
               name="name"
@@ -91,12 +85,11 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                 <FormItem>
                   <FormLabel className="gangster-font">NAME (OPTIONAL)</FormLabel>
                   <FormControl>
-                    <Input {...field} className="input-sharp" placeholder="Anonymous" />
+                    <Input {...field} name="name" className="input-sharp" placeholder="Anonymous" />
                   </FormControl>
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="phone"
@@ -104,12 +97,11 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                 <FormItem>
                   <FormLabel className="gangster-font">PHONE (OPTIONAL)</FormLabel>
                   <FormControl>
-                    <Input {...field} className="input-sharp" placeholder="Optional contact number" />
+                    <Input {...field} name="phone" className="input-sharp" placeholder="Optional contact number" />
                   </FormControl>
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -118,20 +110,20 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                   <FormItem>
                     <FormLabel className="gangster-font">AMOUNT OWED</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        step="0.01" 
-                        min="0" 
-                        className="input-sharp" 
+                      <Input
+                        {...field}
+                        name="amountOwed"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="input-sharp"
                         placeholder="0.00"
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} 
+                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="dueDate"
@@ -139,13 +131,12 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                   <FormItem>
                     <FormLabel className="gangster-font">DUE DATE (OPTIONAL)</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" className="input-sharp" />
+                      <Input {...field} name="dueDate" type="date" className="input-sharp" />
                     </FormControl>
                   </FormItem>
                 )}
               />
             </div>
-
             <FormField
               control={form.control}
               name="notes"
@@ -155,6 +146,7 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                   <FormControl>
                     <Textarea
                       {...field}
+                      name="notes"
                       className="input-sharp resize-none"
                       placeholder="Additional notes (private)"
                     />
@@ -162,15 +154,12 @@ export default function CustomerForm({ isOpen, onClose, onSave, initialData }: C
                 </FormItem>
               )}
             />
-
             <DialogFooter>
-              <Button type="submit" disabled={isLoading} className="bg-white hover:bg-white/90 text-black button-sharp">
-                {isLoading ? "SAVING..." : initialData ? "UPDATE CLIENT" : "ADD CLIENT"}
-              </Button>
+              <SubmitButton initialData={initialData} />
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

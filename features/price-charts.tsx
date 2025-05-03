@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import type { PricePoint } from "@/lib/data"
+import type { PricePoint } from "@/types"
 import {
   BarChart,
   Bar,

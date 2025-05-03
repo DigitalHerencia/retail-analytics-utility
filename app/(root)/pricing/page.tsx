@@ -3,7 +3,7 @@
 import { HustleStat } from "@/components/hustle-stat"
 import { HustleTip } from "@/components/hustle-tip"
 import { DollarSign, TrendingUp, FileStack } from "lucide-react"
-import SimplifiedPricing from "@/components/simplified-pricing"
+import SimplifiedPricing from "@/features/simplified-pricing"
 import { usePricing } from "@/hooks/use-pricing"
 import { formatCurrency } from "@/lib/utils"
 

@@ -4,13 +4,13 @@ import { useState, useMemo } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
-import PriceGenerator from "@/components/price-generator"
-import PriceTable from "@/components/price-table"
-import PriceCharts from "@/components/price-charts"
+import PriceGenerator from "@/features/price-generator"
+import PriceTable from "@/features/price-table"
+import PriceCharts from "@/features/price-charts"
 import { HustleTip } from "@/components/hustle-tip"
 import { Button } from "@/components/ui/button"
 import { Download, Save, RefreshCw } from "lucide-react"
-import type { ScenarioData, PricePoint } from "@/lib/data"
+import type { ScenarioData, PricePoint } from "@/types"
 
 export default function RetailPricingTool() {
   const [pricePoints, setPricePoints] = useState<PricePoint[]>([])

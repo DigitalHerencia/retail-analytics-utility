@@ -1,63 +1,52 @@
-"use client"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import { Suspense } from "react"
 
-import { useState, useEffect } from "react"
-import dynamic from "next/dynamic"
+import { RetailAnalyticsCharts } from "@/features/retail-analytics-charts"
+import { RetailAnalyticsTable } from "@/features/retail-analytics-table"
+import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { InventoryItem, Customer, Transaction } from "@/lib/data" // Import necessary types
+import { getTransactions, getCustomers, getInventory } from "@/lib/fetchers"
+import { tenants } from "@/lib/migrations/schema"
 
-// Dynamically import components that need client-side features
-const CashRegister = dynamic(() => import("@/components/cash-register"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[600px] flex items-center justify-center">
-      <Skeleton className="w-full h-full" />
-    </div>
-  )
-})
-// Main component
-export default function Home() {
-  const [isClient, setIsClient] = useState(false)
-  const [inventory, setInventory] = useState<InventoryItem[]>([]) // Add state for inventory
-  const [customers, setCustomers] = useState<Customer[]>([]) // Add state for customers
-  const [transactions, setTransactions] = useState<Transaction[]>([]) // Add state for transactions (optional, but needed for onAddTransaction)
-
-  // Handler to add a transaction
-  const handleAddTransaction = (transaction: Transaction) => {
-    setTransactions(prev => [...prev, transaction])
-    // Here you might also want to update inventory based on the transaction
+export default async function HomePage() {
+  const { userId } = await auth()
+  if (!userId) {
+    redirect("/sign-in")
   }
 
-  // This effect runs only on the client side after the component mounts
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+  // Fetch data in parallel
+  const [transactions, customers, inventory] = await Promise.all([
+    getTransactions(userId),
+    getCustomers(userId),
+    getInventory(userId)
+  ])
 
-  // Render a loading state or null until the component has mounted on the client
-  if (!isClient) {
-    // Optionally, return a skeleton or loading indicator matching the dynamic import's loading state
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-between">
-        <div className="w-full max-w-5xl mx-auto p-4">
-          <div className="w-full h-[600px] flex items-center justify-center">
-            <Skeleton className="w-full h-full" />
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // Only render the full content on the client side
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between">
-      <div className="w-full max-w-5xl mx-auto p-4">
-        <CashRegister
-          inventory={inventory}
-          customers={customers}
-          onUpdateInventory={setInventory}
-          onUpdateCustomers={setCustomers}
-          onAddTransaction={handleAddTransaction}
+    <div className="space-y-8 py-8">
+      <Suspense fallback={
+        <Card className="w-full h-[400px] animate-pulse">
+          <Skeleton className="w-full h-full" />
+        </Card>
+      }>
+        <RetailAnalyticsCharts
+          transactions={transactions.transactions}
+          customers={customers.customers}
+          inventory={inventory.inventory}
         />
-      </div>
-    </main>
+      </Suspense>
+
+      <Suspense fallback={
+        <Card className="w-full h-[500px] animate-pulse">
+          <Skeleton className="w-full h-full" />
+        </Card>
+      }>
+        <RetailAnalyticsTable
+          transactions={transactions.transactions}
+          customers={customers.customers}
+          inventory={inventory.inventory}
+        />
+      </Suspense>
+    </div>
   )
 }

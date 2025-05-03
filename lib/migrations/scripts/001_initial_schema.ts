@@ -4,33 +4,43 @@ import { schemas } from '../schema';
 
 /**
  * Initial schema migration
- * Creates the user_secrets table
+ * Creates all required tables for multi-tenant SaaS
  */
 export async function up() {
-  // Create user_secrets table if it doesn't exist
+  // Create all required tables for multi-tenant SaaS
   const result = await executeQuery(async () => {
-    sql.unsafe( schemas.userSecrets );
-    console.log('Created user_secrets table');
+    sql.unsafe(schemas.userSecrets);
+    sql.unsafe(schemas.tenants);
+    sql.unsafe(schemas.users);
+    sql.unsafe(schemas.customers);
+    sql.unsafe(schemas.inventory);
+    sql.unsafe(schemas.transactions);
+    sql.unsafe(schemas.scenarios);
+    console.log('Created all required tables');
     return true;
   });
-  
   if (!result.success) {
-    throw new Error(`Failed to create user_secrets table: ${result.error}`);
+    throw new Error(`Failed to create tables: ${result.error}`);
   }
 }
 
 /**
  * Downgrade migration (if needed)
- * This would drop the user_secrets table
+ * This would drop all required tables
  */
 export async function down() {
   const result = await executeQuery(async () => {
+    await sql`DROP TABLE IF EXISTS scenarios;`;
+    await sql`DROP TABLE IF EXISTS transactions;`;
+    await sql`DROP TABLE IF EXISTS inventory;`;
+    await sql`DROP TABLE IF EXISTS customers;`;
+    await sql`DROP TABLE IF EXISTS users;`;
+    await sql`DROP TABLE IF EXISTS tenants;`;
     await sql`DROP TABLE IF EXISTS user_secrets;`;
-    console.log('Dropped user_secrets table');
+    console.log('Dropped all tables');
     return true;
   });
-  
   if (!result.success) {
-    throw new Error(`Failed to drop user_secrets table: ${result.error}`);
+    throw new Error(`Failed to drop tables: ${result.error}`);
   }
 }

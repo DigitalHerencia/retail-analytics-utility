@@ -1,6 +1,6 @@
 "use client"
 
-import SettingsTab from "@/components/settings-tab"
+import SettingsTab from "@/features/settings-tab"
 import { usePersistentState } from "@/hooks/use-persistent-state"
 
 export default function SettingsPage() {
@@ -13,8 +13,8 @@ export default function SettingsPage() {
     customers, 
     setCustomers,
     isLoading,
-    saveAllChanges
-  } = usePersistentState();
+    saveAllChanges,
+  } = usePersistentState() as any;
 
   const handleDataLoad = (
     loadedBusinessData: any,

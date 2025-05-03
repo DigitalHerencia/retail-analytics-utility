@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
-import type { InventoryItem, Transaction } from "@/lib/data"
+import type { InventoryItem, Transaction } from "@/types"
 import { formatCurrency, formatGrams, formatOunces, gramsToOunces, ouncesToGrams } from "@/lib/utils"
 
 interface InventoryManagementProps {

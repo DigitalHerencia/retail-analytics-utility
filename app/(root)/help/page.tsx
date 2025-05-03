@@ -1,4 +1,4 @@
-import HelpTab from "@/components/help-tab"
+import HelpTab from "@/features/help-tab"
 
 export default function HelpPage() {
   return (

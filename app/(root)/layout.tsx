@@ -1,59 +1,33 @@
-import type React from "react"
+import { Inter } from "next/font/google"
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import { ClientLayout } from "@/features/client-layout"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils"
-import { Permanent_Marker, Inter } from "next/font/google"
-import Header from "@/components/header"
-import BottomNav from "@/components/bottom-nav"
-import { ClerkProvider } from '@clerk/nextjs'
-import { PricingProvider } from "@/hooks/use-pricing"
+import { getBusinessData } from "@/lib/fetchers"
 
-// Configure the fonts
-const permanentMarker = Permanent_Marker({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-permanent-marker",
-  display: "swap",
-})
+const inter = Inter({ subsets: ["latin"] })
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-})
+interface RootLayoutProps {
+  children: React.ReactNode
+}
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const { userId } = await auth()
+  if (!userId) {
+    redirect("/sign-in")
+  }
+
+  // Fetch business data server-side
+  const { businessData } = await getBusinessData(userId)
 
   return (
-    <ClerkProvider
-      appearance={{
-        captcha: {
-          theme: 'dark',
-          size: 'flexible',
-          language: 'en-US',
-        }
-      }}
-      signInFallbackRedirectUrl="/"
-    >
-      <html lang="en" suppressHydrationWarning className={`${permanentMarker.variable} ${inter.variable}`}>
-        <head>
-          <title>Hustlers Code</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-          <link rel="icon" href="/favicon.ico" sizes="any" />
-        </head>
-        <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-            <PricingProvider>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1 pb-16">{children}</main>
-                <BottomNav />
-              </div>
-            </PricingProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ClientLayout businessData={businessData}>
+          {children}
+        </ClientLayout>
+      </body>
+    </html>
   )
 }
 

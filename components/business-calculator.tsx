@@ -1,18 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Package, Users, Settings, TrendingUp, DollarSign } from "lucide-react"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
 import { calculatePricePoints } from "@/lib/utils"
 import { defaultBusinessData, defaultMarkupPercentages } from "@/lib/data"
-import type { BusinessData, PricePoint, InventoryItem, Customer, Transaction } from "@/lib/data"
-import SettingsTab from "@/components/settings-tab"
-import CustomersTab from "@/components/customers-tab"
-import CashRegister from "@/components/cash-register"
-import MonthlyForecast from "@/components/monthly-forecast"
-import SetupTab from "@/components/setup-tab"
-import InventoryManagement from "@/components/inventory-management"
+import type { BusinessData, PricePoint, InventoryItem, Customer, Transaction } from "@/types"
+import SettingsTab from "@/features/settings-tab"
+import CustomersTab from "@/features/customers-tab"
+import { CashRegister } from "@/features/cash-register"
+import MonthlyForecast from "@/features/monthly-forecast"
+import SetupTab from "@/features/setup-tab"
+import InventoryManagement from "@/features/inventory-management"
 import { loadData } from "@/app/(root)/actions"
 
 export default function BusinessCalculator() {
@@ -114,10 +112,7 @@ export default function BusinessCalculator() {
             <CashRegister
               inventory={inventory}
               customers={customers}
-              onUpdateInventory={setInventory}
-              onUpdateCustomers={setCustomers}
-              onAddTransaction={handleAddTransaction}
-              isLoading={isLoading}
+              initialTransactions={transactions}
             />
           </TabsContent>
 

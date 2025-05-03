@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import CustomersTab from "@/components/customers-tab"
+import CustomersTab from "@/features/customers-tab"
 import { usePersistentState } from "@/hooks/use-persistent-state"
 
 export default function ClientsPage() {

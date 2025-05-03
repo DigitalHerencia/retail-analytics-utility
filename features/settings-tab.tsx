@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { saveData, getSavedDataList, loadData, deleteData } from "@/app/(root)/actions"
-import type { BusinessData, InventoryItem, Customer } from "@/lib/data"
+import type { BusinessData, InventoryItem, Customer } from "@/types"
 
 interface SettingsTabProps {
   businessData: BusinessData

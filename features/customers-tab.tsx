@@ -236,8 +236,9 @@ export default function CustomersTab({
         <PaymentForm
           open={isPaymentOpen}
           onOpenChange={() => setIsPaymentOpen(false)}
-          // onSubmit={handleAddPayment} // Removed: PaymentForm handles submission via server action
+          // onSubmit={handleAddPayment} // Removed: PaymentForm likely handles submission via server action
           customerId={selectedCustomer.id}
+          // TODO: Add an onSuccess callback if needed to update parent state after successful payment
         />
       )}
 

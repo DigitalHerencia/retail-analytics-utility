@@ -26,7 +26,7 @@ import {
 } from "recharts"
 import { formatCurrency, formatPercentage } from "@/lib/utils"
 import { DollarSign, TrendingUp, Calendar, AlertTriangle } from "lucide-react"
-import type { BusinessData, InventoryItem, Customer, Transaction } from "@/lib/data"
+import type { BusinessData, InventoryItem, Customer, Transaction } from "@/types"
 import { useMediaQuery } from "@/hooks/use-mobile"
 import { usePricing } from "@/hooks/use-pricing"
 
@@ -277,11 +277,6 @@ export default function MonthlyForecast({
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
-          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">MONTHLY FORECAST</h1>
-          <p className="text-white/80 mt-1">TRACK YOUR PROGRESS. PLAN YOUR MOVES.</p>
-        </div>
-
         <HustleTip title="BUSINESS INTELLIGENCE">
           <p className="text-center">
             This page shows your monthly performance and projections. Track your progress towards your target profit,
