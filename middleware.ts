@@ -1,51 +1,54 @@
-import { NextResponse } from "next/server";
 import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-// Define public routes (no auth required)
-const publicRoutes = [
-  "/sign-in",
-  "/sign-up",
-  "/sign-out",
-  "/help",
-  "/api/get-tenant-id",
-  "/api/webhook",
-  // Add more public API routes as needed
+const publicPaths = [
+  "/sign-in*",
+  "/sign-up*",
+  "/sign-out*",
+  "/api/webhook/clerk*", // Allow Clerk webhooks
+  "/api/get-tenant-id*", // Allow tenant ID endpoint
 ];
 
-function isPublicRoute(pathname: string) {
-  return publicRoutes.some((route) =>
-    pathname === route || pathname.startsWith(`${route}/`)
-  );
-}
+const ignoredPaths = [
+  "/_next/static/*",
+  "/_next/image*",
+  "/favicon.ico",
+  "/title-*.png",
+  "/icon.png",
+  "/code.png",
+  "/logo.png",
+  "/register.jpeg",
+];
 
 export default clerkMiddleware(async (auth, req) => {
-  const { pathname } = req.nextUrl;
-  const authObject = await auth();
-  const userId = authObject.userId;
+    const { userId } = await auth();
+    const { pathname } = req.nextUrl;
 
-  // Redirect signed-in users away from auth pages
-  if (userId && ["/sign-in", "/sign-up", "/sign-out"].some((r) => pathname.startsWith(r))) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
+    // Redirect signed-in users away from auth pages
+    if (userId && ["/sign-in", "/sign-up", "/sign-out"].some(p => pathname.startsWith(p))) {
+      const homeUrl = new URL("/", req.url);
+      return NextResponse.redirect(homeUrl);
+    }
 
-  // Allow public routes
-  if (isPublicRoute(pathname)) {
+    // Allow users to visit public routes
+    if (publicPaths.some(path => pathname.match(new RegExp(`^${path.replace('*', '.*')}$`)))) {
+      return NextResponse.next();
+    }
+
+    // Force users to sign in if they're not authenticated
+    if (!userId && !ignoredPaths.some(path => pathname.match(new RegExp(`^${path.replace('*', '.*')}$`)))) {
+      const signInUrl = new URL("/sign-in", req.url);
+      signInUrl.searchParams.set("redirect_url", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
+
     return NextResponse.next();
   }
-
-  // Require authentication for all other routes
-  if (!userId) {
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.nextUrl.pathname);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  // Authenticated and not on an auth page: allow
-  return NextResponse.next();
-});
+);
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)",
+    "/((?!.*\\.|api|trpc|_next/static|_next/image|favicon.ico).*)",
+    "/"
   ],
 };

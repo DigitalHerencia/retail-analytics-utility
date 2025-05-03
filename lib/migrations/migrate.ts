@@ -3,6 +3,7 @@ import { schemas } from './schema';
 import { executeQuery } from '../db';
 import fs from 'fs';
 import path from 'path';
+import { neon } from '@neondatabase/serverless';
 
 // Create migrations table if it doesn't exist
 async function createMigrationsTable() {
@@ -132,11 +133,27 @@ export async function applyBaseSchema() {
   }
 }
 
-// If this file is run directly, run the migrations
-if (require.main === module) {
-  runMigrations().then(success => {
-    if (!success) {
-      process.exit(1);
+// New migration function using neon
+export async function migrate() {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  console.log('Starting database migrations...');
+  
+  try {
+    // Execute each schema creation in sequence
+    for (const [tableName, schemaSQL] of Object.entries(schemas)) {
+      console.log(`Creating/updating table: ${tableName}`);
+      await sql.query(schemaSQL);
     }
-  });
+    
+    console.log('Migrations completed successfully');
+  } catch (error) {
+    console.error('Migration failed:', error);
+    throw error;
+  }
+}
+
+// Allow running migrations directly
+if (require.main === module) {
+  migrate().catch(console.error);
 }
