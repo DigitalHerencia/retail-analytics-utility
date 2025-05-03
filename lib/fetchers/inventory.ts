@@ -12,6 +12,7 @@ export async function getInventory(tenantId: string): Promise<{ inventory: Inven
 
   const inventory = rows.map(row => ({
     id: row.id,
+    tenantId: row.tenant_id,
     name: row.name,
     description: row.description || "",
     quantityG: parseFloat(row.quantity_g) || 0,
@@ -45,8 +46,20 @@ export async function createInventoryItem(tenantId: string, item: Omit<Inventory
     )
     RETURNING *
   `;
-
-  return result[0];
+  const row = result[0];
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    name: row.name,
+    description: row.description || "",
+    quantityG: parseFloat(row.quantity_g) || 0,
+    quantityOz: parseFloat(row.quantity_oz) || 0,
+    quantityKg: parseFloat(row.quantity_kg) || 0,
+    costPerOz: parseFloat(row.cost_per_oz) || 0,
+    totalCost: parseFloat(row.total_cost) || 0,
+    purchaseDate: row.purchase_date || new Date().toISOString().split("T")[0],
+    reorderThresholdG: parseFloat(row.reorder_threshold_g) || 100
+  };
 }
 
 export async function updateInventoryItem(tenantId: string, item: InventoryItem) {
@@ -65,8 +78,20 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
     WHERE tenant_id = ${tenantId} AND id = ${item.id}
     RETURNING *
   `;
-
-  return result[0];
+  const row = result[0];
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    name: row.name,
+    description: row.description || "",
+    quantityG: parseFloat(row.quantity_g) || 0,
+    quantityOz: parseFloat(row.quantity_oz) || 0,
+    quantityKg: parseFloat(row.quantity_kg) || 0,
+    costPerOz: parseFloat(row.cost_per_oz) || 0,
+    totalCost: parseFloat(row.total_cost) || 0,
+    purchaseDate: row.purchase_date || new Date().toISOString().split("T")[0],
+    reorderThresholdG: parseFloat(row.reorder_threshold_g) || 100
+  };
 }
 
 export async function deleteInventoryItem(tenantId: string, itemId: string) {

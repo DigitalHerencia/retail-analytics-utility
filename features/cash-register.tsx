@@ -40,8 +40,12 @@ export function CashRegister({ inventory, customers, initialTransactions }: Cash
       return
     }
 
+    // TODO: Replace with actual tenantId from context or props
+    const tenantId = selectedItem.tenantId
+
     try {
       const transaction: Omit<Transaction, "id" | "createdAt"> = {
+        tenantId,
         date: new Date().toISOString(),
         type: "sale",
         inventoryId: selectedItem.id,

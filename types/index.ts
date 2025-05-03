@@ -21,6 +21,7 @@ export interface PricePoint {
 
 export interface InventoryItem {
   id: string
+  tenantId: string
   name: string
   description: string
   quantityG: number
@@ -44,6 +45,7 @@ export interface Payment {
 
 export interface Transaction {
   id: string
+  tenantId: string
   date: string
   type: "sale" | "payment" | "purchase"
   inventoryId: string | null
@@ -62,6 +64,7 @@ export interface Transaction {
 
 export interface Customer {
   id: string
+  tenantId: string
   name: string
   phone: string
   email: string
@@ -96,6 +99,7 @@ export interface Salesperson {
 
 export interface ScenarioData {
   id: string
+  tenantId: string
   scenario: string
   retailPriceG: number
   grossMarginG: number

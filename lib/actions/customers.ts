@@ -22,6 +22,7 @@ export async function saveCustomer(formData: FormData) {
     // Update existing customer
     const customer: Customer = {
       id,
+      tenantId: userId,
       name,
       phone,
       email: "",
@@ -39,6 +40,7 @@ export async function saveCustomer(formData: FormData) {
     // Create new customer
     const customer: Omit<Customer, "id" | "createdAt" | "updatedAt"> = {
       name,
+        tenantId: userId,
       phone,
       email: "",
       address: "",

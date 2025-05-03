@@ -10,26 +10,19 @@ export const userSecrets = pgTable('user_secrets', {
   secretAnswerHash: varchar('secret_answer_hash', { length: 255 }).notNull(),
 });
 
-// Tenants table
-export const tenants = pgTable('tenants', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 255 }).notNull().unique(),
-  createdAt: text('created_at'),
-});
-
-// Users table (multi-tenant, Clerk string IDs)
+// Users table (Clerk string IDs, tenantId is Clerk user ID)
 export const users = pgTable('users', {
   id: varchar('id', { length: 255 }).primaryKey(), // Clerk string ID
-  tenantId: serial('tenant_id').notNull(),
+  tenantId: varchar('tenant_id', { length: 255 }).notNull(), // Clerk user ID
   email: varchar('email', { length: 255 }).notNull(),
   name: varchar('name', { length: 255 }),
   status: varchar('status', { length: 32 }),
 });
 
-// Customers table (multi-tenant)
+// Customers table (tenantId is Clerk user ID)
 export const customers = pgTable('customers', {
   id: serial('id').primaryKey(),
-  tenantId: serial('tenant_id').notNull(),
+  tenantId: varchar('tenant_id', { length: 255 }).notNull(),
   name: text('name'),
   email: varchar('email', { length: 255 }),
   phone: varchar('phone', { length: 32 }),
@@ -43,10 +36,10 @@ export const customers = pgTable('customers', {
   updatedAt: text('updated_at'),
 });
 
-// Inventory table (multi-tenant)
+// Inventory table (tenantId is Clerk user ID)
 export const inventory = pgTable('inventory', {
   id: serial('id').primaryKey(),
-  tenantId: serial('tenant_id').notNull(),
+  tenantId: varchar('tenant_id', { length: 255 }).notNull(),
   name: text('name'),
   description: text('description'),
   quantityG: text('quantity_g'),
@@ -60,10 +53,10 @@ export const inventory = pgTable('inventory', {
   updatedAt: text('updated_at'),
 });
 
-// Transactions table (multi-tenant)
+// Transactions table (tenantId is Clerk user ID)
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
-  tenantId: serial('tenant_id').notNull(),
+  tenantId: varchar('tenant_id', { length: 255 }).notNull(),
   customerId: serial('customer_id'),
   inventoryId: serial('inventory_id'),
   type: varchar('type', { length: 32 }),
@@ -79,10 +72,10 @@ export const transactions = pgTable('transactions', {
   updatedAt: text('updated_at'),
 });
 
-// Scenarios table (multi-tenant, for forecasting, etc.)
+// Scenarios table (tenantId is Clerk user ID)
 export const scenarios = pgTable('scenarios', {
   id: serial('id').primaryKey(),
-  tenantId: serial('tenant_id').notNull(),
+  tenantId: varchar('tenant_id', { length: 255 }).notNull(),
   name: text('name'),
   data: text('data'),
 });
@@ -100,7 +93,6 @@ export const savedData = pgTable('saved_data', {
 // Define the schema object for drizzle
 const schema = { 
   userSecrets, 
-  tenants, 
   users, 
   customers, 
   inventory, 
@@ -128,17 +120,10 @@ export const schemas = {
       secret_answer_hash VARCHAR(255) NOT NULL
     );
   `,
-  tenants: `
-    CREATE TABLE IF NOT EXISTS tenants (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255) UNIQUE NOT NULL,
-      created_at TEXT
-    );
-  `,
   users: `
     CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(255) PRIMARY KEY,
-      tenant_id INTEGER NOT NULL,
+      tenant_id VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL,
       name VARCHAR(255),
       status VARCHAR(32)
@@ -147,7 +132,7 @@ export const schemas = {
   customers: `
     CREATE TABLE IF NOT EXISTS customers (
       id SERIAL PRIMARY KEY,
-      tenant_id INTEGER NOT NULL,
+      tenant_id VARCHAR(255) NOT NULL,
       name TEXT,
       email VARCHAR(255),
       phone VARCHAR(32),
@@ -164,7 +149,7 @@ export const schemas = {
   inventory: `
     CREATE TABLE IF NOT EXISTS inventory (
       id SERIAL PRIMARY KEY,
-      tenant_id INTEGER NOT NULL,
+      tenant_id VARCHAR(255) NOT NULL,
       name TEXT,
       description TEXT,
       quantity_g TEXT,
@@ -181,7 +166,7 @@ export const schemas = {
   transactions: `
     CREATE TABLE IF NOT EXISTS transactions (
       id SERIAL PRIMARY KEY,
-      tenant_id INTEGER NOT NULL,
+      tenant_id VARCHAR(255) NOT NULL,
       customer_id INTEGER,
       inventory_id INTEGER,
       type VARCHAR(32),
@@ -200,7 +185,7 @@ export const schemas = {
   scenarios: `
     CREATE TABLE IF NOT EXISTS scenarios (
       id SERIAL PRIMARY KEY,
-      tenant_id INTEGER NOT NULL,
+      tenant_id VARCHAR(255) NOT NULL,
       name TEXT,
       data TEXT
     );

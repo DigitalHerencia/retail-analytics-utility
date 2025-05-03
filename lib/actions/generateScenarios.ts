@@ -2,12 +2,31 @@
 import { calculateDerivedValues } from '../utils'
 import { v4 as uuidv4 } from 'uuid'
 import type { ScenarioData } from '@/types'
+import { auth } from "@clerk/nextjs/server"
+import sql from "../db"
 
 export async function generateScenarios(formData: FormData): Promise<ScenarioData[]> {
   const basePrice = Number(formData.get('basePrice'))
   const priceIncrement = Number(formData.get('priceIncrement'))
   const grossMarginPercentage = Number(formData.get('grossMarginPercentage'))
   const targetProfit = Number(formData.get('targetProfit'))
+  
+  // Get the authenticated user's ID first
+  const { userId } = await auth()
+  
+  // Retrieve the tenantId associated with this user
+  let tenantId = userId || 'default' // Ensure tenantId is never null
+  
+  if (userId) {
+    try {
+      const result = await sql`SELECT tenant_id FROM users WHERE clerk_id = ${userId}`
+      if (result.length > 0 && result[0].tenant_id) {
+        tenantId = result[0].tenant_id
+      }
+    } catch (error) {
+      console.error("Error retrieving tenant ID:", error)
+    }
+  }
 
   const generatedScenarios: ScenarioData[] = []
 
@@ -22,6 +41,7 @@ export async function generateScenarios(formData: FormData): Promise<ScenarioDat
       grossMarginG: margin,
       netProfit: targetProfit,
       ...derivedValues,
+      tenantId,
       monthlyRevenue: 0,
       monthlyCost: 0,
       netProfitAfterCommission: 0,
@@ -44,6 +64,7 @@ export async function generateScenarios(formData: FormData): Promise<ScenarioDat
     grossMarginG: baseMargin,
     netProfit: targetProfit,
     ...baseDerivedValues,
+    tenantId,
     monthlyRevenue: 0,
     monthlyCost: 0,
     netProfitAfterCommission: 0,
@@ -67,6 +88,7 @@ export async function generateScenarios(formData: FormData): Promise<ScenarioDat
       grossMarginG: margin,
       netProfit: targetProfit,
       ...derivedValues,
+      tenantId,
       monthlyRevenue: 0,
       monthlyCost: 0,
       netProfitAfterCommission: 0,

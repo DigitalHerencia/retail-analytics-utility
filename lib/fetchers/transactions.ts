@@ -17,6 +17,7 @@ export async function getTransactions(tenantId: string): Promise<{ transactions:
 
   const transactions = rows.map(row => ({
     id: row.id,
+    tenantId: row.tenant_id,
     date: row.date,
     type: row.type,
     inventoryId: row.inventory_id,
@@ -59,18 +60,25 @@ export async function createTransaction(tenantId: string, transaction: Omit<Tran
     )
     RETURNING *
   `;
-
-  // If it's a sale or purchase, update inventory quantities
-  if (transaction.type !== "payment" && transaction.inventoryId) {
-    const quantityChange = transaction.type === "sale" ? -transaction.quantityGrams : transaction.quantityGrams;
-    await sql`
-      UPDATE inventory
-      SET quantity_g = (COALESCE(NULLIF(quantity_g, ''), '0')::decimal + ${quantityChange}::decimal)::text
-      WHERE id = ${transaction.inventoryId} AND tenant_id = ${tenantId}
-    `;
-  }
-
-  return result[0];
+  const row = result[0];
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    date: row.date,
+    type: row.type,
+    inventoryId: row.inventory_id,
+    inventoryName: null,
+    quantityGrams: parseFloat(row.quantity_grams) || 0,
+    pricePerGram: parseFloat(row.price_per_gram) || 0,
+    totalPrice: parseFloat(row.total_price) || 0,
+    cost: parseFloat(row.cost) || 0,
+    profit: parseFloat(row.profit) || 0,
+    paymentMethod: row.payment_method || "",
+    customerId: row.customer_id,
+    customerName: null,
+    notes: row.notes || "",
+    createdAt: row.created_at
+  };
 }
 
 export async function deleteTransaction(tenantId: string, transactionId: string) {

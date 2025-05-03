@@ -7,7 +7,6 @@ import { RetailAnalyticsTable } from "@/features/retail-analytics-table"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getTransactions, getCustomers, getInventory } from "@/lib/fetchers"
-import { tenants } from "@/lib/migrations/schema"
 
 export default async function HomePage() {
   const { userId } = await auth()

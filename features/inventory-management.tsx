@@ -42,6 +42,7 @@ interface InventoryManagementProps {
   onUpdateInventory: (inventory: InventoryItem[]) => void
   onAddTransaction: (transaction: Transaction) => void
   isLoading?: boolean // Add isLoading prop
+  tenantId: string
 }
 
 const formSchema = z.object({
@@ -53,12 +54,12 @@ const formSchema = z.object({
   purchaseDate: z.string().min(1, "Purchase date is required"),
   reorderThresholdG: z.coerce.number().nonnegative("Threshold must be non-negative"),
 })
-
 export default function InventoryManagement({
   inventory,
   onUpdateInventory,
   onAddTransaction,
   isLoading = false, // Destructure isLoading with a default value
+  tenantId,
 }: InventoryManagementProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -106,19 +107,18 @@ export default function InventoryManagement({
       quantityG = values.quantity
     }
 
-    const quantityOz = gramsToOunces(quantityG)
-    const costPerOz = values.costPerOz
-    const totalCost = costPerOz * quantityOz
+    const totalCost = values.costPerOz * quantityG
 
     const newItem: InventoryItem = {
       id: uuidv4(),
+      tenantId: tenantId,
       name: values.name,
       description: values.description || "",
       quantityG,
-      quantityOz,
+      quantityOz: gramsToOunces(quantityG),
       quantityKg: quantityG / 1000,
       purchaseDate: values.purchaseDate,
-      costPerOz,
+      costPerOz: values.costPerOz,
       totalCost,
       reorderThresholdG: values.reorderThresholdG,
     }
@@ -126,6 +126,7 @@ export default function InventoryManagement({
     // Create a transaction record for the inventory purchase
     const transaction: Transaction = {
       id: uuidv4(),
+      tenantId: newItem.tenantId,
       date: new Date().toISOString(),
       type: "purchase",
       inventoryId: newItem.id,
@@ -187,6 +188,7 @@ export default function InventoryManagement({
       if (quantityDiff !== 0) {
         const transaction: Transaction = {
           id: uuidv4(),
+          tenantId: editingItem.tenantId,
           date: new Date().toISOString(),
           type: "purchase",
           inventoryId: editingItem.id,

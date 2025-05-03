@@ -12,6 +12,7 @@ export async function getCustomers(tenantId: string): Promise<{ customers: Custo
 
   const customers = rows.map(row => ({
     id: row.id,
+    tenantId: row.tenant_id,
     name: row.name,
     phone: row.phone || "",
     email: row.email || "",
@@ -52,7 +53,22 @@ export async function createCustomer(tenantId: string, customer: Omit<Customer, 
     RETURNING *
   `;
 
-  return result[0];
+  const row = result[0];
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    name: row.name,
+    phone: row.phone || "",
+    email: row.email || "",
+    address: row.address || "",
+    amountOwed: parseFloat(row.amount_owed) || 0,
+    dueDate: row.due_date || new Date().toISOString().split("T")[0],
+    status: row.status as "paid" | "unpaid" | "partial",
+    paymentHistory: JSON.parse(row.payment_history || "[]") as Payment[],
+    notes: row.notes || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
 export async function updateCustomer(tenantId: string, customer: Customer) {
@@ -73,7 +89,22 @@ export async function updateCustomer(tenantId: string, customer: Customer) {
     RETURNING *
   `;
 
-  return result[0];
+  const row = result[0];
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    name: row.name,
+    phone: row.phone || "",
+    email: row.email || "",
+    address: row.address || "",
+    amountOwed: parseFloat(row.amount_owed) || 0,
+    dueDate: row.due_date || new Date().toISOString().split("T")[0],
+    status: row.status as "paid" | "unpaid" | "partial",
+    paymentHistory: JSON.parse(row.payment_history || "[]") as Payment[],
+    notes: row.notes || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
 export async function deleteCustomer(tenantId: string, customerId: string) {

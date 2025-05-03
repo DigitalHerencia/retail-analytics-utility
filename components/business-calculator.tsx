@@ -118,6 +118,7 @@ export default function BusinessCalculator() {
 
           <TabsContent value="inventory" className="m-0 p-4 space-y-4">
             <InventoryManagement
+              tenantId=""
               inventory={inventory}
               onUpdateInventory={setInventory}
               onAddTransaction={handleAddTransaction}

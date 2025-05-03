@@ -23,6 +23,7 @@ export async function addInventoryItem(tenantId: string, formData: FormData) {
 
   const item: InventoryItem = {
     id: uuidv4(),
+    tenantId,
     name,
     description,
     quantityG,
