@@ -12,6 +12,7 @@ import { saveBusinessData } from "@/lib/actions/saveBusinessData"
 import type { BusinessData, InventoryItem, Customer, Transaction } from "@/types"
 import { useFormStatus } from "react-dom"
 import React from "react"
+import { formatCurrency, formatPercentage } from "@/lib/utils"
 
 const formSchema = z.object({
   wholesalePricePerOz: z.coerce.number().nonnegative("Price must be non-negative"),
@@ -98,8 +99,8 @@ export function RetailAnalyticsForm({
     inventory.reduce((sum, item) => sum + (item.quantityOz * item.costPerOz), 0)
 
   const profitMargin = totalRevenue > 0
-    ? ((totalProfit / totalRevenue) * 100).toFixed(2)
-    : "0.00"
+    ? formatPercentage(totalProfit / totalRevenue / 100)
+    : "0%"
 
   return (
     <Card className="border-white/20 card-sharp">
@@ -110,15 +111,15 @@ export function RetailAnalyticsForm({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-black/20 rounded-md">
             <p className="text-sm text-white/70">Revenue</p>
-            <p className="text-2xl font-bold text-white">${totalRevenue.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue)}</p>
           </div>
           <div className="p-4 bg-black/20 rounded-md">
             <p className="text-sm text-white/70">Expenses</p>
-            <p className="text-2xl font-bold text-white">${totalExpenses.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-white">{formatCurrency(totalExpenses)}</p>
           </div>
           <div className="p-4 bg-black/20 rounded-md">
             <p className="text-sm text-white/70">Profit Margin</p>
-            <p className="text-2xl font-bold text-white">{profitMargin}%</p>
+            <p className="text-2xl font-bold text-white">{profitMargin}</p>
           </div>
         </div>
         <Form {...form}>

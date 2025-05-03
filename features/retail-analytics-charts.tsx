@@ -19,6 +19,7 @@ import {
   ChartOptions
 } from 'chart.js';
 import type { InventoryItem, Customer, Transaction } from "@/types"
+import { formatGrams, formatCurrency } from "@/lib/utils"
 
 // Register Chart.js components
 ChartJS.register(
@@ -158,8 +159,8 @@ export function RetailAnalyticsCharts({
           label: (context) => {
             const value = context.parsed.y;
             return chartType === "items"
-              ? `${value.toFixed(2)}g`
-              : `$${value.toFixed(2)}`;
+              ? `${formatGrams(value)}g`
+              : formatCurrency(value);
           }
         }
       }

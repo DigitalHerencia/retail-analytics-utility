@@ -11,6 +11,7 @@ import { HustleTip } from "@/components/hustle-tip"
 import { Button } from "@/components/ui/button"
 import { Download, Save, RefreshCw } from "lucide-react"
 import type { ScenarioData, PricePoint } from "@/types"
+import { formatCurrency, formatGrams } from "@/lib/utils"
 
 export default function RetailPricingTool() {
   const [pricePoints, setPricePoints] = useState<PricePoint[]>([])
@@ -184,8 +185,8 @@ export default function RetailPricingTool() {
               {selectedPricePoint && (
                 <HustleTip title="SELECTED PRICE POINT">
                   <p>
-                    You've selected a markup of <strong>{selectedPricePoint.markupPercentage}%</strong> with a retail price of <strong>${selectedPricePoint.retailPricePerGram.toFixed(2)}/g</strong>.
-                    This would require selling <strong>{selectedPricePoint.breakEvenGramsPerMonth.toFixed(0)} grams</strong> per month to reach your profit target.
+                    You've selected a markup of <strong>{selectedPricePoint.markupPercentage}%</strong> with a retail price of <strong>{formatCurrency(selectedPricePoint.retailPricePerGram)}/g</strong>.
+                    This would require selling <strong>{formatGrams(selectedPricePoint.breakEvenGramsPerMonth)} grams</strong> per month to reach your profit target.
                   </p>
                 </HustleTip>
               )}

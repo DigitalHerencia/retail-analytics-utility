@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { DollarSign, Percent, Check } from "lucide-react"
-import { formatCurrency, businessConcepts } from "@/lib/utils"
+import { formatCurrency, businessConcepts, formatPercentage } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { usePricing } from "@/hooks/use-pricing"
@@ -177,7 +177,7 @@ export default function SimplifiedPricing() {
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="gangster-font">PROFIT MARGIN:</span>
-                  <span className="text-white font-medium">{profitMarginPercentage.toFixed(0)}%</span>
+                  <span className="text-white font-medium">{formatPercentage(profitMarginPercentage / 100)}</span>
                 </div>
               </div>
               <div>

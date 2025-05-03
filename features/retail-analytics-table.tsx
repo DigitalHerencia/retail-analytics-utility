@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { InventoryItem, Customer, Transaction } from "@/types"
+import { formatGrams, formatCurrency } from "@/lib/utils"
 
 interface RetailAnalyticsTableProps {
   transactions: Transaction[]
@@ -149,7 +150,7 @@ export function RetailAnalyticsTable({
                     <td className="p-3">
                       {transaction.type === "sale" ? (
                         <>
-                          {transaction.inventoryName} ({transaction.quantityGrams.toFixed(2)}g @ ${transaction.pricePerGram}/g)
+                          {transaction.inventoryName} ({formatGrams(transaction.quantityGrams)}g @ ${transaction.pricePerGram}/g)
                           {transaction.customerName && <><br /><span className="text-sm text-white/70">Customer: {transaction.customerName}</span></>}
                         </>
                       ) : (
@@ -164,11 +165,11 @@ export function RetailAnalyticsTable({
                         </div>
                       )}
                     </td>
-                    <td className="p-3">${transaction.totalPrice.toFixed(2)}</td>
+                    <td className="p-3">{formatCurrency(transaction.totalPrice)}</td>
                     <td className="p-3">
                       {transaction.type === "sale" && (
                         <span className={transaction.profit >= 0 ? "text-green-400" : "text-red-400"}>
-                          ${transaction.profit.toFixed(2)}
+                          {formatCurrency(transaction.profit)}
                         </span>
                       )}
                     </td>

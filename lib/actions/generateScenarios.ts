@@ -36,7 +36,7 @@ export async function generateScenarios(formData: FormData): Promise<ScenarioDat
     const derivedValues = calculateDerivedValues(price, margin, targetProfit)
     generatedScenarios.push({
       id: uuidv4(),
-      scenario: `P${price.toFixed(0)}`,
+      scenario: `P${Math.round(price)}`,
       retailPriceG: price,
       grossMarginG: margin,
       netProfit: targetProfit,
@@ -59,7 +59,7 @@ export async function generateScenarios(formData: FormData): Promise<ScenarioDat
   const baseDerivedValues = calculateDerivedValues(basePrice, baseMargin, targetProfit)
   generatedScenarios.push({
     id: uuidv4(),
-    scenario: `P${basePrice.toFixed(0)}*`,
+    scenario: `P${Math.round(basePrice)}*`,
     retailPriceG: basePrice,
     grossMarginG: baseMargin,
     netProfit: targetProfit,
@@ -83,7 +83,7 @@ export async function generateScenarios(formData: FormData): Promise<ScenarioDat
     const derivedValues = calculateDerivedValues(price, margin, targetProfit)
     generatedScenarios.push({
       id: uuidv4(),
-      scenario: `P${price.toFixed(0)}`,
+      scenario: `P${Math.round(price)}`,
       retailPriceG: price,
       grossMarginG: margin,
       netProfit: targetProfit,
