@@ -11,7 +11,7 @@ export async function getTransactions(tenantId: string): Promise<{ transactions:
     FROM transactions t
     LEFT JOIN inventory i ON t.inventory_id = i.id
     LEFT JOIN customers c ON t.customer_id = c.id
-    WHERE t.tenant_id = ${tenantId}::uuid
+    WHERE t.tenant_id = ${tenantId}
     ORDER BY t.date DESC
   `;
 
@@ -43,7 +43,7 @@ export async function createTransaction(tenantId: string, transaction: Omit<Tran
       price_per_gram, total_price, cost, profit, payment_method,
       customer_id, notes, created_at
     ) VALUES (
-      ${tenantId}::uuid,
+      ${tenantId},
       ${transaction.date},
       ${transaction.type},
       ${transaction.inventoryId},
@@ -66,7 +66,7 @@ export async function createTransaction(tenantId: string, transaction: Omit<Tran
     await sql`
       UPDATE inventory
       SET quantity_g = (COALESCE(NULLIF(quantity_g, ''), '0')::decimal + ${quantityChange}::decimal)::text
-      WHERE id = ${transaction.inventoryId}::uuid AND tenant_id = ${tenantId}::uuid
+      WHERE id = ${transaction.inventoryId} AND tenant_id = ${tenantId}
     `;
   }
 
@@ -77,7 +77,7 @@ export async function deleteTransaction(tenantId: string, transactionId: string)
   // First, get the transaction details to revert inventory if needed
   const transaction = (await sql`
     SELECT * FROM transactions 
-    WHERE tenant_id = ${tenantId}::uuid AND id = ${transactionId}::uuid
+    WHERE tenant_id = ${tenantId} AND id = ${transactionId}
   `)[0];
 
   if (transaction && transaction.type !== "payment" && transaction.inventory_id) {
@@ -89,13 +89,13 @@ export async function deleteTransaction(tenantId: string, transactionId: string)
     await sql`
       UPDATE inventory
       SET quantity_g = (COALESCE(NULLIF(quantity_g, ''), '0')::decimal + ${quantityChange}::decimal)::text
-      WHERE id = ${transaction.inventory_id}::uuid AND tenant_id = ${tenantId}::uuid
+      WHERE id = ${transaction.inventory_id} AND tenant_id = ${tenantId}
     `;
   }
 
   // Delete the transaction
   await sql`
     DELETE FROM transactions 
-    WHERE tenant_id = ${tenantId}::uuid AND id = ${transactionId}::uuid
+    WHERE tenant_id = ${tenantId} AND id = ${transactionId}
   `;
 }

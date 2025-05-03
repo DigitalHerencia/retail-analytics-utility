@@ -6,7 +6,7 @@ import { InventoryItem } from "@/types";
 export async function getInventory(tenantId: string): Promise<{ inventory: InventoryItem[] }> {
   const rows = await sql`
     SELECT * FROM inventory 
-    WHERE tenant_id = ${tenantId}::uuid
+    WHERE tenant_id = ${tenantId}
     ORDER BY name ASC
   `;
 
@@ -32,7 +32,7 @@ export async function createInventoryItem(tenantId: string, item: Omit<Inventory
       tenant_id, name, description, quantity_g, quantity_oz, quantity_kg,
       cost_per_oz, total_cost, purchase_date, reorder_threshold_g
     ) VALUES (
-      ${tenantId}::uuid,
+      ${tenantId},
       ${item.name},
       ${item.description},
       ${item.quantityG}::decimal::text,
@@ -62,7 +62,7 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
       total_cost = ${item.totalCost}::decimal::text,
       purchase_date = ${item.purchaseDate},
       reorder_threshold_g = ${item.reorderThresholdG}::decimal::text
-    WHERE tenant_id = ${tenantId}::uuid AND id = ${item.id}::uuid
+    WHERE tenant_id = ${tenantId} AND id = ${item.id}
     RETURNING *
   `;
 
@@ -72,6 +72,6 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
 export async function deleteInventoryItem(tenantId: string, itemId: string) {
   await sql`
     DELETE FROM inventory 
-    WHERE tenant_id = ${tenantId}::uuid AND id = ${itemId}::uuid
+    WHERE tenant_id = ${tenantId} AND id = ${itemId}
   `;
 }
