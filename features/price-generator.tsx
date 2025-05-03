@@ -13,6 +13,7 @@ import type { ScenarioData } from "@/types"
 import { generateScenarios } from "@/lib/actions/generateScenarios"
 
 import { useFormStatus } from 'react-dom'
+import { formatCurrency } from "@/lib/utils"
 
 const formSchema = z.object({
   basePrice: z.coerce.number().positive("Base price must be positive"),
@@ -105,7 +106,6 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
         <form action={formAction} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
-              control={form.control}
               name="basePrice"
               render={({ field }) => (
                 <FormItem>
@@ -178,8 +178,8 @@ export default function PriceGenerator({ onGenerate }: PriceGeneratorProps) {
                     index === 5 ? "border-white bg-white/10" : "border-white/50"
                   }`}
                 >
-                  <div className="font-medium">${scenario.price.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground">Margin: ${scenario.margin.toFixed(2)}</div>
+                  <div className="font-medium">{formatCurrency(scenario.price)}</div>
+                  <div className="text-xs text-muted-foreground">Margin: {formatCurrency(scenario.margin)}</div>
                 </div>
               ))}
             </div>

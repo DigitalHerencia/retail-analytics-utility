@@ -3,6 +3,7 @@ import { HustleStat } from "@/components/hustle-stat"
 import { Boxes, Scale, Weight, Package } from "lucide-react"
 import { getInventory } from "@/lib/fetchers"
 import { auth } from "@clerk/nextjs/server"
+import { formatCurrency, formatGrams, formatKilograms } from "@/lib/utils"
 
 export default async function InventoryPage() {
   const { userId } = await auth();
@@ -20,7 +21,7 @@ export default async function InventoryPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <HustleStat
           title="TOTAL VALUE"
-          value={`$${totalValue.toFixed(2)}`}
+          value={formatCurrency(totalValue)}
           icon={<Boxes className="h-5 w-5 text-white" />} />
         <HustleStat
           title="LOW STOCK ITEMS"
@@ -28,11 +29,11 @@ export default async function InventoryPage() {
           icon={<Scale className="h-5 w-5 text-white" />} />
         <HustleStat
           title="TOTAL WEIGHT (g)"
-          value={totalQuantityG.toFixed(2)}
+          value={formatGrams(totalQuantityG)}
           icon={<Weight className="h-5 w-5 text-white" />} />
         <HustleStat
           title="TOTAL WEIGHT (kg)"
-          value={totalQuantityKg.toFixed(2)}
+          value={formatKilograms(totalQuantityKg)}
           icon={<Package className="h-5 w-5 text-white" />} />
       </div>
 

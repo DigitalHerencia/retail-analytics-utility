@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatGrams, formatOunces } from "@/lib/utils"
 import type { PricePoint } from "@/types"
 
 interface PriceTableProps {
@@ -61,8 +61,8 @@ export default function PriceTable({
                 <TableCell className="px-4 py-3">{formatCurrency(point.wholesalePricePerGram)}</TableCell>
                 <TableCell className="px-4 py-3 font-medium">{formatCurrency(point.retailPricePerGram)}</TableCell>
                 <TableCell className="px-4 py-3">{formatCurrency(point.profitPerGram)}</TableCell>
-                <TableCell className="px-4 py-3">{point.breakEvenGramsPerMonth.toFixed(1)}</TableCell>
-                <TableCell className="px-4 py-3">{point.breakEvenOuncesPerMonth.toFixed(2)}oz</TableCell>
+                <TableCell className="px-4 py-3">{formatGrams(point.breakEvenGramsPerMonth)}</TableCell>
+                <TableCell className="px-4 py-3">{formatOunces(point.breakEvenOuncesPerMonth)}</TableCell>
                 <TableCell className="px-4 py-3">{formatCurrency(point.monthlyRevenue)}</TableCell>
                 <TableCell className="px-4 py-3">{formatCurrency(point.monthlyCost)}</TableCell>
                 <TableCell className="px-4 py-3 font-medium">{formatCurrency(point.monthlyProfit)}</TableCell>

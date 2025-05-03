@@ -15,7 +15,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { useMediaQuery } from "@/hooks/use-mobile"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatGrams, formatPercentage } from "@/lib/utils"
 
 interface PriceChartsProps {
   pricePoints: PricePoint[]
@@ -110,7 +110,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
               )}
               <Tooltip 
                 contentStyle={tooltipStyle} 
-                formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+                formatter={(value: number) => [`$${formatCurrency(value)}`, ""]}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
@@ -168,11 +168,11 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
                 axisLine={{ stroke: "#FFFFFF" }}
                 tickFormatter={(value) => `${value}g`}
               />
-              <Tooltip 
+              <Tooltip
                 contentStyle={tooltipStyle}
                 formatter={(value: number, name: string) => {
-                  if (name === "Retail Price") return [`$${value.toFixed(2)}`, name];
-                  return [`${value.toFixed(0)}g`, name];
+                  if (name === "Retail Price") return [`$${formatCurrency(value)}`, name];
+                  return [`${formatGrams(value)}g`, name];
                 }}
               />
               <Legend
@@ -229,7 +229,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+                formatter={(value: number) => [`$${formatCurrency(value)}`, ""]}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
@@ -279,11 +279,11 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
                 tick={{ ...chartStyle }} 
                 width={isMobile ? 40 : 60}
                 axisLine={{ stroke: "#FFFFFF" }}
-                tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                tickFormatter={(value) => formatPercentage(value)}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(value: number) => [`${(value * 100).toFixed(1)}%`, "Profit Margin"]}
+                formatter={(value: number) => [`${formatPercentage(value)}`, "Profit Margin"]}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}

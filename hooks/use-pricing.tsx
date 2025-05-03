@@ -63,7 +63,7 @@ export function PricingProvider({ children }: { children: ReactNode }) {
     // When markup changes, recalculate retail price while keeping wholesale price stable
     // Formula: Retail Price = Wholesale Price * (1 + Markup % / 100)
     const newRetailPrice = wholesalePricePerGram * (1 + percentage / 100)
-    setRetailPricePerGram(Number(newRetailPrice.toFixed(2)))
+    setRetailPricePerGram(Number(Number(newRetailPrice).toFixed(2)))
   }
   
   // Update wholesale price with GAAP-compliant calculation
@@ -72,7 +72,7 @@ export function PricingProvider({ children }: { children: ReactNode }) {
     // When wholesale price changes, recalculate retail price using current markup
     // Formula: Retail Price = Wholesale Price * (1 + Markup % / 100)
     const newRetailPrice = price * (1 + markupPercentage / 100)
-    setRetailPricePerGram(Number(newRetailPrice.toFixed(2)))
+    setRetailPricePerGram(Number(Number(newRetailPrice).toFixed(2)))
   }
   
   // Calculate retail price based on wholesale price and markup (used by other components)

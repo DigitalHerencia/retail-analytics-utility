@@ -24,7 +24,7 @@ import {
   Cell,
   LabelList,
 } from "recharts"
-import { formatCurrency, formatPercentage } from "@/lib/utils"
+import { formatCurrency, formatPercentage, formatGrams, formatOunces } from "@/lib/utils"
 import { DollarSign, TrendingUp, Calendar, AlertTriangle } from "lucide-react"
 import type { BusinessData, InventoryItem, Customer, Transaction } from "@/types"
 import { useMediaQuery } from "@/hooks/use-mobile"
@@ -556,7 +556,7 @@ export default function MonthlyForecast({
                         <div>
                           <div className="font-medium">{product.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            {(product.quantity || 0).toFixed(1)}g sold
+                            {formatGrams(product.quantity)}g sold
                           </div>
                         </div>
                         <div className="text-right">
@@ -611,7 +611,7 @@ export default function MonthlyForecast({
                           <div className="font-medium">{item.name}</div>
                           <div className="flex items-center space-x-2">
                             <div className={`w-3 h-3 rounded-full ${statusColor}`}></div>
-                            <span>{(item.quantityOz || 0).toFixed(2)} oz</span>
+                            <span>{formatOunces(item.quantityOz)} oz</span>
                           </div>
                         </div>
                         <div className="mt-2">
@@ -619,7 +619,7 @@ export default function MonthlyForecast({
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground mt-1">
                           <span>
-                            {formatPercentage(percentRemaining / 100)} of {(item.initialQuantityOz || 0).toFixed(2)} oz
+                            {formatPercentage(percentRemaining / 100)} of {formatOunces(item.initialQuantityOz)} oz
                           </span>
                           <span>{formatCurrency((item.quantityOz || 0) * (item.costPerOz || 0))}</span>
                         </div>

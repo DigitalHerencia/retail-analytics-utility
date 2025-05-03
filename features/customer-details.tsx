@@ -19,14 +19,15 @@ import {
 import { Calendar, DollarSign } from "lucide-react"
 import type { Customer, Payment } from "@/types"
 import PaymentForm from "@/features/payment-form"
+import { formatCurrency } from "@/lib/utils"
 
 interface CustomerDetailsProps {
   customer?: Customer
   open: boolean
   onOpenChange: (open: boolean) => void
-  onUpdate: (customer: Customer) => void
   onDelete: (id: string) => void
   onAddPayment: (customerId: string, payment: Payment) => void
+  onUpdate: (customer: Customer) => void
 }
 
 export default function CustomerDetails({
@@ -174,7 +175,7 @@ export default function CustomerDetails({
                         className="input-sharp"
                       />
                     ) : (
-                      <p className="text-white/70">${customer.amountOwed.toFixed(2)}</p>
+                      <p className="text-white/70">{formatCurrency(customer.amountOwed)}</p>
                     )}
                   </div>
 
@@ -281,7 +282,7 @@ export default function CustomerDetails({
                           <DollarSign className="h-5 w-5 text-white/70" />
                           <div>
                             <p className="text-sm font-medium text-white">
-                              ${payment.amount.toFixed(2)}
+                              {formatCurrency(payment.amount)}
                             </p>
                             <p className="text-xs text-white/70">Method: {payment.method}</p>
                           </div>

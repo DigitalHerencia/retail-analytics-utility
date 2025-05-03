@@ -11,7 +11,7 @@ import { Calendar, DollarSign } from "lucide-react"
 import { toast } from "sonner"
 import { processTransaction } from "@/lib/actions/transactions"
 import type { InventoryItem, Customer, Transaction } from "@/types"
-import { gramsToOunces } from "@/lib/utils"
+import { gramsToOunces, formatCurrency, formatGrams } from "@/lib/utils"
 
 interface CashRegisterProps {
   inventory: InventoryItem[]
@@ -112,7 +112,7 @@ export function CashRegister({ inventory, customers, initialTransactions }: Cash
                 <SelectContent>
                   {inventory.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
-                      {item.name} ({item.quantityG.toFixed(2)}g available)
+                      {item.name} ({formatGrams(item.quantityG)}g available)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -196,15 +196,15 @@ export function CashRegister({ inventory, customers, initialTransactions }: Cash
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/20 p-4 rounded-md">
             <div>
               <Label className="gangster-font">TOTAL</Label>
-              <p className="text-2xl font-bold text-white">${total.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(total)}</p>
             </div>
             <div>
               <Label className="gangster-font">COST</Label>
-              <p className="text-2xl font-bold text-white">${cost.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(cost)}</p>
             </div>
             <div>
               <Label className="gangster-font">PROFIT</Label>
-              <p className="text-2xl font-bold text-white">${profit.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-white">{formatCurrency(profit)}</p>
             </div>
           </div>
 
@@ -233,11 +233,11 @@ export function CashRegister({ inventory, customers, initialTransactions }: Cash
                   <DollarSign className="h-5 w-5 text-white/70" />
                   <div>
                     <p className="text-sm font-medium text-white">
-                      {transaction.inventoryName || "Payment"} - ${transaction.totalPrice.toFixed(2)}
+                      {transaction.inventoryName || "Payment"} - {formatCurrency(transaction.totalPrice)}
                     </p>
                     <p className="text-xs text-white/70">
                       {transaction.type === "sale"
-                        ? `${transaction.quantityGrams.toFixed(2)}g @ $${transaction.pricePerGram}/g`
+                        ? `${formatGrams(transaction.quantityGrams)}g @ $${transaction.pricePerGram}/g`
                         : `Payment via ${transaction.paymentMethod}`}
                     </p>
                   </div>

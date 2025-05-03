@@ -5,6 +5,7 @@ import { HustleStat } from "@/components/hustle-stat"
 import { DollarSign, TrendingUp, ShoppingBag } from "lucide-react"
 import type { InventoryItem, Customer, Transaction } from "@/types"
 import type { SetStateAction } from "react"
+import { formatCurrency, formatGrams } from "@/lib/utils"
 
 export default async function TransactionsPage() {
   const { userId } = await auth();
@@ -38,18 +39,21 @@ export default async function TransactionsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <HustleStat
           title="TOTAL SALES"
-          value={`$${totalSales.toFixed(2)}`}
+          value={formatCurrency(totalSales)}
           icon={<DollarSign className="h-5 w-5 text-white" />}
+          className="border-white"
         />
         <HustleStat
           title="TOTAL PROFIT"
-          value={`$${totalProfit.toFixed(2)}`}
+          value={formatCurrency(totalProfit)}
           icon={<TrendingUp className="h-5 w-5 text-white" />}
+          className="border-white"
         />
         <HustleStat
           title="ITEMS SOLD (g)"
-          value={totalItems.toFixed(2)}
+          value={formatGrams(totalItems)}
           icon={<ShoppingBag className="h-5 w-5 text-white" />}
+          className="border-white"
         />
       </div>
 

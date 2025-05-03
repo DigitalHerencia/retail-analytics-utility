@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { DollarSign, Users, AlertTriangle, Clock } from "lucide-react"
 import type { Customer } from "@/types"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatPercentage, formatGrams } from "@/lib/utils"
 import { HustleStat } from "@/components/hustle-stat"
 
 interface CustomerAnalyticsProps {
@@ -82,7 +82,7 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
         />
         <HustleStat
           title="COLLECTION RATE"
-          value={`${metrics.collectionRate.toFixed(1)}%`}
+          value={formatPercentage(metrics.collectionRate / 100)}
           icon={<Clock className="h-5 w-5 text-white" />}
           trend={metrics.collectionRate > 80 ? "up" : metrics.collectionRate > 50 ? "neutral" : "down"}
           trendValue={metrics.collectionRate > 80 ? "Excellent" : metrics.collectionRate > 50 ? "Average" : "Poor"}
@@ -171,7 +171,7 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
                           : "text-blood"
                     }
                   >
-                    {metrics.collectionRate.toFixed(1)}%
+                    {formatPercentage(metrics.collectionRate / 100)}
                   </span>
                 </div>
                 <div className="w-full bg-secondary h-4">
@@ -190,8 +190,8 @@ export default function CustomerAnalytics({ customers }: CustomerAnalyticsProps)
               <div className="bg-smoke p-4">
                 <div className="text-sm text-muted-foreground gangster-font">AVERAGE DAYS TO PAY</div>
                 <div className="text-xl font-bold mt-1 gangster-font">
-                  {Math.abs(metrics.avgDaysToPay).toFixed(1)} days
-                  {metrics.avgDaysToPay < 0 ? " before due date" : " after due date"}
+                  {metrics.avgDaysToPay !== undefined && metrics.avgDaysToPay !== null ? formatGrams(Math.abs(metrics.avgDaysToPay)) : '0.0'} days
+                  {metrics.avgDaysToPay && metrics.avgDaysToPay < 0 ? " before due date" : " after due date"}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {metrics.avgDaysToPay < 0

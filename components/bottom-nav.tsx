@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import {
   BarChart,
   Users,
@@ -67,10 +67,10 @@ export function BottomNav({ businessData = { wholesalePricePerOz: 0, targetProfi
           {businessData && (
             <div className="text-sm">
               <div className="text-white font-medium">
-                Target: ${businessData.targetProfitPerMonth.toFixed(2)}/mo
+                Target: {formatCurrency(businessData.targetProfitPerMonth)}/mo
               </div>
               <div className="text-white/70 text-xs">
-                ${businessData.wholesalePricePerOz.toFixed(2)}/oz wholesale
+                {formatCurrency(businessData.wholesalePricePerOz)}/oz wholesale
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@ import { getCustomers } from "@/lib/fetchers"
 import { CustomerList } from "@/features/customer-list"
 import { HustleStat } from "@/components/hustle-stat"
 import { Users, UserPlus, DollarSign } from "lucide-react"
+import { formatCurrency } from "@/lib/utils"
 
 export default async function CustomersPage() {
   const { userId } = await auth();
@@ -42,7 +43,7 @@ export default async function CustomersPage() {
         />
         <HustleStat
           title="TOTAL OWED"
-          value={`$${totalOwed.toFixed(2)}`}
+          value={formatCurrency(totalOwed)}
           icon={<DollarSign className="h-5 w-5 text-white" />}
           className="border-white"
         />

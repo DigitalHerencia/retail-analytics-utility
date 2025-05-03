@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import type { Customer, Payment } from "@/types"
+import { formatCurrency } from "@/lib/utils"
 
 interface CustomersTabProps {
   customers: Customer[]
@@ -251,7 +252,7 @@ export default function CustomersTab({
               Are you sure you want to delete this clieis a-whitection cannot be undone.
               {(selectedCustomer?.amountOwed || 0) > 0 && (
                 <span className="block mt-2 text-blood">
-                  Warning: This client still owes {selectedCustomer?.amountOwed?.toFixed(2)}. Deleting will remove all
+                  Warning: This client still owes {formatCurrency(selectedCustomer?.amountOwed)}. Deleting will remove all
                   payment records.
                 </span>
               )}

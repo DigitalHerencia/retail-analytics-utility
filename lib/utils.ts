@@ -9,13 +9,13 @@ export function cn(...inputs: ClassValue[]) {
 
 // Formatting functions with null/undefined checks
 export const formatCurrency = (value: number | undefined | null): string => {
-  if (value === undefined || value === null) return "$0.00"
+  if (value === undefined || value === null || isNaN(value)) return "$0.00"
   return `$${value.toFixed(2)}`
 }
 
 // Format grams
 export const formatGrams = (grams: number | undefined | null): string => {
-  if (grams === undefined || grams === null) return "0.0"
+  if (grams === undefined || grams === null || isNaN(grams)) return "0.0"
   return `${grams.toFixed(1)}`
 }
 
@@ -39,20 +39,20 @@ export const calculateDerivedValues = (retailPriceG: number, grossMarginG: numbe
 
 // Format kilograms with "kg" suffix
 export const formatKilograms = (kilograms: number | undefined | null): string => {
-  if (kilograms === undefined || kilograms === null) return "0.00kg"
+  if (kilograms === undefined || kilograms === null || isNaN(kilograms)) return "0.00kg"
   return `${kilograms.toFixed(2)}kg`
 }
 
 // Format ounces with "oz" suffix
 export const formatOunces = (ounces: number | undefined | null): string => {
-  if (ounces === undefined || ounces === null) return "0.00oz"
+  if (ounces === undefined || ounces === null || isNaN(ounces)) return "0.00oz"
   return `${ounces.toFixed(2)}oz`
 }
 
 // Format percentage
-export const formatPercentage = (value: number | undefined | null): string => {
-  if (value === undefined || value === null) return "0%"
-  return `${Math.round(value * 100)}%`
+export const formatPercentage = (value: number | undefined | null, digits: number = 0): string => {
+  if (value === undefined || value === null || isNaN(value)) return "0%"
+  return `${(value * 100).toFixed(digits)}%`
 }
 
 // Convert grams to ounces

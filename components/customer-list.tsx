@@ -12,6 +12,7 @@ import CustomerDetails from "@/features/customer-details"
 import type { Customer, Payment } from "@/types"
 import { createCustomer, updateCustomer, deleteCustomer, addCustomerPayment } from "@/lib/fetchers"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/utils"
 
 interface CustomerListProps {
   initialCustomers: Customer[]
@@ -164,7 +165,7 @@ export function CustomerList({ initialCustomers, tenantId }: CustomerListProps) 
                 <div className="flex justify-between items-center pt-2 border-t border-white/10">
                   <span className="text-white/70">Amount Owed:</span>
                   <span className="text-white font-medium">
-                    ${customer.amountOwed.toFixed(2)}
+                    {formatCurrency(customer.amountOwed)}
                   </span>
                 </div>
               </div>
