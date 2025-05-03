@@ -1,51 +1,29 @@
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
-import { Suspense } from "react"
+"use client"
 
-import { RetailAnalyticsCharts } from "@/features/retail-analytics-charts"
-import { RetailAnalyticsTable } from "@/features/retail-analytics-table"
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { getTransactions, getCustomers, getInventory } from "@/lib/fetchers"
+import CashRegister from "@/features/cash-register"
+import { useState } from "react"
+import type { Customer, InventoryItem, Transaction,  } from "@/types"
 
-export default async function HomePage() {
-  const { userId } = await auth()
-  if (!userId) {
-    redirect("/sign-in")
+export default function Home() {
+  // Use state to allow updates from CashRegister
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
+  // Demo: just log transactions
+  const handleAddTransaction = (transaction: Transaction) => {
+    // eslint-disable-next-line no-console
+    console.log("Transaction added:", transaction)
   }
 
-  // Fetch data in parallel
-  const [transactions, customers, inventory] = await Promise.all([
-    getTransactions(userId),
-    getCustomers(userId),
-    getInventory(userId)
-  ])
-
   return (
-    <div className="space-y-8 py-8">
-      <Suspense fallback={
-        <Card className="w-full h-[400px] animate-pulse">
-          <Skeleton className="w-full h-full" />
-        </Card>
-      }>
-        <RetailAnalyticsCharts
-          transactions={transactions.transactions}
-          customers={customers.customers}
-          inventory={inventory.inventory}
-        />
-      </Suspense>
-
-      <Suspense fallback={
-        <Card className="w-full h-[500px] animate-pulse">
-          <Skeleton className="w-full h-full" />
-        </Card>
-      }>
-        <RetailAnalyticsTable
-          transactions={transactions.transactions}
-          customers={customers.customers}
-          inventory={inventory.inventory}
-        />
-      </Suspense>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-between">
+      <div className="container p-6">
+        <CashRegister
+          inventory={ inventory }
+          customers={ customers }
+          onUpdateInventory={ setInventory }
+          onUpdateCustomers={ setCustomers }
+          onAddTransaction={ handleAddTransaction } retailPricePerGram={ 0 }        />
+      </div>
+    </main>
   )
 }

@@ -27,15 +27,14 @@ export default function HelpTab() {
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="border rounded-md border-white bg-black p-0 mb-4 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-0 bg-transparent p-0 overflow-hidden">
-            {["overview", "calculator", "inventory", "customers", "register", "forecast"].map((tab) => (
-              <TabsTrigger 
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 gap-0 bg-transparent p-0 overflow-hidden border border-white rounded h-12">
+            {["overview", "calculator", "inventory", "customers", "register", "forecast", "crash-course"].map((tab) => (
+              <TabsTrigger
                 key={tab}
-                value={tab} 
-                className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
-                style={{ borderBottom: '2px solid transparent', borderRadius: 0 }}
+                value={tab}
+                className="gangster-font text-xs sm:text-sm flex items-center justify-center h-12 w-full font-bold uppercase transition-colors rounded-none border-0 bg-transparent text-white data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:border-b-4 data-[state=active]:border-black focus-visible:outline-none"
               >
-                {tab.toUpperCase()}
+                {tab.replace(/-/g, ' ').toUpperCase()}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -296,6 +295,57 @@ export default function HelpTab() {
                     make smarter inventory purchases and pricing decisions to maximize your profits.
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="crash-course" className="space-y-6 mt-6">
+          <Card className="card-sharp border-white">
+            <CardHeader>
+              <CardTitle className="gangster-font text-white">RETAIL ANALYTICS CRASH COURSE</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p>
+                <strong>Retail analytics</strong> is the practice of using data to make smarter business decisions in retail. It helps you understand your sales, customers, inventory, and profits so you can grow your business and stay ahead of the competition.
+              </p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li><strong>Why it matters:</strong> Analytics turns raw numbers into insights. It shows you what’s selling, who’s buying, and where you’re making (or losing) money. With analytics, you can:
+                  <ul className="list-disc pl-5 mt-1">
+                    <li>Set the right prices for maximum profit</li>
+                    <li>Keep your best products in stock</li>
+                    <li>Spot trends and seasonality</li>
+                    <li>Reduce losses from unsold inventory</li>
+                    <li>Collect what you’re owed, faster</li>
+                  </ul>
+                </li>
+              </ul>
+              <div className="bg-smoke p-4 mt-4 rounded">
+                <h3 className="gangster-font text-white mb-2">GLOSSARY</h3>
+                <div className="space-y-2 text-sm">
+                  <div><strong className="text-white">Markup</strong>: The percentage you add to your cost to set your price. Higher markup means more profit per sale, but may slow down sales volume.</div>
+                  <div><strong className="text-white">Break-even</strong>: The amount you need to sell to cover your costs. After this, you start making profit.</div>
+                  <div><strong className="text-white">ROI</strong>: Return on Investment. Shows how much profit you make compared to what you spend.</div>
+                  <div><strong className="text-white">Profit Margin</strong>: The percentage of your selling price that is profit.</div>
+                  <div><strong className="text-white">Inventory Turnover</strong>: How quickly you sell through your stock. High turnover means you’re selling fast.</div>
+                  <div><strong className="text-white">Accounts Receivable</strong>: Money owed to you by customers who bought on credit.</div>
+                  <div><strong className="text-white">Revenue</strong>: Total money from sales before costs are subtracted.</div>
+                  <div><strong className="text-white">Operating Expenses</strong>: The costs of running your business (rent, supplies, etc.).</div>
+                </div>
+              </div>
+              <div className="bg-smoke p-4 mt-4 rounded">
+                <h3 className="gangster-font text-white mb-2">EXAMPLES</h3>
+                <ul className="list-disc pl-5 space-y-2 text-sm">
+                  <li><strong>Example 1:</strong> If you buy a product for $10 and sell it for $20, your markup is 100%. If you sell 50 units, your revenue is $1,000 and your profit (before expenses) is $500.</li>
+                  <li><strong>Example 2:</strong> If you notice your best-selling product is always out of stock, analytics tells you to order more next time to avoid missed sales.</li>
+                  <li><strong>Example 3:</strong> If your accounts receivable is growing, it means customers aren’t paying on time. Use the analytics to follow up and improve your cash flow.</li>
+                </ul>
+              </div>
+              <div className="bg-smoke p-4 mt-4 rounded">
+                <h3 className="gangster-font text-white mb-2">PRO TIP</h3>
+                <p className="text-sm">
+                  Review your analytics weekly. Small changes—like raising prices on bestsellers or cutting slow-moving stock—can make a big difference in your bottom line.
+                </p>
               </div>
             </CardContent>
           </Card>

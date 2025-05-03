@@ -3,9 +3,6 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import CustomerForm from "@/features/customer-form"
 import CustomerDetails from "@/features/customer-details"
@@ -21,16 +18,11 @@ interface CustomerListProps {
 
 export function CustomerList({ initialCustomers, tenantId }: CustomerListProps) { // Destructure tenantId
   const [customers, setCustomers] = useState(initialCustomers)
-  const [searchQuery, setSearchQuery] = useState("")
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchQuery.toLowerCase())
-  )
 
   async function handleAddCustomer(customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) {
     try {
@@ -125,23 +117,8 @@ export function CustomerList({ initialCustomers, tenantId }: CustomerListProps) 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Input
-          placeholder="Search customers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="input-sharp"
-        />
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-white hover:bg-white/90 text-black button-sharp font-medium"
-        >
-          <Plus className="h-5 w-5 mr-2" /> Add Customer
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {filteredCustomers.map((customer) => (
+      <div className="grid grid-cols-1 gap-4">
+        {customers.map(customer => (
           <Card
             key={customer.id}
             className="cursor-pointer hover:bg-smoke/10 transition-colors card-sharp border-white/20"
@@ -168,6 +145,18 @@ export function CustomerList({ initialCustomers, tenantId }: CustomerListProps) 
                     {formatCurrency(customer.amountOwed)}
                   </span>
                 </div>
+                {customer.dueDate && (
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-white/70">Due Date:</span>
+                    <span className="text-white font-medium">
+                      {(() => {
+                        // Try to parse as date, fallback to string
+                        const d = new Date(customer.dueDate)
+                        return isNaN(d.getTime()) ? customer.dueDate : d.toLocaleDateString()
+                      })()}
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

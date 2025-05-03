@@ -1,32 +1,34 @@
+import { getCustomers } from "@/lib/fetchers/customers"
 import { auth } from "@clerk/nextjs/server"
-import { getCustomers } from "@/lib/fetchers"
-import { CustomerList } from "@/features/customer-list"
+import CustomersTab from "@/features/customers-tab"
+import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
 import { Users, UserPlus, DollarSign } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
 
 export default async function CustomersPage() {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Not authenticated");
-
-  const { customers } = await getCustomers(userId);
-  
-  const totalCustomers = customers.length;
+  const { userId } = await auth()
+  if (!userId) throw new Error("Not authenticated")
+  const { customers } = await getCustomers(userId)
+  const totalCustomers = customers.length
   const newCustomers = customers.filter(c => {
-    const createdDate = new Date(c.createdAt);
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    return createdDate > oneMonthAgo;
-  }).length;
-  const totalOwed = customers.reduce((sum, c) => sum + c.amountOwed, 0);
+    const created = new Date(c.createdAt)
+    const now = new Date()
+    return (now.getTime() - created.getTime()) < 14 * 24 * 60 * 60 * 1000 // last 14 days
+  }).length
+  const totalOwed = customers.reduce((sum, c) => sum + (c.amountOwed || 0), 0)
 
   return (
-    <div className="container py-4 space-y-4">
-      <div className="bg-smoke p-6 rounded-md">
-        <div className="mb-4">
+    <div className="container p-4">
+      <div className="text-center mb-4">
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
           <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">CUSTOMERS</h1>
-          <p className="text-white/80 mt-1">Manage your customer relationships</p>
+          <p className="text-white/80 mt-1">KNOW YOUR CLIENTS. TRACK EVERY DOLLAR. GROW YOUR BASE.</p>
         </div>
+        <HustleTip title="CLIENT MANAGEMENT">
+          <p>
+            Keep your customer list up to date. Track outstanding balances, payment history, and client notes. Loyal clients are your best asset—treat them right and watch your business grow.
+          </p>
+        </HustleTip>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <HustleStat
@@ -43,13 +45,16 @@ export default async function CustomersPage() {
         />
         <HustleStat
           title="TOTAL OWED"
-          value={formatCurrency(totalOwed)}
+          value={`$${totalOwed.toFixed(2)}`}
           icon={<DollarSign className="h-5 w-5 text-white" />}
           className="border-white"
         />
       </div>
-
-      <CustomerList initialCustomers={ customers } tenantId={ "" } />
+      <CustomersTab
+        customers={customers}
+        tenantId={userId}
+        showTips={false}
+      />
     </div>
   )
 }

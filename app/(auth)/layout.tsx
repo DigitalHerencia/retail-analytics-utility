@@ -1,4 +1,3 @@
-import type React from "react"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
@@ -36,7 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <head>
           <title>Hustlers Code</title>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-          <link rel="icon" href="/favicon.ico" sizes="any" />
+          <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
         </head>
         <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
@@ -49,4 +48,3 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     </ClerkProvider>
   )
 }
-

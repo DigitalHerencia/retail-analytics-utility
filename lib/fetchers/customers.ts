@@ -10,21 +10,31 @@ export async function getCustomers(tenantId: string): Promise<{ customers: Custo
     ORDER BY name ASC
   `;
 
-  const customers = rows.map(row => ({
-    id: row.id,
-    tenantId: row.tenant_id,
-    name: row.name,
-    phone: row.phone || "",
-    email: row.email || "",
-    address: row.address || "",
-    amountOwed: parseFloat(row.amount_owed) || 0,
-    dueDate: row.due_date || new Date().toISOString().split("T")[0],
-    status: row.status as "paid" | "unpaid" | "partial",
-    paymentHistory: JSON.parse(row.payment_history || "[]") as Payment[],
-    notes: row.notes || "",
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
-  }));
+  const customers = rows.map(row => {
+    // safely parse payment history
+    let paymentHistory: Payment[];
+    try {
+      const raw = row.payment_history?.trim() || "[]";
+      paymentHistory = JSON.parse(raw) as Payment[];
+    } catch {
+      paymentHistory = [];
+    }
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      name: row.name,
+      phone: row.phone || "",
+      email: row.email || "",
+      address: row.address || "",
+      amountOwed: parseFloat(row.amount_owed) || 0,
+      dueDate: row.due_date || new Date().toISOString().split("T")[0],
+      status: row.status as "paid" | "unpaid" | "partial",
+      paymentHistory,
+      notes: row.notes || "",
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    };
+  });
 
   return { customers };
 }
@@ -54,6 +64,13 @@ export async function createCustomer(tenantId: string, customer: Omit<Customer, 
   `;
 
   const row = result[0];
+  let paymentHistory: Payment[];
+  try {
+    const raw = row.payment_history?.trim() || "[]";
+    paymentHistory = JSON.parse(raw) as Payment[];
+  } catch {
+    paymentHistory = [];
+  }
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -64,7 +81,7 @@ export async function createCustomer(tenantId: string, customer: Omit<Customer, 
     amountOwed: parseFloat(row.amount_owed) || 0,
     dueDate: row.due_date || new Date().toISOString().split("T")[0],
     status: row.status as "paid" | "unpaid" | "partial",
-    paymentHistory: JSON.parse(row.payment_history || "[]") as Payment[],
+    paymentHistory,
     notes: row.notes || "",
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -90,6 +107,13 @@ export async function updateCustomer(tenantId: string, customer: Customer) {
   `;
 
   const row = result[0];
+  let paymentHistory: Payment[];
+  try {
+    const raw = row.payment_history?.trim() || "[]";
+    paymentHistory = JSON.parse(raw) as Payment[];
+  } catch {
+    paymentHistory = [];
+  }
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -100,7 +124,7 @@ export async function updateCustomer(tenantId: string, customer: Customer) {
     amountOwed: parseFloat(row.amount_owed) || 0,
     dueDate: row.due_date || new Date().toISOString().split("T")[0],
     status: row.status as "paid" | "unpaid" | "partial",
-    paymentHistory: JSON.parse(row.payment_history || "[]") as Payment[],
+    paymentHistory,
     notes: row.notes || "",
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -121,7 +145,13 @@ export async function addCustomerPayment(tenantId: string, customerId: string, p
 
   if (!customer) throw new Error("Customer not found");
 
-  const paymentHistory = JSON.parse(customer.payment_history || "[]") as Payment[];
+  let paymentHistory: Payment[];
+  try {
+    const raw = customer.payment_history?.trim() || "[]";
+    paymentHistory = JSON.parse(raw) as Payment[];
+  } catch {
+    paymentHistory = [];
+  }
   paymentHistory.push(payment);
 
   // Recalculate amount owed

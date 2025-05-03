@@ -1,5 +1,7 @@
 "use client"
 
+// This component is no longer used for the details page. It can be deleted if not used elsewhere.
+
 import { useState } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -193,7 +195,12 @@ export default function CustomerDetails({
                         className="input-sharp"
                       />
                     ) : (
-                      <p className="text-white/70">{customer.dueDate}</p>
+                      <p className="text-white/70">{
+                        (() => {
+                          const d = new Date(customer.dueDate as string)
+                          return isNaN(d.getTime()) ? customer.dueDate : d.toLocaleDateString()
+                        })()
+                      }</p>
                     )}
                   </div>
                 </div>
@@ -289,7 +296,12 @@ export default function CustomerDetails({
                         </div>
                         <div className="flex items-center space-x-4">
                           <Calendar className="h-4 w-4 text-white/70" />
-                          <p className="text-sm text-white/70">{payment.date}</p>
+                          <p className="text-sm text-white/70">{
+                            (() => {
+                              const d = new Date(payment.date as string)
+                              return isNaN(d.getTime()) ? payment.date : d.toLocaleDateString()
+                            })()
+                          }</p>
                         </div>
                       </div>
                     ))}

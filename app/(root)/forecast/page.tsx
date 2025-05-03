@@ -2,32 +2,28 @@
 
 import MonthlyForecast from "@/features/monthly-forecast"
 import { usePersistentState } from "@/hooks/use-persistent-state"
+import type { BusinessData } from "@/types"
+import { PricingProvider } from "@/hooks/use-pricing"
 
 export default function ForecastPage() {
-  // Replace individual state management with unified persistent state
   const {
     businessData,
     inventory,
     customers,
     transactions,
-    isLoading
-  } = usePersistentState();
+  } = usePersistentState()
 
+  // Always render the page, even if data is missing
   return (
     <div className="container py-4">
-      {isLoading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-          <p className="mt-4">Loading forecast data...</p>
-        </div>
-      ) : (
+      <PricingProvider>
         <MonthlyForecast
-          businessData={businessData}
-          inventory={inventory}
-          customers={customers}
-          transactions={transactions}
+          businessData={businessData || { wholesalePricePerOz: 0, targetProfitPerMonth: 0, operatingExpenses: 0, targetProfit: 0 } as BusinessData}
+          inventory={inventory || []}
+          customers={customers || []}
+          transactions={transactions || []}
         />
-      )}
+      </PricingProvider>
     </div>
   )
 }

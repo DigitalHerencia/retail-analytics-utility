@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { DollarSign, Percent, Check } from "lucide-react"
+import { DollarSign, Percent, Check, TrendingUp } from "lucide-react"
 import { formatCurrency, businessConcepts, formatPercentage } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { usePricing } from "@/hooks/use-pricing"
+import { HustleStat } from "@/components/hustle-stat"
 
 export default function SimplifiedPricing() {
   const { 
@@ -36,6 +37,9 @@ export default function SimplifiedPricing() {
   
   // Calculate profit per ounce
   const profitPerOunce = profitPerGram * 28.35
+
+  // Calculate ROI (return on investment)
+  const roi = wholesalePricePerGram > 0 ? (profitPerGram / wholesalePricePerGram) * 100 : 0
 
   // Handle markup slider changes
   const handleMarkupChange = (value: number[]) => {
@@ -67,7 +71,29 @@ export default function SimplifiedPricing() {
   }
 
   return (
-    <div className="px-4 space-y-6">
+    <div className="mb-6 space-y-6">
+      {/* Dynamic Pricing Stats Row (styled like HustleStat, replaces old stats) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-10">
+        <HustleStat
+          title="ROI"
+          value={formatPercentage(roi / 100)}
+          icon={<TrendingUp className="h-5 w-5 text-white" />}
+          className="border-white"
+        />
+        <HustleStat
+          title="Margin"
+          value={formatPercentage(profitMarginPercentage / 100)}
+          icon={<Percent className="h-5 w-5 text-white" />}
+          className="border-white"
+        />
+        <HustleStat
+          title="Profit"
+          value={formatCurrency(profitPerGram) + "/g"}
+          icon={<DollarSign className="h-5 w-5 text-white" />}
+          className="border-white"
+        />
+      </div>
+
       <Card className="card-hover card-sharp border-white overflow-hidden">
         <CardHeader className="bg-black border-b border-white/20">
           <CardTitle className="gangster-font text-white flex items-center">
