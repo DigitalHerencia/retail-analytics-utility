@@ -10,25 +10,21 @@ export default function SignOut() {
   const router = useRouter()
 
   useEffect(() => {
+    // Modern sign-out: revoke all Clerk auth cookies, clear local storage, and redirect to login
     const performSignOut = async () => {
       try {
-        // Clear any local storage items first
         if (typeof window !== "undefined") {
           localStorage.removeItem("tenant_id")
         }
-        
-        // Sign out from Clerk
+        // Clerk signOut() revokes all session/auth cookies (industry standard)
         await signOut()
-        
-        // Redirect to sign-in page after sign-out completes
-        router.push("/sign-in")
+        // Always redirect to login page after sign-out
+        router.replace("/sign-in")
       } catch (error) {
         console.error("Error during sign out:", error)
-        // Still redirect to sign-in even if there's an error
-        router.push("/sign-in")
+        router.replace("/sign-in")
       }
     }
-
     performSignOut()
   }, [signOut, router])
 
