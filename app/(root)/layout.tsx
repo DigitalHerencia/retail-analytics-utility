@@ -2,6 +2,7 @@ import { Inter } from "next/font/google"
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { ClientLayout } from "@/features/client-layout"
+import { ClerkProvider } from '@clerk/nextjs'
 import "./globals.css"
 import { getBusinessData } from "@/lib/fetchers"
 
@@ -23,9 +24,11 @@ export default async function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ClientLayout businessData={businessData}>
-          {children}
-        </ClientLayout>
+        <ClerkProvider>
+          <ClientLayout businessData={businessData}>
+            {children}
+          </ClientLayout>
+        </ClerkProvider>
       </body>
     </html>
   )
