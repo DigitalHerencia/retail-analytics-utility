@@ -4,7 +4,6 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { v4 as uuidv4 } from "uuid"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,9 +28,11 @@ import {
 } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+// NOTE: Ensure all server actions in lib/actions/inventoryActions.ts are exported with 'use server'
 import { addInventoryItem, editInventoryItem, removeInventoryItem } from "@/lib/actions/inventoryActions"
 import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
+import { useTransition } from "react"
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -63,6 +64,7 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
   const { toast } = useToast()
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,8 +88,11 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
         await addInventoryItem(tenantId, formData)
         form.reset()
         setIsAddDialogOpen(false)
+        router.refresh() // Ensure inventory list updates
+        toast({ title: "Product added", description: "Product added successfully.", variant: "default" })
         return { success: true }
       } catch {
+        toast({ title: "Error", description: "Failed to add inventory item", variant: "destructive" })
         return { error: "Failed to add inventory item" }
       }
     },
@@ -105,8 +110,11 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
         form.reset()
         setIsEditDialogOpen(false)
         setEditingItem(null)
+        router.refresh() // Ensure inventory list updates
+        toast({ title: "Product updated", description: "Product updated successfully.", variant: "default" })
         return { success: true }
       } catch {
+        toast({ title: "Error", description: "Failed to update inventory item", variant: "destructive" })
         return { error: "Failed to update inventory item" }
       }
     },
@@ -120,8 +128,11 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
     async (_state, id) => {
       try {
         await removeInventoryItem(tenantId, id)
+        router.refresh() // Ensure inventory list updates
+        toast({ title: "Product deleted", description: "Product deleted successfully.", variant: "default" })
         return { success: true }
       } catch {
+        toast({ title: "Error", description: "Failed to delete inventory item", variant: "destructive" })
         return { error: "Failed to delete inventory item" }
       }
     },
@@ -131,22 +142,22 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
   const openEditDialog = (item: InventoryItem) => {
     setEditingItem(item)
 
-    let displayUnit = "oz";
-    let displayQuantity = item.quantityOz;
+    let displayUnit: "oz" | "g" | "kg" = "oz"
+    let displayQuantity = item.quantityOz
 
     if (item.quantityKg > 0.01) {
-      displayUnit = "kg";
-      displayQuantity = item.quantityKg;
+      displayUnit = "kg"
+      displayQuantity = item.quantityKg
     } else if (item.quantityG > 10) {
-      displayUnit = "g";
-      displayQuantity = item.quantityG;
+      displayUnit = "g"
+      displayQuantity = item.quantityG
     }
 
     form.reset({
       name: item.name,
       description: item.description,
       quantity: displayQuantity,
-      unit: displayUnit as "oz" | "g" | "kg",
+      unit: displayUnit,
       costPerOz: item.costPerOz,
       purchaseDate: item.purchaseDate,
       reorderThresholdG: item.reorderThresholdG,
@@ -193,19 +204,64 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
               <Table className="w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px]">Grade/Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Description</TableHead>
-                    <TableHead className="hidden sm:table-cell">Quantity</TableHead>
-                    <TableHead className="hidden sm:table-cell">Cost</TableHead>
-                    <TableHead className="hidden sm:table-cell">Purchase Date</TableHead>
-                    <TableHead className="hidden sm:table-cell">Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="w-[120px]">
+                      <div className="flex justify-between items-center w-full">
+                        <span>Product</span>
+                        <span className="sm:hidden">Actions</span>
+                      </div>
+                    </TableHead>
+                    <TableHead className="hidden sm:table-cell" colSpan={6}>
+                      <div className="flex justify-between items-center w-full">
+                        <span></span>
+                        <span className="font-medium">Actions</span>
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {inventory.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell className="font-medium w-[120px]">
+                        <div className="flex justify-between items-center w-full">
+                          <span>{item.name}</span>
+                          <div className="sm:hidden flex space-x-1">
+                            <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => startTransition(() => deleteAction(item.id))}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell" colSpan={6}>
+                        <div className="flex justify-between items-center w-full">
+                          <span></span>
+                          <div className="flex space-x-1">
+                            <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => startTransition(() => deleteAction(item.id))}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
+                      {/* Show delete feedback below the row */}
+                      {deleteState?.error && (
+                        <tr>
+                          <td colSpan={8}>
+                            <div className="text-red-500 text-sm mt-2">{deleteState.error}</div>
+                          </td>
+                        </tr>
+                      )}
+                      {deleteState?.success && (
+                        <tr>
+                          <td colSpan={8}>
+                            <div className="text-green-500 text-sm mt-2">Product deleted successfully.</div>
+                          </td>
+                        </tr>
+                      )}
                       <TableCell className="hidden sm:table-cell">{item.description}</TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <div className="space-y-1">
@@ -226,18 +282,6 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => deleteAction(item.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        {deleteState?.error && <div className="text-red-500 text-sm mt-2">{deleteState.error}</div>}
-                        {deleteState?.success && <div className="text-green-500 text-sm mt-2">Product deleted successfully.</div>}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -249,261 +293,341 @@ export default function InventoryTable({ inventory, tenantId }: InventoryTablePr
 
       {/* Add Inventory Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="bg-smoke border-white card-sharp max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="gangster-font text-white text-xl">ADD NEW PRODUCT</DialogTitle>
-            <DialogDescription>Enter the details of the new product for your inventory.</DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form action={addAction} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">PRODUCT NAME</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Premium, Standard, etc." className="input-sharp" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+        <DialogContent
+          className="max-w-lg w-full mx-auto my-8 bg-smoke border border-white/10 card-sharp overflow-y-auto"
+          style={{ maxHeight: 'calc(100vh - 80px)' }}
+        >
+          <div className="p-8">
+            <DialogHeader className="mb-6">
+              <DialogTitle className="gangster-font text-2xl text-white">ADD NEW PRODUCT</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Enter the details of the new product for your inventory.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Form {...form}>
+              <form action={addAction} className="space-y-6">
+                <div className="max-w-md mx-auto space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="gangster-font text-base">PRODUCT NAME</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Premium, Standard, etc." 
+                            className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">QUANTITY</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              {...field} 
+                              className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">UNIT</FormLabel>
+                          <select
+                            className="flex h-11 w-full rounded-none border border-white/20 bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-white/40 disabled:cursor-not-allowed disabled:opacity-50 input-sharp"
+                            {...field}
+                          >
+                            <option value="g">Grams (g)</option>
+                            <option value="oz">Ounces (oz)</option>
+                            <option value="kg">Kilograms (kg)</option>
+                          </select>
+                          <FormDescription className="text-sm text-muted-foreground mt-2">
+                            Select the unit of measurement
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="costPerOz"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">COST PER OUNCE</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              {...field} 
+                              className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-muted-foreground mt-2">
+                            Wholesale cost per ounce
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="purchaseDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">PURCHASE DATE</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="reorderThresholdG"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="gangster-font text-base">REORDER THRESHOLD (GRAMS)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="1" 
+                            min="0" 
+                            {...field} 
+                            className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm text-muted-foreground mt-2">
+                          When to reorder (in grams)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="pt-6 ">
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsAddDialogOpen(false)}
+                      className="button-sharp bg-transparent border-white/20 hover:bg-white/5 hover:border-white/40"
+                    >
+                      Cancel
+                    </Button>
+                    <SubmitButton label="ADD PRODUCT" />
+                  </DialogFooter>
+                </div>
+
+                {addState?.error && (
+                  <div className="text-destructive text-sm mt-2">{addState.error}</div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">DESCRIPTION</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Optional description" className="input-sharp resize-none" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {addState?.success && (
+                  <div className="text-emerald-500 text-sm mt-2">Product added successfully.</div>
                 )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">QUANTITY</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">UNIT</FormLabel>
-                      <select
-                        className="flex h-10 w-full rounded-none border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 input-sharp"
-                        {...field}
-                      >
-                        <option value="g">Grams (g)</option>
-                        <option value="oz">Ounces (oz)</option>
-                        <option value="kg">Kilograms (kg)</option>
-                      </select>
-                      <FormDescription>Select the unit of measurement</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="costPerOz"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">COST PER OUNCE</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
-                      </FormControl>
-                      <FormDescription>Wholesale cost per ounce</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="purchaseDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">PURCHASE DATE</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} className="input-sharp" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="reorderThresholdG"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">REORDER THRESHOLD (GRAMS)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="1" min="0" {...field} className="input-sharp" />
-                    </FormControl>
-                    <FormDescription>When to reorder (in grams)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter className="pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsAddDialogOpen(false)}
-                  className="button-sharp"
-                >
-                  Cancel
-                </Button>
-                <SubmitButton label="ADD PRODUCT" />
-              </DialogFooter>
-              {addState?.error && <div className="text-red-500 text-sm mt-2">{addState.error}</div>}
-              {addState?.success && <div className="text-green-500 text-sm mt-2">Product added successfully.</div>}
-            </form>
-          </Form>
+              </form>
+            </Form>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit Inventory Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="bg-smoke border-white card-sharp max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="gangster-font text-white text-xl">EDIT PRODUCT</DialogTitle>
-            <DialogDescription>Update the details of this inventory item.</DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form action={editAction} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">PRODUCT NAME</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Premium, Standard, etc." className="input-sharp" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+        <DialogContent
+          className="max-w-lg w-full mx-auto my-8 bg-smoke border border-white/10 card-sharp overflow-y-auto"
+          style={{ maxHeight: 'calc(100vh - 80px)' }}
+        >
+          <div className="p-8">
+            <DialogHeader className="mb-6">
+              <DialogTitle className="gangster-font text-2xl text-white">EDIT PRODUCT</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Update the details of this inventory item.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Form {...form}>
+              <form action={editAction} className="space-y-6">
+                <div className="max-w-md mx-auto space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="gangster-font text-base">PRODUCT NAME</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Premium, Standard, etc." 
+                            className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">QUANTITY</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              {...field} 
+                              className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">UNIT</FormLabel>
+                          <select
+                            className="flex h-11 w-full rounded-none border border-white/20 bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-white/40 disabled:cursor-not-allowed disabled:opacity-50 input-sharp"
+                            {...field}
+                          >
+                            <option value="g">Grams (g)</option>
+                            <option value="oz">Ounces (oz)</option>
+                            <option value="kg">Kilograms (kg)</option>
+                          </select>
+                          <FormDescription className="text-sm text-muted-foreground mt-2">
+                            Select the unit of measurement
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="costPerOz"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">COST PER OUNCE</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              {...field} 
+                              className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-muted-foreground mt-2">
+                            Wholesale cost per ounce
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="purchaseDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="gangster-font text-base">PURCHASE DATE</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              {...field} 
+                              className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="reorderThresholdG"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="gangster-font text-base">REORDER THRESHOLD (GRAMS)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="1" 
+                            min="0" 
+                            {...field} 
+                            className="input-sharp h-11 bg-background/50 border-white/20 focus-visible:border-white/40" 
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm text-muted-foreground mt-2">
+                          When to reorder (in grams)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="pt-6 mt-8 border-t border-white/10">
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsEditDialogOpen(false)}
+                      className="button-sharp bg-transparent border-white/20 hover:bg-white/5 hover:border-white/40"
+                    >
+                      Cancel
+                    </Button>
+                    <SubmitButton label="UPDATE PRODUCT" />
+                  </DialogFooter>
+                </div>
+
+                {editState?.error && (
+                  <div className="text-destructive text-sm mt-2">{editState.error}</div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">DESCRIPTION</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Optional description" className="input-sharp resize-none" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {editState?.success && (
+                  <div className="text-emerald-500 text-sm mt-2">Product updated successfully.</div>
                 )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">QUANTITY</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">UNIT</FormLabel>
-                      <select
-                        className="flex h-10 w-full rounded-none border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 input-sharp"
-                        {...field}
-                      >
-                        <option value="g">Grams (g)</option>
-                        <option value="oz">Ounces (oz)</option>
-                        <option value="kg">Kilograms (kg)</option>
-                      </select>
-                      <FormDescription>Select the unit of measurement</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="costPerOz"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">COST PER OUNCE</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
-                      </FormControl>
-                      <FormDescription>Wholesale cost per ounce</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="purchaseDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="gangster-font">PURCHASE DATE</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} className="input-sharp" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="reorderThresholdG"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="gangster-font">REORDER THRESHOLD (GRAMS)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="1" min="0" {...field} className="input-sharp" />
-                    </FormControl>
-                    <FormDescription>When to reorder (in grams)</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter className="pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsEditDialogOpen(false)}
-                  className="button-sharp"
-                >
-                  Cancel
-                </Button>
-                <SubmitButton label="UPDATE PRODUCT" />
-              </DialogFooter>
-              {editState?.error && <div className="text-red-500 text-sm mt-2">{editState.error}</div>}
-              {editState?.success && <div className="text-green-500 text-sm mt-2">Product updated successfully.</div>}
-            </form>
-          </Form>
+              </form>
+            </Form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

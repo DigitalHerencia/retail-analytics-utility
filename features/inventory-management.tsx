@@ -115,12 +115,13 @@ export default function InventoryManagement({
       name: values.name,
       description: values.description || "",
       quantityG,
-      quantityOz: gramsToOunces(quantityG),
+      quantityOz: gramsToOunces( quantityG ),
       quantityKg: quantityG / 1000,
       purchaseDate: values.purchaseDate,
       costPerOz: values.costPerOz,
       totalCost,
       reorderThresholdG: values.reorderThresholdG,
+      retailPrice: 0
     }
 
     // Create a transaction record for the inventory purchase

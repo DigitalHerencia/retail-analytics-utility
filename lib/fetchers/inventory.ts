@@ -4,27 +4,35 @@ import sql from "../db";
 import { InventoryItem } from "@/types";
 
 export async function getInventory(tenantId: string): Promise<{ inventory: InventoryItem[] }> {
-  const rows = await sql`
-    SELECT * FROM inventory 
-    WHERE tenant_id = ${tenantId}
-    ORDER BY name ASC
-  `;
+  try {
+    const rows = await sql`
+      SELECT * FROM inventory 
+      WHERE tenant_id = ${tenantId}
+      ORDER BY name ASC
+    `;
 
-  const inventory = rows.map(row => ({
-    id: row.id,
-    tenantId: row.tenant_id,
-    name: row.name,
-    description: row.description || "",
-    quantityG: parseFloat(row.quantity_g) || 0,
-    quantityOz: parseFloat(row.quantity_oz) || 0,
-    quantityKg: parseFloat(row.quantity_kg) || 0,
-    costPerOz: parseFloat(row.cost_per_oz) || 0,
-    totalCost: parseFloat(row.total_cost) || 0,
-    purchaseDate: row.purchase_date || new Date().toISOString().split("T")[0],
-    reorderThresholdG: parseFloat(row.reorder_threshold_g) || 100
-  }));
+    const inventory = rows.map(row => ({
+      id: row.id,
+      tenantId: row.tenant_id,
+      name: row.name,
+      description: row.description || "",
+      quantityG: parseFloat(row.quantity_g) || 0,
+      quantityOz: parseFloat(row.quantity_oz) || 0,
+      quantityKg: parseFloat(row.quantity_kg) || 0,
+      costPerOz: parseFloat(row.cost_per_oz) || 0,
+      totalCost: parseFloat(row.total_cost) || 0,
+      purchaseDate: row.purchase_date instanceof Date 
+        ? row.purchase_date.toISOString().split('T')[0] 
+        : (typeof row.purchase_date === 'string' ? row.purchase_date : new Date().toISOString().split('T')[0]),
+      reorderThresholdG: parseFloat(row.reorder_threshold_g) || 100,
+      retailPrice: parseFloat(row.retail_price) || 0
+    }));
 
-  return { inventory };
+    return { inventory };
+  } catch (error) {
+    console.error("Failed to fetch inventory:", error);
+    return { inventory: [] };
+  }
 }
 
 export async function createInventoryItem(tenantId: string, item: Omit<InventoryItem, "id">) {
@@ -36,13 +44,13 @@ export async function createInventoryItem(tenantId: string, item: Omit<Inventory
       ${tenantId},
       ${item.name},
       ${item.description},
-      ${item.quantityG}::decimal::text,
-      ${item.quantityOz}::decimal::text,
-      ${item.quantityKg}::decimal::text,
-      ${item.costPerOz}::decimal::text,
-      ${item.totalCost}::decimal::text,
+      ${item.quantityG},
+      ${item.quantityOz},
+      ${item.quantityKg},
+      ${item.costPerOz},
+      ${item.totalCost},
       ${item.purchaseDate},
-      ${item.reorderThresholdG}::decimal::text
+      ${item.reorderThresholdG}
     )
     RETURNING *
   `;
@@ -57,7 +65,9 @@ export async function createInventoryItem(tenantId: string, item: Omit<Inventory
     quantityKg: parseFloat(row.quantity_kg) || 0,
     costPerOz: parseFloat(row.cost_per_oz) || 0,
     totalCost: parseFloat(row.total_cost) || 0,
-    purchaseDate: row.purchase_date || new Date().toISOString().split("T")[0],
+    purchaseDate: row.purchase_date instanceof Date 
+      ? row.purchase_date.toISOString().split('T')[0] 
+      : (typeof row.purchase_date === 'string' ? row.purchase_date : new Date().toISOString().split('T')[0]),
     reorderThresholdG: parseFloat(row.reorder_threshold_g) || 100
   };
 }
@@ -68,13 +78,13 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
     SET 
       name = ${item.name},
       description = ${item.description},
-      quantity_g = ${item.quantityG}::decimal::text,
-      quantity_oz = ${item.quantityOz}::decimal::text,
-      quantity_kg = ${item.quantityKg}::decimal::text,
-      cost_per_oz = ${item.costPerOz}::decimal::text,
-      total_cost = ${item.totalCost}::decimal::text,
+      quantity_g = ${item.quantityG},
+      quantity_oz = ${item.quantityOz},
+      quantity_kg = ${item.quantityKg},
+      cost_per_oz = ${item.costPerOz},
+      total_cost = ${item.totalCost},
       purchase_date = ${item.purchaseDate},
-      reorder_threshold_g = ${item.reorderThresholdG}::decimal::text
+      reorder_threshold_g = ${item.reorderThresholdG}
     WHERE tenant_id = ${tenantId} AND id = ${item.id}
     RETURNING *
   `;
@@ -89,7 +99,9 @@ export async function updateInventoryItem(tenantId: string, item: InventoryItem)
     quantityKg: parseFloat(row.quantity_kg) || 0,
     costPerOz: parseFloat(row.cost_per_oz) || 0,
     totalCost: parseFloat(row.total_cost) || 0,
-    purchaseDate: row.purchase_date || new Date().toISOString().split("T")[0],
+    purchaseDate: row.purchase_date instanceof Date 
+      ? row.purchase_date.toISOString().split('T')[0] 
+      : (typeof row.purchase_date === 'string' ? row.purchase_date : new Date().toISOString().split('T')[0]),
     reorderThresholdG: parseFloat(row.reorder_threshold_g) || 100
   };
 }

@@ -15,9 +15,9 @@ type PricingContextType = {
 const PricingContext = createContext<PricingContextType | undefined>(undefined)
 
 export function PricingProvider({ children }: { children: ReactNode }) {
-  const [retailPricePerGram, setRetailPricePerGram] = useState(15) // Default retail price
-  const [markupPercentage, setMarkupPercentage] = useState(100) // Default markup
-  const [wholesalePricePerGram, setWholesalePricePerGram] = useState(7.5) // Default wholesale price
+  const [retailPricePerGram, setRetailPricePerGram] = useState(100) // Default retail price per gram
+  const [markupPercentage, setMarkupPercentage] = useState(251) // Default markup for 28.50 -> 100
+  const [wholesalePricePerGram, setWholesalePricePerGram] = useState(28.5) // Default wholesale price per gram
 
   // Load pricing data from localStorage on initial render
   useEffect(() => {
@@ -25,9 +25,9 @@ export function PricingProvider({ children }: { children: ReactNode }) {
     if (savedPricing) {
       try {
         const { retailPrice, markup, wholesalePrice } = JSON.parse(savedPricing)
-        setRetailPricePerGram(retailPrice || 15)
-        setMarkupPercentage(markup || 100)
-        setWholesalePricePerGram(wholesalePrice || 7.5)
+        setRetailPricePerGram(retailPrice || 100)
+        setMarkupPercentage(markup || 251)
+        setWholesalePricePerGram(wholesalePrice || 28.5)
       } catch (error) {
         console.error("Error loading pricing data:", error)
       }

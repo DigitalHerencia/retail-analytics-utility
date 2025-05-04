@@ -20,6 +20,7 @@ export interface PricePoint {
 }
 
 export interface InventoryItem {
+  retailPrice: number
   id: string
   tenantId: string
   name: string

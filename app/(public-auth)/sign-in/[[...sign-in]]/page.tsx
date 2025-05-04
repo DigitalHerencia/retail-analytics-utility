@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Head from "next/head"
-import sql from "@/lib/db"
 import { useRouter, useSearchParams } from "next/navigation"
 
 // Add a type declaration for window.Clerk to avoid TypeScript errors

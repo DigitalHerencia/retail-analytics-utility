@@ -33,17 +33,46 @@ export async function addInventoryItem(tenantId: string, formData: FormData) {
     costPerOz,
     totalCost,
     reorderThresholdG,
+    retailPrice: 0
   }
   await createInventoryItem(tenantId, item)
   return item
 }
 
 export async function editInventoryItem(tenantId: string, id: string, formData: FormData) {
-  // Same parsing as add, but with id
-  // ...parse as above...
-  // ...build updatedItem...
-  // await updateInventoryItem(tenantId, updatedItem)
-  // return updatedItem
+  // Parse and transform formData to InventoryItem shape for update
+  const name = String(formData.get('name'))
+  const description = String(formData.get('description') || '')
+  const quantity = Number(formData.get('quantity'))
+  const unit = String(formData.get('unit'))
+  const costPerOz = Number(formData.get('costPerOz'))
+  const purchaseDate = String(formData.get('purchaseDate'))
+  const reorderThresholdG = Number(formData.get('reorderThresholdG'))
+
+  let quantityG = quantity
+  if (unit === 'oz') quantityG = quantity * 28.3495
+  if (unit === 'kg') quantityG = quantity * 1000
+
+  const quantityOz = quantityG / 28.3495
+  const quantityKg = quantityG / 1000
+  const totalCost = costPerOz * quantityOz
+
+  const updatedItem: InventoryItem = {
+    id,
+    tenantId,
+    name,
+    description,
+    quantityG,
+    quantityOz,
+    quantityKg,
+    purchaseDate,
+    costPerOz,
+    totalCost,
+    reorderThresholdG,
+    retailPrice: 0
+  }
+  await updateInventoryItem(tenantId, updatedItem)
+  return updatedItem
 }
 
 export async function removeInventoryItem(tenantId: string, id: string) {

@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <head>
           <title>Hustlers Code</title>
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-          <link rel="icon" href="/icon.png" type="image/png" sizes="any" />
+          <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         </head>
         <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>

@@ -32,7 +32,7 @@ export default function HelpTab() {
               <TabsTrigger
                 key={tab}
                 value={tab}
-                className="gangster-font text-xs sm:text-sm flex items-center justify-center h-12 w-full font-bold uppercase transition-colors rounded-none border-0 bg-transparent text-white data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:border-b-4 data-[state=active]:border-black focus-visible:outline-none"
+                className="gangster-font text-xs sm:text-sm flex items-center justify-center h-12 w-full font-bold uppercase transition-colors rounded-none border-0 bg-transparent text-white data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
               >
                 {tab.replace(/-/g, ' ').toUpperCase()}
               </TabsTrigger>
