@@ -10,70 +10,97 @@ import { DollarSign, Percent, Check, TrendingUp } from "lucide-react"
 import { formatCurrency, businessConcepts, formatPercentage } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { usePricing } from "@/hooks/use-pricing"
+import * as z from "zod"
 import { HustleStat } from "@/components/hustle-stat"
+import type { BusinessData } from "@/types"
+import { useActionState } from "react"
+import { updatePriceAction } from "@/lib/actions/updatePriceAction"
 
-export default function SimplifiedPricing() {
-  const { 
-    retailPricePerGram,
-    markupPercentage,
-    wholesalePricePerGram,
-    setRetailPrice,
-    setMarkupPercentage,
-    setWholesalePrice
-  } = usePricing()
+const formSchema = z.object({
+  wholesalePricePerGram: z.coerce.number().min(0.01),
+  markupPercentage: z.coerce.number().min(1).max(300),
+  retailPricePerGram: z.coerce.number().min(0.01),
+})
 
-  const [saveSuccess, setSaveSuccess] = useState(false)
-  
-  // Calculate profit per gram (revenue - cost)
+interface SimplifiedPricingProps {
+  businessData: BusinessData
+}
+
+export default function SimplifiedPricing({ businessData }: SimplifiedPricingProps) {
+  const wholesalePricePerGram = businessData.wholesalePricePerOz / 28.35
+  const markupPercentage = businessData.markupPercentage ?? 100
+  const retailPricePerGram = businessData.retailPricePerGram ?? (wholesalePricePerGram * (1 + markupPercentage / 100))
   const profitPerGram = retailPricePerGram - wholesalePricePerGram
-  
-  // Calculate profit margin percentage (profit / revenue) * 100
-  // This follows GAAP principles for margin calculation
   const profitMarginPercentage = (profitPerGram / retailPricePerGram) * 100
-  
-  // Calculate retail price per ounce (convert from grams)
   const retailPricePerOunce = retailPricePerGram * 28.35
-  
-  // Calculate profit per ounce
-  const profitPerOunce = profitPerGram * 28.35
-
-  // Calculate ROI (return on investment)
   const roi = wholesalePricePerGram > 0 ? (profitPerGram / wholesalePricePerGram) * 100 : 0
 
-  // Handle markup slider changes
+  interface FormState {
+    success: boolean;
+    error?: string;
+  }
+
+  interface FormValues {
+    wholesalePricePerGram: number;
+    markupPercentage: number;
+    retailPricePerGram: number;
+  }
+
+  const [formState, formAction] = useActionState<FormState, FormData>(
+    async (_prevState, formData: FormData) => {
+      const values: FormValues = {
+        wholesalePricePerGram: Number(formData.get("wholesalePricePerGram")),
+        markupPercentage: Number(formData.get("markupPercentage")),
+        retailPricePerGram: Number(formData.get("retailPricePerGram")),
+      }
+      const parsed = formSchema.safeParse(values)
+      if (!parsed.success) {
+        return { success: false, error: "Invalid input." }
+      }
+      const formDataToSend = new FormData();
+      formDataToSend.append("wholesalePricePerOz", String(values.wholesalePricePerGram * 28.35));
+      formDataToSend.append("markupPercentage", String(values.markupPercentage));
+      formDataToSend.append("retailPricePerGram", String(values.retailPricePerGram));
+
+      await updatePriceAction(formDataToSend);
+      return { success: true }
+    },
+    { success: false, error: undefined }
+  )
+
+  const [localForm, setLocalForm] = useState({
+    wholesalePricePerGram,
+    markupPercentage,
+    retailPricePerGram,
+  })
+
   const handleMarkupChange = (value: number[]) => {
-    setMarkupPercentage(value[0])
+    const markup = value[0]
+    const newRetail = Number((localForm.wholesalePricePerGram * (1 + markup / 100)).toFixed(2))
+    setLocalForm(f => ({ ...f, markupPercentage: markup, retailPricePerGram: newRetail }))
   }
 
-  // Handle wholesale price input changes
-  const handleWholesalePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleWholesaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value)
-    if (!isNaN(value) && value >= 0) {
-      setWholesalePrice(value)
+    if (!isNaN(value) && value >= 0.01) {
+      const markup = localForm.markupPercentage
+      const newRetail = Number((value * (1 + markup / 100)).toFixed(2))
+      setLocalForm(f => ({ ...f, wholesalePricePerGram: value, retailPricePerGram: newRetail }))
     }
   }
 
-  // Handle retail price input changes
-  const handleRetailPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRetailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value)
-    if (!isNaN(value) && value >= 0) {
-      setRetailPrice(value)
+    if (!isNaN(value) && value >= 0.01) {
+      const wholesale = localForm.wholesalePricePerGram
+      const newMarkup = wholesale > 0 ? Math.round(((value - wholesale) / wholesale) * 100) : 100
+      setLocalForm(f => ({ ...f, retailPricePerGram: value, markupPercentage: newMarkup }))
     }
-  }
-
-  // Display success message when pricing is saved
-  const handleSavePricing = () => {
-    // The data is already saved in localStorage through the context
-    // Show success message
-    setSaveSuccess(true)
-    setTimeout(() => setSaveSuccess(false), 2000)
   }
 
   return (
-    <div className="mb-6 space-y-6">
-      {/* Dynamic Pricing Stats Row (styled like HustleStat, replaces old stats) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-10">
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <HustleStat
           title="ROI"
           value={formatPercentage(roi / 100)}
@@ -93,7 +120,6 @@ export default function SimplifiedPricing() {
           className="border-white"
         />
       </div>
-
       <Card className="card-hover card-sharp border-white overflow-hidden">
         <CardHeader className="bg-black border-b border-white/20">
           <CardTitle className="gangster-font text-white flex items-center">
@@ -101,144 +127,143 @@ export default function SimplifiedPricing() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="flex items-center justify-between mb-2 gangster-font">
-                  <span className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-1 text-white" />
-                    WHOLESALE COST PER GRAM
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="ml-1 cursor-help">ⓘ</span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p>{businessConcepts.wholesale}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </span>
-                  <span className="font-medium white-text">{formatCurrency(wholesalePricePerGram)}</span>
-                </Label>
-                <Input
-                  type="number"
-                  value={wholesalePricePerGram}
-                  onChange={handleWholesalePriceChange}
-                  step="0.1"
-                  min="0.1"
-                  className="text-lg input-sharp"
-                />
-                <p className="text-xs text-white/60">Your cost per ounce: {formatCurrency(wholesalePricePerGram * 28.35)}</p>
+          <form action={formAction}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center justify-between mb-2 gangster-font">
+                    <span className="flex items-center">
+                      <DollarSign className="h-4 w-4 mr-1 text-white" />
+                      WHOLESALE COST PER GRAM
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="ml-1 cursor-help">ⓘ</span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{businessConcepts.wholesale}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                    <span className="font-medium white-text">{formatCurrency(localForm.wholesalePricePerGram)}</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    name="wholesalePricePerGram"
+                    value={localForm.wholesalePricePerGram}
+                    onChange={handleWholesaleChange}
+                    step="0.01"
+                    min="0.01"
+                    className="text-lg input-sharp"
+                  />
+                  <p className="text-xs text-white/60">Your cost per ounce: {formatCurrency(localForm.wholesalePricePerGram * 28.35)}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center justify-between mb-2 gangster-font">
+                    <span className="flex items-center">
+                      <Percent className="h-4 w-4 mr-1 text-white" />
+                      MARKUP PERCENTAGE: {localForm.markupPercentage}%
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="ml-1 cursor-help">ⓘ</span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{businessConcepts.markup}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                  </Label>
+                  <Slider
+                    value={[localForm.markupPercentage]}
+                    min={10}
+                    max={300}
+                    step={5}
+                    onValueChange={handleMarkupChange}
+                    className="mb-6"
+                  />
+                </div>
               </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center justify-between mb-2 gangster-font">
-                  <span className="flex items-center">
-                    <Percent className="h-4 w-4 mr-1 text-white" />
-                    MARKUP PERCENTAGE: {markupPercentage}%
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="ml-1 cursor-help">ⓘ</span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p>{businessConcepts.markup}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </span>
-                </Label>
-                <Slider
-                  value={[markupPercentage]}
-                  min={10}
-                  max={300}
-                  step={5}
-                  onValueChange={handleMarkupChange}
-                  className="mb-6"
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center justify-between mb-2 gangster-font">
+                    <span className="flex items-center">
+                      <DollarSign className="h-4 w-4 mr-1 text-white" />
+                      RETAIL PRICE PER GRAM
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="ml-1 cursor-help">ⓘ</span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{businessConcepts.retail}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                    <span className="font-medium white-text">{formatCurrency(localForm.retailPricePerGram)}</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    name="retailPricePerGram"
+                    value={localForm.retailPricePerGram}
+                    onChange={handleRetailChange}
+                    step="0.01"
+                    min="0.01"
+                    className="text-lg input-sharp"
+                  />
+                  <p className="text-xs text-white/60">Your retail price per ounce: {formatCurrency(localForm.retailPricePerGram * 28.35)}</p>
+                </div>
+              </div>
+              <input type="hidden" name="markupPercentage" value={localForm.markupPercentage} />
+              <div className="col-span-2">
+                <Button type="submit" className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white">
+                  {formState.success ? (
+                    <><Check className="h-4 w-4 mr-2" /> PRICING SAVED</>
+                  ) : (
+                    "SAVE PRICING SETTINGS"
+                  )}
+                </Button>
+                {formState.error && <div className="text-red-500 mt-2">{formState.error}</div>}
               </div>
             </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="flex items-center justify-between mb-2 gangster-font">
-                  <span className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-1 text-white" />
-                    RETAIL PRICE PER GRAM
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="ml-1 cursor-help">ⓘ</span>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p>{businessConcepts.retail}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </span>
-                  <span className="font-medium white-text">{formatCurrency(retailPricePerGram)}</span>
-                </Label>
-                <Input
-                  type="number"
-                  value={retailPricePerGram}
-                  onChange={handleRetailPriceChange}
-                  step="0.1"
-                  min="0.1"
-                  className="text-lg input-sharp"
-                />
-                <p className="text-xs text-white/60">Your retail price per ounce: {formatCurrency(retailPricePerOunce)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Combined price breakdown and profit info into one uniform width table */}
-          <div className="bg-smoke p-4 w-full">
+          </form>
+          <div className="bg-smoke p-4 w-full mt-6">
             <div className="text-lg font-medium text-center mb-4 white-text gangster-font">PRICE BREAKDOWN</div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="gangster-font">PROFIT PER GRAM:</span>
-                  <span className="text-white font-medium">{formatCurrency(profitPerGram)}</span>
+                  <span className="text-white font-medium">{formatCurrency(localForm.retailPricePerGram - localForm.wholesalePricePerGram)}</span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="gangster-font">PROFIT MARGIN:</span>
-                  <span className="text-white font-medium">{formatPercentage(profitMarginPercentage / 100)}</span>
+                  <span className="text-white font-medium">{formatPercentage(((localForm.retailPricePerGram - localForm.wholesalePricePerGram) / localForm.retailPricePerGram) || 0)}</span>
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between">
                   <span className="gangster-font">COST:</span>
-                  <span className="text-white/80">{formatCurrency(wholesalePricePerGram)} per gram</span>
+                  <span className="text-white/80">{formatCurrency(localForm.wholesalePricePerGram)} per gram</span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                   <span className="gangster-font">+ PROFIT:</span>
-                  <span className="text-white/80">{formatCurrency(profitPerGram)} per gram</span>
+                  <span className="text-white/80">{formatCurrency(localForm.retailPricePerGram - localForm.wholesalePricePerGram)} per gram</span>
                 </div>
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/20">
                   <span className="gangster-font">= RETAIL PRICE:</span>
-                  <span className="text-white font-medium">{formatCurrency(retailPricePerGram)} per gram</span>
+                  <span className="text-white font-medium">{formatCurrency(localForm.retailPricePerGram)} per gram</span>
                 </div>
               </div>
             </div>
           </div>
-          
-          <Button 
-            onClick={handleSavePricing}
-            className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white"
-          >
-            {saveSuccess ? (
-              <><Check className="h-4 w-4 mr-2" /> PRICING SAVED</>
-            ) : (
-              "SAVE PRICING SETTINGS"
-            )}
-          </Button>
         </CardContent>
       </Card>
-      
       <HustleTip title="PRICING STRATEGY">
         <p>
-          Your current markup is <strong>{markupPercentage}%</strong> which gives you <strong>{formatCurrency(profitPerGram)}</strong> profit per gram.
+          Your current markup is <strong>{localForm.markupPercentage}%</strong> which gives you <strong>{formatCurrency(localForm.retailPricePerGram - localForm.wholesalePricePerGram)}</strong> profit per gram.
           This is a {profitMarginPercentage < 30 ? "low" : profitMarginPercentage < 50 ? "moderate" : "premium"} pricing strategy.
         </p>
         <p className="mt-2">

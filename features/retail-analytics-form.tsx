@@ -66,7 +66,9 @@ export function RetailAnalyticsForm({
         wholesalePricePerOz: Number(formData.get("wholesalePricePerOz")),
         targetProfitPerMonth: Number(formData.get("targetProfitPerMonth")),
         operatingExpenses: Number(formData.get("operatingExpenses")),
-        targetProfit: 0,
+        markupPercentage: businessData.markupPercentage,
+        retailPricePerGram: businessData.retailPricePerGram,
+        targetProfit: businessData.targetProfit,
       }
       try {
         await saveBusinessData(userId, values)

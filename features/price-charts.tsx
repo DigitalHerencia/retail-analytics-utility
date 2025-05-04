@@ -50,30 +50,33 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
   // Custom styles for all charts to ensure consistency with the gangster theme
   const chartStyle = {
     fill: "#FFFFFF",
-    fontFamily: "'Roboto Condensed', sans-serif",
-    fontSize: isMobile ? 10 : 12
+    fontFamily: "var(--font-permanent-marker), cursive",
+    fontSize: isMobile ? 10 : 12,
+    letterSpacing: "0.05em"
   }
   
   const tooltipStyle = {
-    backgroundColor: "#000",
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
     border: "1px solid #FFFFFF",
     borderRadius: "0px",
     padding: "8px",
     color: "#FFFFFF",
     boxShadow: "none",
+    fontFamily: "var(--font-permanent-marker), cursive",
+    letterSpacing: "0.05em"
   }
 
   const getMarginByScreenSize = () => {
-    if (isMobile) return { top: 5, right: 10, left: 0, bottom: 5 };
-    if (isTablet) return { top: 15, right: 20, left: 10, bottom: 5 };
-    return { top: 20, right: 30, left: 20, bottom: 5 };
+    if (isMobile) return { top: 5, right: 10, left: -15, bottom: 5 };
+    if (isTablet) return { top: 15, right: 20, left: -10, bottom: 5 };
+    return { top: 20, right: 30, left: -5, bottom: 5 };
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Price Breakdown Chart */}
-      <div className="bg-black p-6 border border-white card-sharp">
-        <h3 className="text-lg font-bold mb-4 gangster-font">PRICE BREAKDOWN</h3>
+      <div className="bg-black/50 p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font text-white text-shadow">PRICE BREAKDOWN</h3>
         <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -81,7 +84,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
               margin={getMarginByScreenSize()}
               layout={isMobile ? "vertical" : "horizontal"}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               {isMobile ? (
                 <>
                   <YAxis 
@@ -111,6 +114,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
               <Tooltip 
                 contentStyle={tooltipStyle} 
                 formatter={(value: number) => [`$${formatCurrency(value)}`, ""]}
+                cursor={{ fill: 'rgba(255,255,255,0.1)' }}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
@@ -137,15 +141,15 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
       </div>
 
       {/* Price vs. Quantity Chart */}
-      <div className="bg-black p-6 border border-white card-sharp">
-        <h3 className="text-lg font-bold mb-4 gangster-font">PRICE VS. QUANTITY</h3>
+      <div className="bg-black/50 p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font text-white text-shadow">PRICE VS. QUANTITY</h3>
         <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
               margin={getMarginByScreenSize()}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="name" 
                 tick={{ ...chartStyle }} 
@@ -174,6 +178,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
                   if (name === "Retail Price") return [`$${formatCurrency(value)}`, name];
                   return [`${formatGrams(value)}g`, name];
                 }}
+                cursor={{ stroke: 'rgba(255,255,255,0.2)' }}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
@@ -206,15 +211,15 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
       </div>
 
       {/* Revenue, Cost & Profit Chart */}
-      <div className="bg-black p-6 border border-white card-sharp">
-        <h3 className="text-lg font-bold mb-4 gangster-font">REVENUE & PROFIT</h3>
+      <div className="bg-black/50 p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font text-white text-shadow">REVENUE & PROFIT</h3>
         <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
               margin={getMarginByScreenSize()}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="name" 
                 tick={{ ...chartStyle }} 
@@ -230,6 +235,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
               <Tooltip
                 contentStyle={tooltipStyle}
                 formatter={(value: number) => [`$${formatCurrency(value)}`, ""]}
+                cursor={{ fill: 'rgba(255,255,255,0.1)' }}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}
@@ -260,15 +266,15 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
       </div>
 
       {/* Profit Margin Percentage Chart */}
-      <div className="bg-black p-6 border border-white card-sharp">
-        <h3 className="text-lg font-bold mb-4 gangster-font">PROFIT MARGIN PERCENTAGE</h3>
+      <div className="bg-black/50 p-6 border border-white card-sharp">
+        <h3 className="text-lg font-bold mb-4 gangster-font text-white text-shadow">PROFIT MARGIN PERCENTAGE</h3>
         <div className={`h-${isMobile ? "56" : "72"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
               margin={getMarginByScreenSize()}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis 
                 dataKey="name" 
                 tick={{ ...chartStyle }} 
@@ -284,6 +290,7 @@ export default function PriceCharts({ pricePoints }: PriceChartsProps) {
               <Tooltip
                 contentStyle={tooltipStyle}
                 formatter={(value: number) => [`${formatPercentage(value)}`, "Profit Margin"]}
+                cursor={{ stroke: 'rgba(255,255,255,0.2)' }}
               />
               <Legend
                 wrapperStyle={{ ...chartStyle, paddingTop: 10 }}

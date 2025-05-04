@@ -1,4 +1,6 @@
 export interface BusinessData {
+  markupPercentage: number
+  retailPricePerGram: number
   targetProfit: any
   wholesalePricePerOz: number
   targetProfitPerMonth: number
@@ -6,6 +8,7 @@ export interface BusinessData {
 }
 
 export interface PricePoint {
+  value: string | number | readonly string[] | undefined
   id: string
   markupPercentage: number
   wholesalePricePerGram: number
@@ -17,6 +20,9 @@ export interface PricePoint {
   monthlyCost: number
   monthlyProfit: number
   roi: number
+  updatedAt: string
+  wholesale: number
+  retail: number
 }
 
 export interface InventoryItem {

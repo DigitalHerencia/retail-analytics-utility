@@ -1,59 +1,44 @@
-import { HustleStat } from "@/components/hustle-stat"
-import { HustleTip } from "@/components/hustle-tip"
-import { DollarSign, TrendingUp, Calculator } from "lucide-react"
-import SimplifiedPricing from "@/features/simplified-pricing"
-import { PricingProvider } from "@/hooks/use-pricing"
-import { getBusinessData } from "@/lib/fetchers/business"
-import { auth } from "@clerk/nextjs/server"
+import { getPrice } from '@/lib/fetchers/getPrice';
+import SimplifiedPricing from '@/features/simplified-pricing';
+import { HustleTip } from '@/components/hustle-tip';
 
 export default async function PricingPage() {
-  const { userId } = await auth()
-  if (!userId) throw new Error("Not authenticated")
-  const { businessData } = await getBusinessData(userId)
+  let price;
+  let error: string | null = null;
 
-  // Compute real stats from businessData
-  const avgMarkup = businessData?.wholesalePricePerOz && businessData?.targetProfitPerMonth
-    ? Math.round((businessData.targetProfitPerMonth / businessData.wholesalePricePerOz) * 100)
-    : 0
-  const maxProfit = businessData?.targetProfitPerMonth || 0
-  // Pricing scenarios count is not directly available, so show N/A or 0
-
-  const stats = [
-    {
-      title: "PRICING SCENARIOS",
-      value: "N/A",
-      icon: <Calculator className="h-5 w-5 text-white" />,
-    },
-    {
-      title: "MAX PROFIT POTENTIAL",
-      value: `$${maxProfit.toLocaleString()}`,
-      icon: <TrendingUp className="h-5 w-5 text-white" />,
-    },
-    {
-      title: "AVG. MARKUP",
-      value: `${avgMarkup}%`,
-      icon: <DollarSign className="h-5 w-5 text-white" />,
-    },
-  ]
+  try {
+    price = await getPrice();
+  } catch (e: any) {
+    console.error("Failed to load price:", e);
+    error = e.message || 'Failed to load price.';
+  }
 
   return (
-    <div className="container p4 space-y-6">
-      <div className="text-center mt-6 mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
-          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">PRICING TOOLS</h1>
-          <p className="text-white/80 mt-1">Calculate retail prices, analyze profit, and optimize your markup strategy</p>
+    <div className="container py-4 space-y-6">
+      {/* Header Section */}
+      <div className="text-center mb-4">
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 card-sharp fade-in">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">PRICE MANAGEMENT</h1>
+          <p className="text-white/80 mt-1">Set your prices and maximize profits</p>
         </div>
-        <HustleTip title="RETAIL PRICING TOOL">
+        <HustleTip title="COST ANALYSIS">
           <p>
-            Enter your wholesale cost and target profit. The tool will show you different markup levels and how they affect your profit, break-even, and ROI. Choose the price that works best for your business.
+            Analyze your costs regularly to ensure profitability. Review your expenses and adjust your pricing strategy accordingly.
           </p>
         </HustleTip>
       </div>
-      <div>
-        <PricingProvider>
-          <SimplifiedPricing />
-        </PricingProvider>
-      </div>
+      {error && <div className="text-red-500 font-medium">{error}</div>}
+      <SimplifiedPricing
+        businessData={{
+          wholesalePricePerOz: 0,
+          markupPercentage: 100,
+          retailPricePerGram: 0,
+          targetProfit: 0,
+          targetProfitPerMonth: 0,
+          operatingExpenses: 0
+        }}
+        
+      />
     </div>
-  )
+  );
 }

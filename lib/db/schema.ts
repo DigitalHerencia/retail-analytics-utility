@@ -25,6 +25,15 @@ export async function ensureDatabaseSetup() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Create price table if it doesn't exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS price (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        value DECIMAL(10, 2) NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
     
     // Add index on tenant_id for faster queries
     await sql`

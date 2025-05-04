@@ -2,6 +2,12 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 
+type Scenario = {
+  id?: string;
+  retailPriceG: number;
+  // Add any other fields you use for scenarios
+}
+
 type PricingContextType = {
   retailPricePerGram: number
   markupPercentage: number
@@ -10,6 +16,8 @@ type PricingContextType = {
   setMarkupPercentage: (percentage: number) => void
   setWholesalePrice: (price: number) => void
   calculateRetailPrice: (wholesalePricePerGram: number, markup: number) => number
+  scenarios: Scenario[]
+  setScenarios: (scenarios: Scenario[]) => void
 }
 
 const PricingContext = createContext<PricingContextType | undefined>(undefined)
@@ -18,16 +26,18 @@ export function PricingProvider({ children }: { children: ReactNode }) {
   const [retailPricePerGram, setRetailPricePerGram] = useState(100) // Default retail price per gram
   const [markupPercentage, setMarkupPercentage] = useState(251) // Default markup for 28.50 -> 100
   const [wholesalePricePerGram, setWholesalePricePerGram] = useState(28.5) // Default wholesale price per gram
+  const [scenarios, setScenarios] = useState<Scenario[]>([])
 
   // Load pricing data from localStorage on initial render
   useEffect(() => {
     const savedPricing = localStorage.getItem("pricing-data")
     if (savedPricing) {
       try {
-        const { retailPrice, markup, wholesalePrice } = JSON.parse(savedPricing)
+        const { retailPrice, markup, wholesalePrice, scenarios: savedScenarios } = JSON.parse(savedPricing)
         setRetailPricePerGram(retailPrice || 100)
         setMarkupPercentage(markup || 251)
         setWholesalePricePerGram(wholesalePrice || 28.5)
+        setScenarios(savedScenarios || [])
       } catch (error) {
         console.error("Error loading pricing data:", error)
       }
@@ -41,10 +51,11 @@ export function PricingProvider({ children }: { children: ReactNode }) {
       JSON.stringify({
         retailPrice: retailPricePerGram,
         markup: markupPercentage,
-        wholesalePrice: wholesalePricePerGram
+        wholesalePrice: wholesalePricePerGram,
+        scenarios
       })
     )
-  }, [retailPricePerGram, markupPercentage, wholesalePricePerGram])
+  }, [retailPricePerGram, markupPercentage, wholesalePricePerGram, scenarios])
 
   // Update retail price with GAAP-compliant calculation
   const setRetailPrice = (price: number) => {
@@ -90,7 +101,9 @@ export function PricingProvider({ children }: { children: ReactNode }) {
         setRetailPrice,
         setMarkupPercentage: updateMarkupPercentage,
         setWholesalePrice,
-        calculateRetailPrice
+        calculateRetailPrice,
+        scenarios,
+        setScenarios
       }}
     >
       {children}

@@ -10,13 +10,14 @@ export default function HelpTab() {
   const [activeTab, setActiveTab] = useState("overview")
 
   return (
-    <div className="space-y-6">
+    <div className="container py-4 space-y-6">
+      {/* Header Section */}
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 card-sharp fade-in">
           <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">HELP & GUIDE</h1>
           <p className="text-white/80 mt-1">LEARN THE GAME. MASTER THE HUSTLE.</p>
         </div>
-
+        
         <HustleTip title="KNOWLEDGE IS POWER">
           <p>
             This guide will help you get the most out of your Hustle Calculator. Learn all the features to maximize
@@ -24,7 +25,7 @@ export default function HelpTab() {
           </p>
         </HustleTip>
       </div>
-
+      
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="border rounded-md border-white bg-black p-0 mb-4 overflow-hidden">
           <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 gap-0 bg-transparent p-0 overflow-hidden border border-white rounded h-12">

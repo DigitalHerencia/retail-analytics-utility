@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
-import PriceGenerator from "@/features/price-generator"
+import {PriceGenerator} from "@/features/price-generator"
 import PriceTable from "@/features/price-table"
 import PriceCharts from "@/features/price-charts"
 import { HustleTip } from "@/components/hustle-tip"
@@ -24,6 +24,9 @@ export default function RetailPricingTool() {
       // Calculate wholesale price based on retail price and margin
       const retailPricePerGram = scenario.retailPriceG
       const grossMargin = scenario.grossMarginG
+      
+      const wholesale = scenario.wholesalePricePerGram;
+      const retail = scenario.retailPricePerGram;
       
       // Using GAAP principles:
       // Wholesale price = Retail price - Gross margin
@@ -48,6 +51,7 @@ export default function RetailPricingTool() {
       const roi = (monthlyProfit / monthlyCost) * 100
       
       return {
+        value: retailPricePerGram,
         id: uuidv4(),
         markupPercentage,
         wholesalePricePerGram,
@@ -58,7 +62,10 @@ export default function RetailPricingTool() {
         monthlyRevenue,
         monthlyCost,
         monthlyProfit,
-        roi
+        roi,
+        updatedAt: new Date().toISOString(),
+        wholesale: wholesale,
+        retail: retail
       }
     })
     
@@ -122,7 +129,7 @@ export default function RetailPricingTool() {
         <TabsContent value="generate" className="space-y-4 mt-4 px-1 sm:px-0">
           <Card className="card-sharp border-white">
             <CardContent className="pt-6">
-              <PriceGenerator onGenerate={handleGenerateScenarios} />
+              <PriceGenerator />
             </CardContent>
           </Card>
           
@@ -174,11 +181,13 @@ export default function RetailPricingTool() {
               
               <Card className="card-sharp border-white">
                 <CardContent className="pt-6 overflow-x-auto">
-                  <PriceTable 
-                    pricePoints={pricePoints} 
-                    onSelectPricePoint={setSelectedPricePointId}
-                    selectedPricePointId={selectedPricePointId}
-                  />
+                  <PriceTable prices={ [] } onEdit={ function ( price: PricePoint ): void
+                  {
+                    throw new Error( "Function not implemented." )
+                  } } onDelete={ function ( price: PricePoint ): void
+                  {
+                    throw new Error( "Function not implemented." )
+                  } }                  />
                 </CardContent>
               </Card>
               

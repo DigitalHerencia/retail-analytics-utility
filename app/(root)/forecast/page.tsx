@@ -11,7 +11,12 @@ export default function ForecastPage() {
     inventory,
     customers,
     transactions,
+    isLoading
   } = usePersistentState()
+
+  if (isLoading) {
+    return <div className="container py-4">Loading forecast data...</div>
+  }
 
   // Always render the page, even if data is missing
   return (

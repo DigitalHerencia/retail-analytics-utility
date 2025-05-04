@@ -1,599 +1,343 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect, useMemo } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { format } from "date-fns"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DollarSign, Plus, Minus, ShoppingCart, Save } from "lucide-react"
-import { v4 as uuidv4 } from "uuid"
-import { formatCurrency, formatGrams, formatOunces, gramsToOunces, ouncesToGrams } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
-import type { Customer, InventoryItem, Payment, Transaction } from "@/types"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { DollarSign, Package, ArrowDown } from "lucide-react"
+import type { InventoryItem, Customer, Transaction } from "@/types"
+import { v4 as uuidv4 } from "uuid"
+
+const formSchema = z.object({
+  type: z.enum(["sale", "purchase", "payment"]),
+  inventoryId: z.string().optional(),
+  customerId: z.string().optional(),
+  quantityGrams: z.coerce.number().min(0.1).optional(),
+  pricePerGram: z.coerce.number().min(0.1).optional(),
+  totalPrice: z.coerce.number().min(0.1),
+  paymentMethod: z.enum(["cash", "credit", "other"]),
+  notes: z.string().optional(),
+})
 
 interface CashRegisterProps {
   inventory: InventoryItem[]
   customers: Customer[]
-  retailPricePerGram: number
   onUpdateInventory: (inventory: InventoryItem[]) => void
   onUpdateCustomers: (customers: Customer[]) => void
   onAddTransaction: (transaction: Transaction) => void
+  retailPricePerGram: number
 }
 
 export default function CashRegister({
-  inventory = [],
-  customers = [],
-  retailPricePerGram,
+  inventory,
+  customers,
   onUpdateInventory,
   onUpdateCustomers,
   onAddTransaction,
+  retailPricePerGram
 }: CashRegisterProps) {
-  const [activeTab, setActiveTab] = useState("quick-sale")
-  const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(null)
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
-  const [customPrice, setCustomPrice] = useState<number | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState("cash")
-  const [notes, setNotes] = useState("")
-  const [dailyRevenue, setDailyRevenue] = useState(0)
-  const [dailyTransactions, setDailyTransactions] = useState(0)
-  const [dailyProfit, setDailyProfit] = useState(0)
+  const [dailySales, setDailySales] = useState(0)
+  const [itemsSold, setItemsSold] = useState(0)
+  const [averageSale, setAverageSale] = useState(0)
 
-  // Get selected inventory item
-  const selectedInventory = selectedInventoryId ? inventory.find((item) => item.id === selectedInventoryId) : null
-
-  // Get selected customer
-  const selectedCustomer = selectedCustomerId ? customers.find((customer) => customer.id === selectedCustomerId) : null
-
-  // Calculate sale price
-  const calculateSalePrice = () => {
-    if (customPrice !== null) return customPrice
-
-    const pricePerGram = retailPricePerGram
-    return pricePerGram * quantity
-  }
-
-  // Calculate cost
-  const calculateCost = () => {
-    if (!selectedInventory) return 0
-
-    const costPerGram = selectedInventory.costPerOz / 28.35
-    return costPerGram * quantity
-  }
-
-  // Calculate profit
-  const calculateProfit = () => {
-    return calculateSalePrice() - calculateCost()
-  }
-
-  // Handle quick sale
-  const handleQuickSale = () => {
-    if (!selectedInventory) return
-
-    // Create transaction record
-    const transaction: Transaction = {
-      id: uuidv4(),
-      date: new Date().toISOString(),
+  // Create form with default values
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
       type: "sale",
-      inventoryId: selectedInventory.id,
-      inventoryName: selectedInventory.name,
-      quantityGrams: quantity,
-      pricePerGram: calculateSalePrice() / quantity,
-      totalPrice: calculateSalePrice(),
-      cost: calculateCost(),
-      profit: calculateProfit(),
-      paymentMethod: paymentMethod,
-      customerId: selectedCustomer?.id || null,
-      customerName: selectedCustomer?.name || null,
-      notes: notes,
-      createdAt: new Date().toISOString(),
-      tenantId: ""
-    }
+      quantityGrams: 1,
+      pricePerGram: retailPricePerGram,
+      totalPrice: retailPricePerGram, // Default to retail price * 1g
+      paymentMethod: "cash",
+      notes: "",
+    },
+  })
 
-    // Update inventory
-    const updatedInventory = inventory.map((item) => {
-      if (item.id === selectedInventory.id) {
-        const ouncesToDeplete = gramsToOunces(quantity)
-        const newQuantityOz = Math.max(0, item.quantityOz - ouncesToDeplete)
-        const newTotalCost = newQuantityOz * item.costPerOz
-
-        return {
-          ...item,
-          quantityOz: newQuantityOz,
-          totalCost: newTotalCost,
-        }
-      }
-      return item
-    })
-
-    // If customer is selected and not paying cash, add to their account
-    let updatedCustomers = [...customers]
-    if (selectedCustomer && paymentMethod === "credit") {
-      updatedCustomers = customers.map((customer) => {
-        if (customer.id === selectedCustomer.id) {
-          return {
-            ...customer,
-            amountOwed: customer.amountOwed + calculateSalePrice(),
-            status: "unpaid",
-            updatedAt: new Date().toISOString(),
-          }
-        }
-        return customer
-      })
-    }
-
-    // Update daily stats
-    setDailyRevenue((prev) => prev + calculateSalePrice())
-    setDailyTransactions((prev) => prev + 1)
-    setDailyProfit((prev) => prev + calculateProfit())
-
-    // Save changes
-    onUpdateInventory(updatedInventory)
-    onUpdateCustomers(updatedCustomers)
-    onAddTransaction(transaction)
-
-    // Reset form for next sale
-    setSelectedInventoryId(null) // Reset selected product
-    setQuantity(1)
-    setCustomPrice(null)
-    setNotes("")
-    setPaymentMethod("cash") // Reset payment method
-  }
-
-  // Handle customer payment
-  const handleCustomerPayment = () => {
-    if (!selectedCustomer) return
-
-    const paymentAmount = customPrice || selectedCustomer.amountOwed
-
-    if (paymentAmount <= 0) return
-
-    // Create payment record
-    const payment: Payment = {
-      id: uuidv4(),
-      amount: paymentAmount,
-      date: new Date().toISOString().split("T")[0],
-      method: paymentMethod,
-      notes: notes,
-      createdAt: new Date().toISOString(),
-    }
-
-    // Calculate remaining amount after payment
-    const newAmountOwed = Math.max(0, selectedCustomer.amountOwed - paymentAmount)
-
-    // Determine new status
-    let newStatus: "paid" | "partial" | "unpaid" = "unpaid"
-    if (newAmountOwed === 0) {
-      newStatus = "paid"
-    } else if (paymentAmount > 0) {
-      newStatus = "partial"
-    }
-
-    // Update customer
-    const updatedCustomers = customers.map((customer) => {
-      if (customer.id === selectedCustomer.id) {
-        return {
-          ...customer,
-          amountOwed: newAmountOwed,
-          status: newStatus,
-          paymentHistory: [...customer.paymentHistory, payment],
-          updatedAt: new Date().toISOString(),
-        }
-      }
-      return customer
-    })
-
-    // Create transaction record
-    const transaction: Transaction = {
-      id: uuidv4(),
-      date: new Date().toISOString(),
-      type: "payment",
-      inventoryId: null,
-      inventoryName: null,
-      quantityGrams: 0,
-      pricePerGram: 0,
-      totalPrice: paymentAmount,
-      cost: 0,
-      profit: 0,
-      paymentMethod: paymentMethod,
-      customerId: selectedCustomer.id,
-      customerName: selectedCustomer.name,
-      notes: notes,
-      createdAt: new Date().toISOString(),
-      tenantId: ""
-    }
-
-    // Update daily stats
-    setDailyRevenue((prev) => prev + paymentAmount)
-    setDailyTransactions((prev) => prev + 1)
-
-    // Save changes
-    onUpdateCustomers(updatedCustomers)
-    onAddTransaction(transaction)
-
-    // Reset form after payment
-    setCustomPrice(null)
-    setNotes("")
-    setSelectedCustomerId(null) // Reset selected customer after payment
-    setPaymentMethod("cash") // Reset payment method
-  }
-
-  // Reset daily stats at midnight
+  // Update total price when quantity or price per gram changes
+  const watchQuantity = form.watch("quantityGrams")
+  const watchPrice = form.watch("pricePerGram")
+  const watchType = form.watch("type")
+  
   useEffect(() => {
-    const now = new Date()
-    const night = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1, // tomorrow
-       0, // hour
-       0, // minute
-       0 // second
-    )
-    const msToMidnight = night.getTime() - now.getTime()
+    if (watchQuantity && watchPrice) {
+      const total = watchQuantity * watchPrice
+      form.setValue("totalPrice", parseFloat(total.toFixed(2)))
+    }
+  }, [watchQuantity, watchPrice, form])
 
-    const timer = setTimeout(() => {
-      setDailyRevenue(0)
-      setDailyTransactions(0)
-      setDailyProfit(0)
-    }, msToMidnight)
+  // Update price per gram when inventory item changes
+  const watchInventoryId = form.watch("inventoryId")
+  
+  useEffect(() => {
+    if (watchInventoryId && watchType === "sale") {
+      const item = inventory.find(item => item.id === watchInventoryId)
+      if (item) {
+        // If item has a retail price, use it. Otherwise use the global retail price.
+        const price = item.retailPrice > 0 ? item.retailPrice : retailPricePerGram
+        form.setValue("pricePerGram", price)
+      }
+    }
+  }, [watchInventoryId, watchType, inventory, retailPricePerGram, form])
 
-    return () => clearTimeout(timer)
-  }, [dailyRevenue, dailyTransactions, dailyProfit])
+  // Reset form fields based on transaction type
+  useEffect(() => {
+    if (watchType === "payment") {
+      form.setValue("inventoryId", undefined)
+      form.setValue("quantityGrams", undefined)
+      form.setValue("pricePerGram", undefined)
+    } else {
+      form.setValue("quantityGrams", 1)
+      form.setValue("pricePerGram", retailPricePerGram)
+      form.setValue("totalPrice", retailPricePerGram)
+    }
+  }, [watchType, retailPricePerGram, form])
+
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // Build the transaction object
+      const now = new Date()
+      const customerId = values.customerId === 'none' ? null : values.customerId;
+      const transaction: Transaction = {
+        id: uuidv4(),
+        date: format( now, "yyyy-MM-dd" ),
+        type: values.type,
+        inventoryId: values.inventoryId || null,
+        inventoryName: values.inventoryId ?
+          inventory.find( item => item.id === values.inventoryId )?.name || null : null,
+        customerId: customerId || null,
+        customerName: customerId ?
+          customers.find( c => c.id === customerId )?.name || null : null,
+        quantityGrams: values.quantityGrams || 0,
+        pricePerGram: values.pricePerGram || 0,
+        totalPrice: values.totalPrice,
+        paymentMethod: values.paymentMethod,
+        notes: values.notes || "",
+        createdAt: now.toISOString(),
+        tenantId: "",
+        cost: 0,
+        profit: 0
+      }
+
+      // Pass the transaction to the parent component for processing
+      onAddTransaction(transaction)
+
+      // Reset the form
+      form.reset({
+        type: "sale",
+        quantityGrams: 1,
+        pricePerGram: retailPricePerGram,
+        totalPrice: retailPricePerGram,
+        paymentMethod: "cash",
+        notes: "",
+      })
+      
+      // Update daily stats
+      if (values.type === "sale") {
+        setDailySales(prev => prev + values.totalPrice)
+        setItemsSold(prev => prev + 1)
+        setAverageSale((dailySales + values.totalPrice) / (itemsSold + 1))
+      }
+    } catch (error) {
+      console.error("Error processing transaction:", error)
+    }
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="container py-4 space-y-6">
       <div className="text-center mb-4">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2">
-          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">CASH REGISTER</h1>
-          <p className="text-white/80 mt-1">MOVE PRODUCT. COLLECT MONEY. STACK PAPER.</p>
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 card-sharp fade-in">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">REGISTER</h1>
+          <p className="text-white/80 mt-1">Track sales, purchases, and payments</p>
         </div>
-
-        <HustleTip title="QUICK TRANSACTIONS">
+        <HustleTip title="REGISTER TIPS">
           <p>
-            Use this page for your day-to-day business. Record sales, collect payments, and keep your inventory
-            accurate. Every transaction is tracked for your monthly reports.
+            Record sales, purchases, and payments accurately. Select the correct transaction type, customer, and payment method.
+            Add notes for additional details. Keep your register up-to-date for accurate tracking and reporting.
           </p>
         </HustleTip>
       </div>
-
+      
+        
+        {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <HustleStat
-          title="TODAY'S REVENUE"
-          value={formatCurrency(dailyRevenue)}
+          title="TODAY'S SALES"
+          value={`$${dailySales.toFixed(2)}`}
           icon={<DollarSign className="h-5 w-5 text-white" />}
-          className="border-white"
+          className="card-hover"
         />
         <HustleStat
-          title="TODAY'S PROFIT"
-          value={formatCurrency(dailyProfit)}
-          icon={<ShoppingCart className="h-5 w-5 text-white" />}
-          className="border-white"
+          title="ITEMS SOLD TODAY" 
+          value={itemsSold.toString()}
+          icon={<Package className="h-5 w-5 text-white" />}
+          className="card-hover"
         />
         <HustleStat
-          title="TRANSACTIONS"
-          value={dailyTransactions.toString()}
-          icon={<Save className="h-5 w-5 text-white" />}
-          className="border-white"
+          title="AVERAGE SALE"
+          value={`$${averageSale.toFixed(2)}`}
+          icon={<ArrowDown className="h-5 w-5 text-white" />}
+          className="card-hover"
         />
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="border rounded-md border-white bg-black p-0 mb-4 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2 gap-0 bg-transparent p-0 overflow-hidden">
-            <TabsTrigger
-              value="quick-sale"
-              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
-              style={{ borderBottom: '2px solid transparent' }}
-            >
-              QUICK SALE
-            </TabsTrigger>
-            <TabsTrigger
-              value="collect-payment"
-              className="gangster-font text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-3 font-bold transition-colors data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:z-10 data-[state=active]:shadow-none data-[state=active]:focus-visible:outline-none"
-              style={{ borderBottom: '2px solid transparent' }}
-            >
-              COLLECT PAYMENT
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      <Card className="card-sharp border-white">
+        <CardHeader className="border-b border-white/20 pb-4">
+          <CardTitle className="text-2xl gangster-font text-white">New Transaction</CardTitle>
+          <CardDescription>Record a new sale, purchase, or payment</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Transaction Type</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-black border-white text-white card-sharp">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-black border-white text-white">
+                          <SelectItem value="sale" className="hover:bg-white/10">Sale</SelectItem>
+                          <SelectItem value="purchase" className="hover:bg-white/10">Purchase</SelectItem>
+                          <SelectItem value="payment" className="hover:bg-white/10">Payment</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription className="text-white/60">
+                        Type of transaction
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        <TabsContent value="quick-sale" className="space-y-4 mt-4 px-1 sm:px-0">
-          <Card className="card-sharp border-white">
-            <CardHeader>
-              <CardTitle className="gangster-font text-white">PRODUCT SALE</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="gangster-font">SELECT PRODUCT</Label>
-                <Select value={selectedInventoryId || ""} onValueChange={setSelectedInventoryId}>
-                  <SelectTrigger className="input-sharp">
-                    <SelectValue placeholder="Select product" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {inventory && inventory.length > 0 ? (
-                      inventory.map((item) => (
-                        <SelectItem key={item.id} value={item.id} disabled={item.quantityOz <= 0}>
-                          {item.name} ({formatOunces(item.quantityOz)})
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-inventory" disabled>
-                        No inventory available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="gangster-font">QUANTITY (GRAMS)</Label>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="border-white text-white hover:bg-white/10 button-sharp"
-                    onClick={() => setQuantity(Math.max(0.2, quantity - 0.2))}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                    step="0.1"
-                    min="0.1"
-                    className="input-sharp text-center"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="border-white text-white hover:bg-white/10 button-sharp"
-                    onClick={() => setQuantity(quantity + 0.2)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {selectedInventory && (
-                  <p className="text-xs text-muted-foreground">
-                    Max available: {formatGrams(ouncesToGrams(selectedInventory.quantityOz))}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="gangster-font">CLIENT (OPTIONAL)</Label>
-                <Select value={selectedCustomerId || "none"} onValueChange={setSelectedCustomerId}>
-                  <SelectTrigger className="input-sharp">
-                    <SelectValue placeholder="Select client (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No client</SelectItem>
-                    {customers && customers.length > 0 ? (
-                      customers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="no-customers" disabled>
-                        No customers available
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="gangster-font">PRICE</Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="number"
-                    value={customPrice !== null ? customPrice : calculateSalePrice()}
-                    onChange={(e) => setCustomPrice(Number(e.target.value))}
-                    step="0.01"
-                    min="0"
-                    className="input-sharp"
-                  />
-                  <Button
-                    variant="outline"
-                    className="border-white text-white hover:bg-white/10 button-sharp whitespace-nowrap"
-                    onClick={() => setCustomPrice(null)}
-                  >
-                    Reset
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Standard price: {formatCurrency(retailPricePerGram)} per gram
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="gangster-font">PAYMENT METHOD</Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger className="input-sharp">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="credit" disabled={!selectedCustomer || selectedCustomerId === "none"}>
-                      Add to Client Account
-                    </SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="crypto">Crypto</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="gangster-font">NOTES (OPTIONAL)</Label>
-                <Input
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="input-sharp"
-                  placeholder="Add notes about this sale..."
+                <FormField
+                  control={form.control}
+                  name="customerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Customer</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-black border-white text-white card-sharp">
+                            <SelectValue placeholder="Select customer" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-black border-white text-white">
+                          <SelectItem value="none" className="hover:bg-white/10">None</SelectItem>
+                          {customers.map((customer) => (
+                            <SelectItem key={customer.id} value={customer.id} className="hover:bg-white/10">
+                              {customer.name} (${customer.amountOwed?.toFixed(2) || "0.00"} owed)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription className="text-white/60">
+                        Required for credit transactions
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
 
-              <div className="bg-smoke p-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="gangster-font">TOTAL PRICE:</span>
-                  <span className="font-bold text-white">{formatCurrency(calculateSalePrice())}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="gangster-font">COST:</span>
-                  <span className="text-white">{formatCurrency(calculateCost())}</span>
-                </div>
-                <div className="flex justify-between border-t border-white pt-2 mt-2">
-                  <span className="gangster-font">PROFIT:</span>
-                  <span className="font-bold text-white">{formatCurrency(calculateProfit())}</span>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="quantityGrams"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Quantity (grams)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.1" {...field} className="bg-black border-white text-white card-sharp" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="totalPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Total Amount ($)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} className="bg-black border-white text-white card-sharp money-text font-bold" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <Button
-                onClick={handleQuickSale}
-                disabled={
-                  !selectedInventory ||
-                  quantity <= 0 ||
-                  (selectedInventory && quantity > ouncesToGrams(selectedInventory.quantityOz))
-                }
-                className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white"
-              >
-                COMPLETE SALE
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Payment Method</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-black border-white text-white card-sharp">
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-black border-white text-white">
+                          <SelectItem value="cash" className="hover:bg-white/10">Cash</SelectItem>
+                          <SelectItem value="credit" className="hover:bg-white/10">Credit (On Account)</SelectItem>
+                          <SelectItem value="other" className="hover:bg-white/10">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-white">Notes (optional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="bg-black border-white text-white card-sharp" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Button type="submit" className="w-full card-sharp bg-white text-black hover:bg-white/90 text-lg font-bold">
+                Complete Transaction
               </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="collect-payment" className="space-y-4 mt-4 px-1 sm:px-0">
-          <Card className="card-sharp border-white">
-            <CardHeader>
-              <CardTitle className="gangster-font text-white">COLLECT PAYMENT</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="gangster-font">SELECT CLIENT</Label>
-                <Select value={selectedCustomerId || ""} onValueChange={setSelectedCustomerId}>
-                  <SelectTrigger className="input-sharp">
-                    <SelectValue placeholder="Select client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers && customers.length > 0 ? (
-                      customers
-                        .filter((c) => c.amountOwed > 0)
-                        .map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name} ({formatCurrency(customer.amountOwed)})
-                          </SelectItem>
-                        ))
-                    ) : (
-                      <SelectItem value="no-customers" disabled>
-                        No customers with outstanding balances
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedCustomer && selectedCustomer.amountOwed > 0 && (
-                <>
-                  <div className="bg-smoke p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="gangster-font">AMOUNT OWED:</span>
-                      <span className="text-white font-bold">{formatCurrency(selectedCustomer.amountOwed)}</span>
-                    </div>
-                    <div className="text-xs text-white mt-1">
-                      Due date: {new Date(selectedCustomer.dueDate).toLocaleDateString()}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="gangster-font">PAYMENT AMOUNT</Label>
-                    <Input
-                      type="number"
-                      value={customPrice !== null ? customPrice : selectedCustomer?.amountOwed || 0}
-                      onChange={(e) => setCustomPrice(Number(e.target.value))}
-                      step="0.01"
-                      min="0"
-                      max={selectedCustomer?.amountOwed || 0}
-                      className="input-sharp"
-                    />
-                    <div className="flex justify-between">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-white text-white hover:bg-white/10 button-sharp"
-                        onClick={() => selectedCustomer && setCustomPrice(selectedCustomer.amountOwed)}
-                      >
-                        Full Amount
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-white text-white hover:bg-white/10 button-sharp"
-                        onClick={() => selectedCustomer && setCustomPrice(selectedCustomer.amountOwed / 2)}
-                      >
-                        Half
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="gangster-font">PAYMENT METHOD</Label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                      <SelectTrigger className="input-sharp">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                        <SelectItem value="crypto">Crypto</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="gangster-font">NOTES (OPTIONAL)</Label>
-                    <Input
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="input-sharp"
-                      placeholder="Add notes about this payment..."
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleCustomerPayment}
-                    disabled={
-                      !selectedCustomer ||
-                      (customPrice !== null && (customPrice <= 0 || customPrice > (selectedCustomer?.amountOwed || 0)))
-                    }
-                    className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white"
-                  >
-                    RECORD PAYMENT
-                  </Button>
-                </>
-              )}
-
-              {selectedCustomer && selectedCustomer.amountOwed === 0 && (
-                <div className="bg-smoke p-6 text-center">
-                  <p className="text-money gangster-font">THIS CLIENT HAS NO OUTSTANDING BALANCE</p>
-                </div>
-              )}
-
-              {!selectedCustomer && (
-                <div className="bg-smoke p-6 text-center">
-                  <p className="text-muted-foreground">Select a client to collect payment</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

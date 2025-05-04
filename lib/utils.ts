@@ -86,7 +86,7 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
 
     // Calculate profit per gram
     const profitPerGram = retailPricePerGram - wholesalePricePerGram
-
+    
     // Calculate break-even quantity (including operating expenses)
     const totalMonthlyExpenses = operatingExpenses + targetProfitPerMonth
     const breakEvenGramsPerMonth = totalMonthlyExpenses / profitPerGram
@@ -102,6 +102,7 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
     const roi = (monthlyProfit / totalInvestment) * 100
 
     return {
+      value: retailPricePerGram,
       id: uuidv4(),
       markupPercentage,
       retailPrice: retailPricePerGram,
@@ -114,6 +115,9 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
       roi,
       wholesalePricePerGram,
       retailPricePerGram,
+      updatedAt: new Date().toISOString(),
+      wholesale: wholesalePricePerGram,
+      retail: retailPricePerGram,
     }
   })
 }

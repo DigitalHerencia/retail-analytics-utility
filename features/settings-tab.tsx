@@ -1,55 +1,79 @@
 "use client"
 
 import { useState } from "react"
-import { Database, Trash2, Check, AlertCircle } from "lucide-react"
+import { Database, Trash2, Check, AlertCircle, Boxes, Scale, Weight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useClerk } from "@clerk/nextjs"
+import { HustleStat } from "@/components/hustle-stat"
+import { HustleTip } from "@/components/hustle-tip"
 
 interface SettingsTabProps {
   dbConnected: boolean
+  totalTransactions: number
+  lifetimeProfit: number
+  totalGramsAdded: number
   onAccountDeleted?: () => void
+  message?: { type: "success" | "error"; text: string } | null
 }
 
-export default function SettingsTab({ dbConnected, onAccountDeleted }: SettingsTabProps) {
+export default function SettingsTab({
+  dbConnected,
+  totalTransactions,
+  lifetimeProfit,
+  totalGramsAdded,
+  onAccountDeleted,
+  message,
+}: SettingsTabProps) {
   const [isDeleting, setIsDeleting] = useState(false)
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [localMessage, setLocalMessage] = useState<{ type: "success" | "error"; text: string } | null>(message || null)
   const { user } = useClerk()
 
   // Handler for deleting the account
   const handleDeleteAccount = async () => {
     setIsDeleting(true)
-    setMessage(null)
+    setLocalMessage(null)
     try {
       await user?.delete()
-      setMessage({ type: "success", text: "Your account has been deleted." })
+      setLocalMessage({ type: "success", text: "Your account has been deleted." })
       if (onAccountDeleted) onAccountDeleted()
     } catch (error) {
-      setMessage({ type: "error", text: "Failed to delete account. Please try again." })
+      setLocalMessage({ type: "error", text: "Failed to delete account. Please try again." })
     }
     setIsDeleting(false)
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="mb-6">
-        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 text-center">
-          <h1 className="text-4xl font-bold text-white gangster-font text-shadow">SETTINGS</h1>
+    <div className="container space-y-6 p-4">
+      <div className="text-center mb-4">
+        <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 card-sharp fade-in">
+          <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">SETTINGS</h1>
           <p className="text-white/80 mt-1">Manage your account and connection status.</p>
+        </div>
+        <HustleTip title="RETAIL ANALYTICS">
+          <p>
+            Explore key metrics to optimize your retail performance. Track transactions, measure profit, and monitor total
+            grams added to gain insights into your business.
+          </p>
+        </HustleTip>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <HustleStat title="Total Transactions" value={totalTransactions.toLocaleString()} icon={<Boxes />} trend={undefined} trendValue={undefined} />
+          <HustleStat title="Lifetime Profit" value={`$${lifetimeProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}`} icon={<Scale />} trend={undefined} trendValue={undefined} />
+          <HustleStat title="Total Grams Added" value={totalGramsAdded.toLocaleString()} icon={<Weight />} trend={undefined} trendValue={undefined} />
         </div>
       </div>
 
-      {message && (
+      {localMessage && (
         <Alert
-          variant={message.type === "success" ? "default" : "destructive"}
+          variant={localMessage.type === "success" ? "default" : "destructive"}
           className={`mb-6 card-sharp ${
-            message.type === "success" ? "bg-white/10 text-white border-white/20" : "bg-blood/10 text-blood border-blood/20"
+            localMessage.type === "success" ? "bg-white/10 text-white border-white/20" : "bg-blood/10 text-blood border-blood/20"
           }`}
         >
-          {message.type === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-          <AlertTitle className="gangster-font">{message.type === "success" ? "SUCCESS" : "ERROR"}</AlertTitle>
-          <AlertDescription>{message.text}</AlertDescription>
+          {localMessage.type === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+          <AlertTitle className="gangster-font">{localMessage.type === "success" ? "SUCCESS" : "ERROR"}</AlertTitle>
+          <AlertDescription>{localMessage.text}</AlertDescription>
         </Alert>
       )}
 
@@ -91,4 +115,6 @@ export default function SettingsTab({ dbConnected, onAccountDeleted }: SettingsT
       </Card>
     </div>
   )
-}
+  
+}  
+
