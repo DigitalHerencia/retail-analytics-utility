@@ -1,38 +1,42 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { updatePrice } from '../fetchers/updatePrice';
 
 /**
  * Server action to update the price in the database.
- * Accepts FormData with 'wholesale' and 'retail' fields.
+ * Accepts FormData with 'wholesalePricePerOz', 'markupPercentage', and 'retailPricePerGram' fields.
  */
 export async function updatePriceAction(formData: FormData) {
-  const wholesale = Number(formData.get('wholesale'));
-  const retail = Number(formData.get('retail'));
+  // Accept the correct field names from the form
+  const wholesalePricePerOz = Number(formData.get('wholesalePricePerOz'));
+  const markupPercentage = Number(formData.get('markupPercentage'));
+  const retailPricePerGram = Number(formData.get('retailPricePerGram'));
 
-  if (isNaN(wholesale) || isNaN(retail)) {
-    throw new Error('Invalid price values');
+  if (
+    isNaN(wholesalePricePerOz) ||
+    isNaN(markupPercentage) ||
+    isNaN(retailPricePerGram)
+  ) {
+    throw new Error('Invalid input values');
   }
 
-  if (wholesale < 0 || retail < 0) {
-    throw new Error('Prices cannot be negative');
+  if (wholesalePricePerOz < 0.01 || markupPercentage < 1 || retailPricePerGram < 0.01) {
+    throw new Error('Input values out of range');
   }
 
-  if (retail < wholesale) {
-    throw new Error('Retail price must be higher than wholesale price');
+  // Optionally, add business logic validation
+  const wholesalePerGram = wholesalePricePerOz / 28.35;
+  if (retailPricePerGram < wholesalePerGram) {
+    throw new Error('Retail price per gram must be higher than wholesale cost per gram');
   }
 
   try {
-    // TODO: Replace with your actual price update logic
-    await fetch('/api/price/update', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ wholesale, retail }),
+    // Update price in the database directly (server action best practice)
+    await updatePrice({
+      wholesale: wholesalePricePerOz / 28.35,
+      retail: retailPricePerGram,
     });
-
-    // Revalidate the pricing page to show updated data
     revalidatePath('/pricing');
   } catch (error) {
     console.error('Failed to update price:', error);

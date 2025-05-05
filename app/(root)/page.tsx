@@ -53,12 +53,12 @@ export default function Home() {
   }
 
   if (isLoading) {
-    return <div className="container py-4">Loading register data...</div>
+    return <div className="container text-center py-10">Loading register data...</div>
   }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
-      <div className="container p-6">
+      <div className="container">
         <CashRegister
           inventory={inventory}
           customers={customers}

@@ -15,6 +15,7 @@ import { HustleStat } from "@/components/hustle-stat"
 import type { BusinessData } from "@/types"
 import { useActionState } from "react"
 import { updatePriceAction } from "@/lib/actions/updatePriceAction"
+import { usePricing } from "@/hooks/use-pricing"
 
 const formSchema = z.object({
   wholesalePricePerGram: z.coerce.number().min(0.01),
@@ -27,76 +28,65 @@ interface SimplifiedPricingProps {
 }
 
 export default function SimplifiedPricing({ businessData }: SimplifiedPricingProps) {
-  const wholesalePricePerGram = businessData.wholesalePricePerOz / 28.35
-  const markupPercentage = businessData.markupPercentage ?? 100
-  const retailPricePerGram = businessData.retailPricePerGram ?? (wholesalePricePerGram * (1 + markupPercentage / 100))
-  const profitPerGram = retailPricePerGram - wholesalePricePerGram
-  const profitMarginPercentage = (profitPerGram / retailPricePerGram) * 100
-  const retailPricePerOunce = retailPricePerGram * 28.35
-  const roi = wholesalePricePerGram > 0 ? (profitPerGram / wholesalePricePerGram) * 100 : 0
+  const {
+    wholesalePricePerGram,
+    markupPercentage,
+    retailPricePerGram,
+    setWholesalePrice,
+    setMarkupPercentage,
+    setRetailPrice
+  } = usePricing();
+
+  const profitPerGram = retailPricePerGram - wholesalePricePerGram;
+  const profitMarginPercentage = (profitPerGram / retailPricePerGram) * 100;
+  const retailPricePerOunce = retailPricePerGram * 28.35;
+  const roi = wholesalePricePerGram > 0 ? (profitPerGram / wholesalePricePerGram) * 100 : 0;
 
   interface FormState {
     success: boolean;
     error?: string;
   }
 
-  interface FormValues {
-    wholesalePricePerGram: number;
-    markupPercentage: number;
-    retailPricePerGram: number;
-  }
-
   const [formState, formAction] = useActionState<FormState, FormData>(
     async (_prevState, formData: FormData) => {
-      const values: FormValues = {
+      const values = {
         wholesalePricePerGram: Number(formData.get("wholesalePricePerGram")),
         markupPercentage: Number(formData.get("markupPercentage")),
         retailPricePerGram: Number(formData.get("retailPricePerGram")),
-      }
-      const parsed = formSchema.safeParse(values)
+      };
+      const parsed = formSchema.safeParse(values);
       if (!parsed.success) {
-        return { success: false, error: "Invalid input." }
+        return { success: false, error: "Invalid input." };
       }
       const formDataToSend = new FormData();
       formDataToSend.append("wholesalePricePerOz", String(values.wholesalePricePerGram * 28.35));
       formDataToSend.append("markupPercentage", String(values.markupPercentage));
       formDataToSend.append("retailPricePerGram", String(values.retailPricePerGram));
-
       await updatePriceAction(formDataToSend);
-      return { success: true }
+      setWholesalePrice(values.wholesalePricePerGram);
+      setMarkupPercentage(values.markupPercentage);
+      setRetailPrice(values.retailPricePerGram);
+      return { success: true };
     },
     { success: false, error: undefined }
-  )
+  );
 
-  const [localForm, setLocalForm] = useState({
-    wholesalePricePerGram,
-    markupPercentage,
-    retailPricePerGram,
-  })
-
+  // Handlers update context directly
   const handleMarkupChange = (value: number[]) => {
-    const markup = value[0]
-    const newRetail = Number((localForm.wholesalePricePerGram * (1 + markup / 100)).toFixed(2))
-    setLocalForm(f => ({ ...f, markupPercentage: markup, retailPricePerGram: newRetail }))
-  }
-
+    setMarkupPercentage(value[0]);
+  };
   const handleWholesaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value)
+    const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0.01) {
-      const markup = localForm.markupPercentage
-      const newRetail = Number((value * (1 + markup / 100)).toFixed(2))
-      setLocalForm(f => ({ ...f, wholesalePricePerGram: value, retailPricePerGram: newRetail }))
+      setWholesalePrice(value);
     }
-  }
-
+  };
   const handleRetailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value)
+    const value = parseFloat(e.target.value);
     if (!isNaN(value) && value >= 0.01) {
-      const wholesale = localForm.wholesalePricePerGram
-      const newMarkup = wholesale > 0 ? Math.round(((value - wholesale) / wholesale) * 100) : 100
-      setLocalForm(f => ({ ...f, retailPricePerGram: value, markupPercentage: newMarkup }))
+      setRetailPrice(value);
     }
-  }
+  };
 
   return (
     <div>
@@ -146,24 +136,24 @@ export default function SimplifiedPricing({ businessData }: SimplifiedPricingPro
                         </Tooltip>
                       </TooltipProvider>
                     </span>
-                    <span className="font-medium white-text">{formatCurrency(localForm.wholesalePricePerGram)}</span>
+                    <span className="font-medium white-text">{formatCurrency(wholesalePricePerGram)}</span>
                   </Label>
                   <Input
                     type="number"
                     name="wholesalePricePerGram"
-                    value={localForm.wholesalePricePerGram}
+                    value={wholesalePricePerGram}
                     onChange={handleWholesaleChange}
                     step="0.01"
                     min="0.01"
                     className="text-lg input-sharp"
                   />
-                  <p className="text-xs text-white/60">Your cost per ounce: {formatCurrency(localForm.wholesalePricePerGram * 28.35)}</p>
+                  <p className="text-xs text-white/60">Your cost per ounce: {formatCurrency(wholesalePricePerGram * 28.35)}</p>
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center justify-between mb-2 gangster-font">
                     <span className="flex items-center">
                       <Percent className="h-4 w-4 mr-1 text-white" />
-                      MARKUP PERCENTAGE: {localForm.markupPercentage}%
+                      MARKUP PERCENTAGE: {markupPercentage}%
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -177,7 +167,7 @@ export default function SimplifiedPricing({ businessData }: SimplifiedPricingPro
                     </span>
                   </Label>
                   <Slider
-                    value={[localForm.markupPercentage]}
+                    value={[markupPercentage]}
                     min={10}
                     max={300}
                     step={5}
@@ -203,21 +193,21 @@ export default function SimplifiedPricing({ businessData }: SimplifiedPricingPro
                         </Tooltip>
                       </TooltipProvider>
                     </span>
-                    <span className="font-medium white-text">{formatCurrency(localForm.retailPricePerGram)}</span>
+                    <span className="font-medium white-text">{formatCurrency(retailPricePerGram)}</span>
                   </Label>
                   <Input
                     type="number"
                     name="retailPricePerGram"
-                    value={localForm.retailPricePerGram}
+                    value={retailPricePerGram}
                     onChange={handleRetailChange}
                     step="0.01"
                     min="0.01"
                     className="text-lg input-sharp"
                   />
-                  <p className="text-xs text-white/60">Your retail price per ounce: {formatCurrency(localForm.retailPricePerGram * 28.35)}</p>
+                  <p className="text-xs text-white/60">Your retail price per ounce: {formatCurrency(retailPricePerGram * 28.35)}</p>
                 </div>
               </div>
-              <input type="hidden" name="markupPercentage" value={localForm.markupPercentage} />
+              <input type="hidden" name="markupPercentage" value={markupPercentage} />
               <div className="col-span-2">
                 <Button type="submit" className="w-full bg-white hover:bg-white/90 text-black button-sharp border-white">
                   {formState.success ? (
@@ -230,31 +220,35 @@ export default function SimplifiedPricing({ businessData }: SimplifiedPricingPro
               </div>
             </div>
           </form>
-          <div className="bg-smoke p-4 w-full mt-6">
-            <div className="text-lg font-medium text-center mb-4 white-text gangster-font">PRICE BREAKDOWN</div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="gangster-font">PROFIT PER GRAM:</span>
-                  <span className="text-white font-medium">{formatCurrency(localForm.retailPricePerGram - localForm.wholesalePricePerGram)}</span>
+          <div className="bg-smoke p-4 w-full mt-6 rounded card-sharp border border-white/10">
+            <div className="text-lg font-medium text-center mb-4 white-text gangster-font tracking-wide">PRICE BREAKDOWN</div>
+            <div className="grid grid-cols-1 gap-6 items-center">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="gangster-font text-white/80">COST (WHOLESALE):</span>
+                  <span className="text-white/70">{formatCurrency(wholesalePricePerGram)} <span className="text-xs font-normal">/g</span></span>
                 </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="gangster-font">PROFIT MARGIN:</span>
-                  <span className="text-white font-medium">{formatPercentage(((localForm.retailPricePerGram - localForm.wholesalePricePerGram) / localForm.retailPricePerGram) || 0)}</span>
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="gangster-font text-white/80">PROFIT PER GRAM:</span>
+                  <span className="text-money font-bold">{formatCurrency(profitPerGram)} <span className="text-xs font-normal">/g</span></span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="gangster-font text-white/80">PROFIT MARGIN:</span>
+                  <span className="text-white font-bold">{formatPercentage(profitMarginPercentage / 100)}</span>
                 </div>
               </div>
-              <div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="gangster-font text-white/80">RETAIL PRICE:</span>
+                  <span className="text-white font-bold">{formatCurrency(retailPricePerGram)} <span className="text-xs font-normal">/g</span></span>
+                </div>
+                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                  <span className="gangster-font text-white/80">PER OUNCE:</span>
+                  <span className="text-white/70">{formatCurrency(retailPricePerOunce)} <span className="text-xs font-normal">/oz</span></span>
+                </div>
                 <div className="flex items-center justify-between">
-                  <span className="gangster-font">COST:</span>
-                  <span className="text-white/80">{formatCurrency(localForm.wholesalePricePerGram)} per gram</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="gangster-font">+ PROFIT:</span>
-                  <span className="text-white/80">{formatCurrency(localForm.retailPricePerGram - localForm.wholesalePricePerGram)} per gram</span>
-                </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/20">
-                  <span className="gangster-font">= RETAIL PRICE:</span>
-                  <span className="text-white font-medium">{formatCurrency(localForm.retailPricePerGram)} per gram</span>
+                  <span className="gangster-font text-white/80">ROI:</span>
+                  <span className="text-white/70">{formatPercentage(roi / 100)}</span>
                 </div>
               </div>
             </div>
@@ -263,7 +257,7 @@ export default function SimplifiedPricing({ businessData }: SimplifiedPricingPro
       </Card>
       <HustleTip title="PRICING STRATEGY">
         <p>
-          Your current markup is <strong>{localForm.markupPercentage}%</strong> which gives you <strong>{formatCurrency(localForm.retailPricePerGram - localForm.wholesalePricePerGram)}</strong> profit per gram.
+          Your current markup is <strong>{markupPercentage}%</strong> which gives you <strong>{formatCurrency(profitPerGram)}</strong> profit per gram.
           This is a {profitMarginPercentage < 30 ? "low" : profitMarginPercentage < 50 ? "moderate" : "premium"} pricing strategy.
         </p>
         <p className="mt-2">
@@ -275,5 +269,5 @@ export default function SimplifiedPricing({ businessData }: SimplifiedPricingPro
         </p>
       </HustleTip>
     </div>
-  )
+  );
 }

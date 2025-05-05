@@ -2,28 +2,22 @@
 
 import { useClerk } from "@clerk/nextjs"
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function SignOut() {
   const { signOut } = useClerk()
-  const router = useRouter()
 
   useEffect(() => {
-    // Use Clerk's recommended signOut with redirectUrl for reliable redirect
-    const performSignOut = async () => {
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("tenant_id")
-        }
-        await signOut({ redirectUrl: "/sign-in" })
-      } catch (error) {
-        // Fallback: redirect manually if Clerk signOut fails
-        window.location.replace("/sign-in")
-      }
+    // Remove tenant-specific data before sign out
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tenant_id")
     }
-    performSignOut()
-  }, [signOut, router])
+    // Clerk signOut with redirect for best UX
+    signOut({ redirectUrl: "/sign-in" }).catch(() => {
+      // Fallback redirect if Clerk fails
+      window.location.replace("/sign-in")
+    })
+  }, [signOut])
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black">
@@ -32,7 +26,7 @@ export default function SignOut() {
         <Card className="w-full bg-white/10 border-white text-white shadow-lg">
           <CardContent className="py-8 text-center">
             <h1 className="text-3xl font-bold mb-6 text-center font-graffiti">Signing Out</h1>
-            <p className="text-white">Please wait while we sign you out...</p>
+            <p className="text-white" aria-live="polite">Please wait while we sign you out...</p>
           </CardContent>
         </Card>
       </div>

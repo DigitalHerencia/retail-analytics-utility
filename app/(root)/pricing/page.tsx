@@ -1,6 +1,7 @@
 import { getPrice } from '@/lib/fetchers/getPrice';
 import SimplifiedPricing from '@/features/simplified-pricing';
 import { HustleTip } from '@/components/hustle-tip';
+import { PricingProvider } from '@/hooks/use-pricing';
 
 export default async function PricingPage() {
   let price;
@@ -28,17 +29,19 @@ export default async function PricingPage() {
         </HustleTip>
       </div>
       {error && <div className="text-red-500 font-medium">{error}</div>}
-      <SimplifiedPricing
-        businessData={{
-          wholesalePricePerOz: 0,
-          markupPercentage: 100,
-          retailPricePerGram: 0,
-          targetProfit: 0,
-          targetProfitPerMonth: 0,
-          operatingExpenses: 0
-        }}
-        
-      />
+      <PricingProvider>
+        <SimplifiedPricing
+          businessData={{
+            wholesalePricePerOz: 0,
+            markupPercentage: 100,
+            retailPricePerGram: 0,
+            targetProfit: 0,
+            targetProfitPerMonth: 0,
+            operatingExpenses: 0,
+            inventoryQty: 0
+          }}
+        />
+      </PricingProvider>
     </div>
   );
 }

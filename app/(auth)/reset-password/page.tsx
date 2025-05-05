@@ -8,9 +8,9 @@ import Link from "next/link"
 // This is a mock function. Replace with your actual user/secret lookup and password reset logic.
 async function verifySecretAndResetPassword(username: string, secret: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
   // TODO: Replace with real backend call
-  // For demonstration, accept any non-empty values and "secret123" as the correct answer
+  // For demonstration, accept any non-empty values and "Hustler's Code" as the correct answer
   if (!username || !secret || !newPassword) return { success: false, error: "All fields are required." }
-  if (secret !== "secret123") return { success: false, error: "Incorrect secret code." }
+  if (secret !== "Hustler's Code") return { success: false, error: "Incorrect Hustler's Code." }
   return { success: true }
 }
 
@@ -36,7 +36,7 @@ export default function ResetPassword() {
     e.preventDefault()
     setError("")
     setLoading(true)
-    // Use the secret code for verification
+    // Use the Hustler's Code for verification
     const result = await verifySecretAndResetPassword(username, secret, newPassword)
     if (result.success) {
       setSuccess(true)
@@ -73,7 +73,7 @@ export default function ResetPassword() {
               <form onSubmit={handleReset} className="space-y-4">
                 <Input
                   type="text"
-                  placeholder="Secret code"
+                  placeholder="Hustler's Code"
                   value={secret}
                   onChange={e => setSecret(e.target.value)}
                   required

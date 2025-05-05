@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils"
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const router = useRouter()
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
 
@@ -22,10 +21,15 @@ export default function Header() {
     { id: "help", href: "/help", label: "HELP", icon: <HelpCircle className="h-5 w-5" /> },
   ]
 
-  const handleLogout = () => {
-    // Use the dedicated sign-out page instead of direct signOut
-    router.push('/sign-out');
+  const handleLogout = async () => {
     setIsOpen(false);
+    // Remove any app-specific localStorage/sessionStorage data
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("tenant_id");
+      sessionStorage.clear();
+    }
+    // Clerk signOut removes all Clerk cookies and sessions
+    await signOut({ redirectUrl: "/sign-in" });
   };
 
   return (
@@ -52,7 +56,6 @@ export default function Header() {
                   <h2 className="text-2xl font-bold text-white font-graffiti">Hustlers Code</h2>
                   <p className="text-sm text-white/70">STACK PAPER. STAY SMART.</p>
                 </div>
-
                 <nav className="flex-1 overflow-auto">
                   <ul className="px-2 py-4 space-y-1">
                     {menuItems.map((item) => (
@@ -72,7 +75,6 @@ export default function Header() {
                         </Link>
                       </li>
                     ))}
-                    
                     {isLoaded && user && (
                       <li>
                         <button

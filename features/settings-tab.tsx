@@ -8,12 +8,17 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useClerk } from "@clerk/nextjs"
 import { HustleStat } from "@/components/hustle-stat"
 import { HustleTip } from "@/components/hustle-tip"
+import SetupTab, { RISK_MODE_DEFAULTS } from "./setup-tab"
+import type { BusinessData } from "@/types"
 
 interface SettingsTabProps {
   dbConnected: boolean
   totalTransactions: number
   lifetimeProfit: number
   totalGramsAdded: number
+  businessData: BusinessData
+  mode: keyof typeof RISK_MODE_DEFAULTS
+  onUpdateBusinessData: (data: BusinessData, mode: keyof typeof RISK_MODE_DEFAULTS) => Promise<void>
   onAccountDeleted?: () => void
   message?: { type: "success" | "error"; text: string } | null
 }
@@ -23,12 +28,19 @@ export default function SettingsTab({
   totalTransactions,
   lifetimeProfit,
   totalGramsAdded,
+  businessData: initialBusinessData,
+  mode: initialMode,
+  onUpdateBusinessData,
   onAccountDeleted,
   message,
 }: SettingsTabProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [localMessage, setLocalMessage] = useState<{ type: "success" | "error"; text: string } | null>(message || null)
   const { user } = useClerk()
+  const [businessData, setBusinessData] = useState<BusinessData>(initialBusinessData)
+  const [mode, setMode] = useState<keyof typeof RISK_MODE_DEFAULTS>(initialMode)
+  const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState<string | null>(null)
 
   // Handler for deleting the account
   const handleDeleteAccount = async () => {
@@ -42,6 +54,27 @@ export default function SettingsTab({
       setLocalMessage({ type: "error", text: "Failed to delete account. Please try again." })
     }
     setIsDeleting(false)
+  }
+
+  const handleUpdateBusinessData = async (data: BusinessData) => {
+    setSaving(true)
+    setSaveMsg(null)
+    try {
+      await onUpdateBusinessData(data, mode)
+      setSaveMsg("Settings saved.")
+    } catch (e) {
+      setSaveMsg("Failed to save settings.")
+    }
+    setSaving(false)
+  }
+
+  const handleSelectRisk = (newMode: keyof typeof RISK_MODE_DEFAULTS) => {
+    setMode(newMode)
+    // Reset business params to mode defaults, but keep editable
+    setBusinessData({
+      ...businessData,
+      ...RISK_MODE_DEFAULTS[newMode],
+    })
   }
 
   return (
@@ -76,6 +109,22 @@ export default function SettingsTab({
           <AlertDescription>{localMessage.text}</AlertDescription>
         </Alert>
       )}
+
+      <SetupTab
+        businessData={businessData}
+        onUpdateBusinessData={setBusinessData}
+        retailPricePerGram={businessData.wholesalePricePerOz / 28.35}
+        onUpdateRetailPrice={(retail) => setBusinessData({ ...businessData, retailPricePerGram: retail })}
+        showModeSelection={true}
+        mode={mode}
+        onSelectRisk={handleSelectRisk}
+      />
+      <div className="flex justify-end mt-4">
+        <Button onClick={() => handleUpdateBusinessData(businessData)} disabled={saving} className="button-sharp bg-white text-black">
+          {saving ? "Saving..." : "Save Settings"}
+        </Button>
+        {saveMsg && <span className="ml-4 text-sm text-white">{saveMsg}</span>}
+      </div>
 
       <Card className="card-sharp border-white">
         <CardHeader>
@@ -115,6 +164,5 @@ export default function SettingsTab({
       </Card>
     </div>
   )
-  
-}  
+}
 

@@ -63,6 +63,27 @@ export default function CustomSignUp() {
           console.error("Error saving user secret:", secretError)
           // Continue anyway as this shouldn't block signup
         }
+
+        try {
+          // Trigger onboarding in Neon DB with sensible defaults
+          const { saveOnboarding } = await import("@/lib/actions/onboarding");
+          const { RISK_MODE_DEFAULTS } = await import("@/features/setup-tab");
+          if (typeof result.id === "string" && result.id) {
+            await saveOnboarding({
+              clerkUserId: result.id,
+              username,
+              secretCode,
+              mode: "moderate",
+              inventoryQty: 0,
+              wholesalePricePerOz: RISK_MODE_DEFAULTS.moderate.wholesalePricePerOz,
+            });
+          } else {
+            console.error("No Clerk user ID returned from signUp.create");
+          }
+        } catch (onboardingError) {
+          console.error("Error saving onboarding data:", onboardingError);
+          // Continue anyway as this shouldn't block signup
+        }
         
         // Redirect to home page after successful sign-up
         router.push(redirectUrl)
@@ -108,7 +129,7 @@ export default function CustomSignUp() {
                   autoComplete="current-password"
                 />
                 <div>
-                  <Label htmlFor="secret-code" className="text-white mb-1 block">Secret Code</Label>
+                  <Label htmlFor="secret-code" className="text-white mb-1 block">Hustler's Code</Label>
                   <Input
                     id="secret-code"
                     type="text"

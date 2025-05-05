@@ -23,9 +23,10 @@ type PricingContextType = {
 const PricingContext = createContext<PricingContextType | undefined>(undefined)
 
 export function PricingProvider({ children }: { children: ReactNode }) {
-  const [retailPricePerGram, setRetailPricePerGram] = useState(100) // Default retail price per gram
-  const [markupPercentage, setMarkupPercentage] = useState(251) // Default markup for 28.50 -> 100
-  const [wholesalePricePerGram, setWholesalePricePerGram] = useState(28.5) // Default wholesale price per gram
+  // Default values: 28 wholesale, 100 retail
+  const [retailPricePerGram, setRetailPricePerGram] = useState(100)
+  const [markupPercentage, setMarkupPercentage] = useState(257) // (100-28)/28*100
+  const [wholesalePricePerGram, setWholesalePricePerGram] = useState(28)
   const [scenarios, setScenarios] = useState<Scenario[]>([])
 
   // Load pricing data from localStorage on initial render
@@ -35,8 +36,8 @@ export function PricingProvider({ children }: { children: ReactNode }) {
       try {
         const { retailPrice, markup, wholesalePrice, scenarios: savedScenarios } = JSON.parse(savedPricing)
         setRetailPricePerGram(retailPrice || 100)
-        setMarkupPercentage(markup || 251)
-        setWholesalePricePerGram(wholesalePrice || 28.5)
+        setMarkupPercentage(markup || 257)
+        setWholesalePricePerGram(wholesalePrice || 28)
         setScenarios(savedScenarios || [])
       } catch (error) {
         console.error("Error loading pricing data:", error)

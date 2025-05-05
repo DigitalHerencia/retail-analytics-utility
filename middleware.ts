@@ -1,54 +1,53 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const publicPaths = [
-  "/sign-in*",
-  "/sign-up*",
-  "/sign-out*",
-  "/api/webhook/clerk*", // Allow Clerk webhooks
-  "/api/get-tenant-id*", // Allow tenant ID endpoint
-];
-
-const ignoredPaths = [
-  "/_next/static/*",
-  "/_next/image*",
-  "/favicon.ico",
-  "/title-*.png",
-  "/icon.png",
-  "/code.png",
-  "/logo.png",
-  "/register.jpeg",
-];
+const isOnboardingRoute = createRouteMatcher(["/onboarding"]);
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/sign-out(.*)",
+  "/api/webhook/clerk(.*)",
+  "/api/get-tenant-id(.*)"
+]);
 
 export default clerkMiddleware(async (auth, req) => {
-    const { userId } = await auth();
-    const { pathname } = req.nextUrl;
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
 
-    // Redirect signed-in users away from auth pages
-    if (userId && ["/sign-in", "/sign-up", "/sign-out"].some(p => pathname.startsWith(p))) {
-      const homeUrl = new URL("/", req.url);
-      return NextResponse.redirect(homeUrl);
-    }
-
-    // Allow users to visit public routes
-    if (publicPaths.some(path => pathname.match(new RegExp(`^${path.replace('*', '.*')}$`)))) {
-      return NextResponse.next();
-    }
-
-    // Force users to sign in if they're not authenticated
-    if (!userId && !ignoredPaths.some(path => pathname.match(new RegExp(`^${path.replace('*', '.*')}$`)))) {
-      const signInUrl = new URL("/sign-in", req.url);
-      signInUrl.searchParams.set("redirect_url", pathname);
-      return NextResponse.redirect(signInUrl);
-    }
-
+  // Allow onboarding route for signed-in users
+  if (userId && isOnboardingRoute(req)) {
     return NextResponse.next();
   }
-);
+
+  // Allow public routes
+  if (!userId && isPublicRoute(req)) {
+    return NextResponse.next();
+  }
+
+  // Force sign-in for private routes
+  if (!userId && !isPublicRoute(req)) {
+    return redirectToSignIn({ returnBackUrl: req.url });
+  }
+
+  // Redirect signed-in users who haven't completed onboarding
+  if (userId && !sessionClaims?.metadata?.onboardingComplete) {
+    const onboardingUrl = new URL("/onboarding", req.url);
+    return NextResponse.redirect(onboardingUrl);
+  }
+
+  // Redirect signed-in users away from auth pages
+  if (userId && isPublicRoute(req)) {
+    const homeUrl = new URL("/", req.url);
+    return NextResponse.redirect(homeUrl);
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
-    "/((?!.*\\.|api|trpc|_next/static|_next/image|favicon.ico).*)",
-    "/"
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 };

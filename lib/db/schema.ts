@@ -34,6 +34,21 @@ export async function ensureDatabaseSetup() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Create business_data table if it doesn't exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS business_data (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id TEXT NOT NULL,
+        risk_mode TEXT NOT NULL DEFAULT 'moderate',
+        wholesale_price_per_oz DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        target_profit_per_month DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        operating_expenses DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        target_profit DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
     
     // Add index on tenant_id for faster queries
     await sql`

@@ -155,7 +155,7 @@ export default function CashRegister({
       <div className="text-center mb-4">
         <div className="gangster-gradient text-white py-6 px-4 mb-4 border-white border-2 card-sharp fade-in">
           <h1 className="text-4xl font-bold text-white graffiti-font text-shadow">REGISTER</h1>
-          <p className="text-white/80 mt-1">Track sales, purchases, and payments</p>
+          <p className="text-white/80 mt-1">Organize the hustle. Encrypt the grind.</p>
         </div>
         <HustleTip title="REGISTER TIPS">
           <p>

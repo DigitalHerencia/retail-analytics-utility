@@ -19,13 +19,60 @@ interface SetupTabProps {
   onUpdateBusinessData: (data: BusinessData) => void
   retailPricePerGram: number
   onUpdateRetailPrice: (price: number) => void
+  onboardingMode?: boolean
+  onSelectRisk?: (risk: keyof typeof RISK_MODE_DEFAULTS) => void
+  showModeSelection?: boolean
+  mode?: keyof typeof RISK_MODE_DEFAULTS
 }
+
+const RISK_OPTIONS = [
+  {
+    value: 'conservative',
+    label: "Under the Radar",
+    description: "Low risk, steady growth, minimal attention.",
+  },
+  {
+    value: 'moderate',
+    label: "Get It How I Live It",
+    description: "Balanced hustle, moderate risk and reward.",
+  },
+  {
+    value: 'high',
+    label: "Take Over",
+    description: "High risk, high reward, aggressive expansion.",
+  },
+]
+
+export const RISK_MODE_DEFAULTS = {
+  conservative: {
+    wholesalePricePerOz: 25,
+    targetProfitPerMonth: 500,
+    operatingExpenses: 300,
+    targetProfit: 500,
+  },
+  moderate: {
+    wholesalePricePerOz: 28.5,
+    targetProfitPerMonth: 1000,
+    operatingExpenses: 500,
+    targetProfit: 1000,
+  },
+  high: {
+    wholesalePricePerOz: 35,
+    targetProfitPerMonth: 2500,
+    operatingExpenses: 1200,
+    targetProfit: 2500,
+  },
+} as const;
 
 export default function SetupTab({
   businessData,
   onUpdateBusinessData,
   retailPricePerGram,
   onUpdateRetailPrice,
+  onboardingMode = false,
+  onSelectRisk,
+  showModeSelection = false,
+  mode,
 }: SetupTabProps) {
   const [activeTab, setActiveTab] = useState("pricing")
   const [markupPercentage, setMarkupPercentage] = useState(100)
@@ -76,41 +123,37 @@ export default function SetupTab({
         </HustleTip>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="pricing" className="gangster-font">
-            PRICING SETUP
-          </TabsTrigger>
-          <TabsTrigger value="business" className="gangster-font">
-            BUSINESS PARAMETERS
-          </TabsTrigger>
-        </TabsList>
+      {(onboardingMode || showModeSelection) && (
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-white gangster-font mb-2">Choose Your Hustle Style</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {RISK_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`w-full p-4 border-2 border-white bg-black/60 text-white rounded-lg hover:bg-white/10 transition ${mode === opt.value ? 'ring-2 ring-white' : ''}`}
+                onClick={() => onSelectRisk?.(opt.value as keyof typeof RISK_MODE_DEFAULTS)}
+              >
+                <div className="text-lg font-bold mb-1">{opt.label}</div>
+                <div className="text-xs opacity-80">{opt.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-        <TabsContent value="pricing" className="space-y-6 mt-6">
+      {onboardingMode ? (
+        <>
           <Card className="card-hover card-sharp border-white">
             <CardHeader>
-              <CardTitle className="gangster-font text-white">PRICING CALCULATOR</CardTitle>
+              <CardTitle className="gangster-font text-white">PRICING SETUP</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="wholesalePrice" className="flex items-center gangster-font">
-                    <DollarSign className="h-4 w-4 mr-1 text-white" />
-                    WHOLESALE PRICE (PER OZ)
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs card-sharp">
-                          <p>{businessConcepts.wholesale}</p>
-                          <p className="text-xs mt-1 text-white">💰 Buy low, sell high. That's the game.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <span className="font-medium white-text">{formatCurrency(businessData.wholesalePricePerOz)}</span>
-                </div>
+                <Label htmlFor="wholesalePrice" className="flex items-center gangster-font">
+                  <DollarSign className="h-4 w-4 mr-1 text-white" />
+                  WHOLESALE PRICE (PER OZ)
+                </Label>
                 <Input
                   id="wholesalePrice"
                   type="number"
@@ -118,73 +161,7 @@ export default function SetupTab({
                   onChange={(e) => handleInputChange("wholesalePricePerOz", Number.parseFloat(e.target.value) || 0)}
                   className="text-lg input-sharp"
                 />
-                <p className="text-xs text-white">Per gram: {formatCurrency(wholesalePricePerGram)}</p>
               </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center justify-between mb-2 gangster-font">
-                  <span className="flex items-center">
-                    <Percent className="h-4 w-4 mr-1 text-white" />
-                    MARKUP PERCENTAGE
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs card-sharp">
-                          <p>{businessConcepts.markup}</p>
-                          <p className="text-xs mt-1 text-white">
-                            💰 Higher markup = bigger profits per unit. Find your sweet spot.
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </span>
-                  <span className="font-medium text-white">{formatPercentage(markupPercentage)}</span>
-                </Label>
-                <Slider
-                  value={[markupPercentage]}
-                  min={50}
-                  max={200}
-                  step={5}
-                  onValueChange={handleMarkupChange}
-                  className="mb-6"
-                />
-                <div className="flex justify-between text-xs text-white">
-                  <span>50%</span>
-                  <span>100%</span>
-                  <span>150%</span>
-                  <span>200%</span>
-                </div>
-              </div>
-
-              <div className="bg-smoke p-6 space-y-4">
-                <h3 className="text-lg font-semibold gangster-font text-white">CALCULATED RETAIL PRICE</h3>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-white gangster-font">RETAIL PRICE (PER GRAM)</p>
-                    <p className="text-2xl font-bold mt-1 white-text gangster-font">
-                      {formatCurrency(retailPricePerGram)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-white gangster-font">PROFIT (PER GRAM)</p>
-                    <p className="text-2xl font-bold mt-1 text-white gangster-font">{formatCurrency(profitPerGram)}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white gangster-font">PROFIT MARGIN</span>
-                    <span className="font-medium white-text">{formatPercentage(profitMarginPercentage)}</span>
-                  </div>
-                  <div className="w-full bg-secondary h-2">
-                    <div className="bg-white h-2" style={{ width: `${profitMarginPercentage}%` }}></div>
-                  </div>
-                </div>
-              </div>
-
               <Button
                 onClick={() => onUpdateRetailPrice(retailPricePerGram)}
                 className="w-full bg-white hover:bg-white/90 text-black button-sharp"
@@ -193,304 +170,408 @@ export default function SetupTab({
               </Button>
             </CardContent>
           </Card>
-
-          <Card className="card-hover card-sharp border-white">
-            <CardHeader>
-              <CardTitle className="gangster-font text-white">PRICING STRATEGY</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">PRICE POSITIONING</h3>
-                <div className="bg-smoke p-4">
-                  <p className="text-sm">
-                    {profitMarginPercentage > 60
-                      ? "Premium pricing strategy. High margins but may limit volume."
-                      : profitMarginPercentage > 40
-                        ? "Balanced pricing strategy. Good margins with reasonable volume."
-                        : "Value pricing strategy. Lower margins but potentially higher volume."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">RECOMMENDED STRATEGIES</h3>
-                <div className="space-y-2">
-                  {profitMarginPercentage < 30 && (
-                    <div className="bg-blood/10 p-3 border-l-4 border-blood">
-                      <p className="text-sm text-blood">
-                        Warning: Your profit margin is very low. Consider increasing your prices or finding a cheaper
-                        supplier.
-                      </p>
-                    </div>
-                  )}
-
-                  {profitMarginPercentage > 70 && (
-                    <div className="bg-white/10 p-3 border-l-4 border-white">
-                      <p className="text-sm">
-                        Your margins are excellent, but make sure your price isn't limiting your sales volume. Consider
-                        offering volume discounts to move more product.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">
-                      • Test different price points to find your optimal balance of margin and volume
-                    </p>
-                  </div>
-
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Consider different pricing tiers for different customer segments</p>
-                  </div>
-
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Monitor competitor pricing but don't automatically match it</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="business" className="space-y-6 mt-6">
-          <Card className="card-hover card-sharp border-white">
-            <CardHeader>
-              <CardTitle className="gangster-font text-white">BUSINESS PARAMETERS</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="expenses" className="flex items-center gangster-font">
-                    <BarChart3 className="h-4 w-4 mr-1 text-blood" />
-                    MONTHLY EXPENSES
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs card-sharp">
-                          <p>Your fixed monthly costs like rent, utilities, etc.</p>
-                          <p className="text-xs mt-1 text-white">
-                            💰 Keep your overhead low to maximize profits.
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <span className="font-medium blood-text">{formatCurrency(businessData.operatingExpenses)}</span>
-                </div>
-                <Input
-                  id="expenses"
-                  type="number"
-                  value={businessData.operatingExpenses}
-                  onChange={(e) => handleInputChange("operatingExpenses", Number.parseFloat(e.target.value) || 0)}
-                  className="text-lg input-sharp"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="targetProfit" className="flex items-center gangster-font">
-                    <TrendingUp className="h-4 w-4 mr-1 text-white" />
-                    TARGET MONTHLY PROFIT
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs card-sharp">
-                          <p>How much profit you want to make each month.</p>
-                          <p className="text-xs mt-1 text-white">
-                            💰 Set ambitious targets. Aim high, hustle hard.
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <span className="font-medium white-text">{formatCurrency(businessData.targetProfitPerMonth)}</span>
-                </div>
-                <Input
-                  id="targetProfit"
-                  type="number"
-                  value={businessData.targetProfitPerMonth}
-                  onChange={(e) => handleInputChange("targetProfitPerMonth", Number.parseFloat(e.target.value) || 0)}
-                  className="text-lg input-sharp"
-                />
-              </div>
-
-              <div className="bg-smoke p-6">
-                <h3 className="text-lg font-semibold gangster-font text-white mb-4">BREAK-EVEN ANALYSIS</h3>
-
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <div className="flex justify-between">
-                      <span className="gangster-font">MONTHLY FIXED COSTS</span>
-                      <span className="text-white">{formatCurrency(businessData.operatingExpenses)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="gangster-font">PROFIT PER GRAM</span>
-                      <span className="text-white">{formatCurrency(profitPerGram)}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-muted/20">
-                    <div className="flex justify-between">
-                      <span className="gangster-font">BREAK-EVEN QUANTITY</span>
-                      <span className="text-white">{formatGrams(businessData.operatingExpenses / profitPerGram)}</span>
-                    </div>
-                    <p className="text-xs text-white mt-1">
-                      This is how much you need to sell each month just to cover your expenses.
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-muted/20">
-                    <div className="flex justify-between">
-                      <span className="gangster-font">TARGET QUANTITY</span>
-                      <span className="text-white">
-                        {formatGrams(
-                          (businessData.operatingExpenses + businessData.targetProfitPerMonth) / profitPerGram,
-                        )}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white mt-1">
-                      This is how much you need to sell each month to hit your profit target.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                onClick={() => onUpdateBusinessData(businessData)}
-                className="w-full bg-white hover:bg-white/90 text-black button-sharp"
-              >
-                SAVE BUSINESS SETTINGS
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="card-hover card-sharp border-white">
-            <CardHeader>
-              <CardTitle className="gangster-font text-white">BUSINESS OPTIMIZATION</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">EXPENSE MANAGEMENT</h3>
-                <div className="bg-smoke p-4">
-                  <p className="text-sm">
-                    Your monthly expenses are {formatCurrency(businessData.operatingExpenses)}, which is{" "}
-                    {businessData.operatingExpenses > 1000
-                      ? "relatively high. Consider ways to reduce overhead."
-                      : businessData.operatingExpenses > 500
-                        ? "moderate. Keep monitoring for potential savings."
-                        : "low. Good job keeping overhead down."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">PROFIT TARGETS</h3>
-                <div className="bg-smoke p-4">
-                  <p className="text-sm">
-                    Your target monthly profit is {formatCurrency(businessData.targetProfitPerMonth)}, which is{" "}
-                    {businessData.targetProfitPerMonth > 5000
-                      ? "ambitious. Make sure your sales volume can support this."
-                      : businessData.targetProfitPerMonth > 2000
-                        ? "reasonable. A solid target for a growing operation."
-                        : "conservative. Consider setting more ambitious goals as you grow."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">RECOMMENDED STRATEGIES</h3>
-                <div className="space-y-2">
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Focus on high-margin products to maximize profit per transaction</p>
-                  </div>
-
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Keep inventory levels optimized to minimize tied-up capital</p>
-                  </div>
-
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Maintain strict collection policies to ensure healthy cash flow</p>
-                  </div>
-
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Regularly review and adjust pricing based on market conditions</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="card-hover card-sharp border-white mt-6">
             <CardHeader>
-              <CardTitle className="gangster-font text-white">INVENTORY SETTINGS</CardTitle>
+              <CardTitle className="gangster-font text-white">INVENTORY SETUP</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <h3 className="font-medium gangster-font">INVENTORY MANAGEMENT</h3>
-                <div className="bg-smoke p-4">
-                  <p className="text-sm">
-                    Your inventory is tracked across all components. Changes in the register will update your inventory
-                    levels, and inventory purchases will be reflected in your financial reports.
-                  </p>
-                </div>
+                <Label htmlFor="inventoryQty" className="flex items-center gangster-font">
+                  Inventory Quantity (grams)
+                </Label>
+                <Input
+                  id="inventoryQty"
+                  type="number"
+                  value={businessData.inventoryQty || 0}
+                  onChange={(e) => handleInputChange("inventoryQty", Number.parseFloat(e.target.value) || 0)}
+                  className="text-lg input-sharp"
+                />
               </div>
-
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">INVENTORY METRICS</h3>
-                <div className="bg-smoke p-4 space-y-4">
-                  <div className="flex justify-between">
-                    <span className="gangster-font">TOTAL INVENTORY VALUE:</span>
-                    <span className="text-white">
-                      {formatCurrency(inventory.reduce((sum, item) => sum + item.totalCost, 0))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="gangster-font">TOTAL QUANTITY:</span>
-                    <span className="text-white">
-                      {formatGrams(inventory.reduce((sum, item) => sum + item.quantityG, 0))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="gangster-font">LOW STOCK ITEMS:</span>
-                    <span className="text-white">
-                      {inventory.filter((item) => item.quantityG <= item.reorderThresholdG).length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-medium gangster-font">INVENTORY RECOMMENDATIONS</h3>
-                <div className="space-y-2">
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Keep at least 2 weeks of inventory on hand based on your sales velocity</p>
-                  </div>
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Set reorder thresholds to ensure you never run out of product</p>
-                  </div>
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Track cost per unit carefully to maintain your profit margins</p>
-                  </div>
-                  <div className="bg-smoke p-3">
-                    <p className="text-sm">• Consider bulk purchases to reduce your cost per unit</p>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                onClick={() => setActiveTab("inventory")}
-                className="w-full bg-white hover:bg-white/90 text-black button-sharp"
-              >
-                MANAGE INVENTORY
-              </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="pricing" className="gangster-font">
+              PRICING SETUP
+            </TabsTrigger>
+            <TabsTrigger value="business" className="gangster-font">
+              BUSINESS PARAMETERS
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pricing" className="space-y-6 mt-6">
+            <Card className="card-hover card-sharp border-white">
+              <CardHeader>
+                <CardTitle className="gangster-font text-white">PRICING CALCULATOR</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="wholesalePrice" className="flex items-center gangster-font">
+                      <DollarSign className="h-4 w-4 mr-1 text-white" />
+                      WHOLESALE PRICE (PER OZ)
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs card-sharp">
+                            <p>{businessConcepts.wholesale}</p>
+                            <p className="text-xs mt-1 text-white">💰 Buy low, sell high. That's the game.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </Label>
+                    <span className="font-medium white-text">{formatCurrency(businessData.wholesalePricePerOz)}</span>
+                  </div>
+                  <Input
+                    id="wholesalePrice"
+                    type="number"
+                    value={businessData.wholesalePricePerOz}
+                    onChange={(e) => handleInputChange("wholesalePricePerOz", Number.parseFloat(e.target.value) || 0)}
+                    className="text-lg input-sharp"
+                  />
+                  <p className="text-xs text-white">Per gram: {formatCurrency(wholesalePricePerGram)}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center justify-between mb-2 gangster-font">
+                    <span className="flex items-center">
+                      <Percent className="h-4 w-4 mr-1 text-white" />
+                      MARKUP PERCENTAGE
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs card-sharp">
+                            <p>{businessConcepts.markup}</p>
+                            <p className="text-xs mt-1 text-white">
+                              💰 Higher markup = bigger profits per unit. Find your sweet spot.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </span>
+                    <span className="font-medium text-white">{formatPercentage(markupPercentage)}</span>
+                  </Label>
+                  <Slider
+                    value={[markupPercentage]}
+                    min={50}
+                    max={200}
+                    step={5}
+                    onValueChange={handleMarkupChange}
+                    className="mb-6"
+                  />
+                  <div className="flex justify-between text-xs text-white">
+                    <span>50%</span>
+                    <span>100%</span>
+                    <span>150%</span>
+                    <span>200%</span>
+                  </div>
+                </div>
+
+                <div className="bg-smoke p-6 space-y-4">
+                  <h3 className="text-lg font-semibold gangster-font text-white">CALCULATED RETAIL PRICE</h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-white gangster-font">RETAIL PRICE (PER GRAM)</p>
+                      <p className="text-2xl font-bold mt-1 white-text gangster-font">
+                        {formatCurrency(retailPricePerGram)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-white gangster-font">PROFIT (PER GRAM)</p>
+                      <p className="text-2xl font-bold mt-1 text-white gangster-font">{formatCurrency(profitPerGram)}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white gangster-font">PROFIT MARGIN</span>
+                      <span className="font-medium white-text">{formatPercentage(profitMarginPercentage)}</span>
+                    </div>
+                    <div className="w-full bg-secondary h-2">
+                      <div className="bg-white h-2" style={{ width: `${profitMarginPercentage}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => onUpdateRetailPrice(retailPricePerGram)}
+                  className="w-full bg-white hover:bg-white/90 text-black button-sharp"
+                >
+                  SAVE PRICING SETTINGS
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover card-sharp border-white">
+              <CardHeader>
+                <CardTitle className="gangster-font text-white">PRICING STRATEGY</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="font-medium gangster-font">PRICE POSITIONING</h3>
+                  <div className="bg-smoke p-4">
+                    <p className="text-sm">
+                      {profitMarginPercentage > 60
+                        ? "Premium pricing strategy. High margins but may limit volume."
+                        : profitMarginPercentage > 40
+                          ? "Balanced pricing strategy. Good margins with reasonable volume."
+                          : "Value pricing strategy. Lower margins but potentially higher volume."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-medium gangster-font">RECOMMENDED STRATEGIES</h3>
+                  <div className="space-y-2">
+                    {profitMarginPercentage < 30 && (
+                      <div className="bg-blood/10 p-3 border-l-4 border-blood">
+                        <p className="text-sm text-blood">
+                          Warning: Your profit margin is very low. Consider increasing your prices or finding a cheaper
+                          supplier.
+                        </p>
+                      </div>
+                    )}
+
+                    {profitMarginPercentage > 70 && (
+                      <div className="bg-white/10 p-3 border-l-4 border-white">
+                        <p className="text-sm">
+                          Your margins are excellent, but make sure your price isn't limiting your sales volume. Consider
+                          offering volume discounts to move more product.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">
+                        • Test different price points to find your optimal balance of margin and volume
+                      </p>
+                    </div>
+
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">• Consider different pricing tiers for different customer segments</p>
+                    </div>
+
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">• Monitor competitor pricing but don't automatically match it</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="business" className="space-y-6 mt-6">
+            <Card className="card-hover card-sharp border-white">
+              <CardHeader>
+                <CardTitle className="gangster-font text-white">BUSINESS PARAMETERS</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="expenses" className="flex items-center gangster-font">
+                      <BarChart3 className="h-4 w-4 mr-1 text-blood" />
+                      MONTHLY EXPENSES
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs card-sharp">
+                            <p>Your fixed monthly costs like rent, utilities, etc.</p>
+                            <p className="text-xs mt-1 text-white">
+                              💰 Keep your overhead low to maximize profits.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </Label>
+                    <span className="font-medium blood-text">{formatCurrency(businessData.operatingExpenses)}</span>
+                  </div>
+                  <Input
+                    id="expenses"
+                    type="number"
+                    value={businessData.operatingExpenses}
+                    onChange={(e) => handleInputChange("operatingExpenses", Number.parseFloat(e.target.value) || 0)}
+                    className="text-lg input-sharp"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="targetProfit" className="flex items-center gangster-font">
+                      <TrendingUp className="h-4 w-4 mr-1 text-white" />
+                      TARGET MONTHLY PROFIT
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-4 w-4 ml-1 inline opacity-70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs card-sharp">
+                            <p>How much profit you want to make each month.</p>
+                            <p className="text-xs mt-1 text-white">
+                              💰 Set ambitious targets. Aim high, hustle hard.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </Label>
+                    <span className="font-medium white-text">{formatCurrency(businessData.targetProfitPerMonth)}</span>
+                  </div>
+                  <Input
+                    id="targetProfit"
+                    type="number"
+                    value={businessData.targetProfitPerMonth}
+                    onChange={(e) => handleInputChange("targetProfitPerMonth", Number.parseFloat(e.target.value) || 0)}
+                    className="text-lg input-sharp"
+                  />
+                </div>
+
+                <div className="bg-smoke p-6">
+                  <h3 className="text-lg font-semibold gangster-font text-white mb-4">BREAK-EVEN ANALYSIS</h3>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="gangster-font">MONTHLY FIXED COSTS</span>
+                        <span className="text-white">{formatCurrency(businessData.operatingExpenses)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="gangster-font">PROFIT PER GRAM</span>
+                        <span className="text-white">{formatCurrency(profitPerGram)}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-muted/20">
+                      <div className="flex justify-between">
+                        <span className="gangster-font">BREAK-EVEN QUANTITY</span>
+                        <span className="text-white">{formatGrams(businessData.operatingExpenses / profitPerGram)}</span>
+                      </div>
+                      <p className="text-xs text-white mt-1">
+                        This is how much you need to sell each month just to cover your expenses.
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-muted/20">
+                      <div className="flex justify-between">
+                        <span className="gangster-font">TARGET QUANTITY</span>
+                        <span className="text-white">
+                          {formatGrams(
+                            (businessData.operatingExpenses + businessData.targetProfitPerMonth) / profitPerGram,
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white mt-1">
+                        This is how much you need to sell each month to hit your profit target.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => onUpdateBusinessData(businessData)}
+                  className="w-full bg-white hover:bg-white/90 text-black button-sharp"
+                >
+                  SAVE BUSINESS SETTINGS
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover card-sharp border-white">
+              <CardHeader>
+                <CardTitle className="gangster-font text-white">BUSINESS OPTIMIZATION</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="font-medium gangster-font">EXPENSE MANAGEMENT</h3>
+                  <div className="bg-smoke p-4">
+                    <p className="text-sm">
+                      Your monthly expenses are {formatCurrency(businessData.operatingExpenses)}, which is{" "}
+                      {businessData.operatingExpenses > 1000
+                        ? "relatively high. Consider ways to reduce overhead."
+                        : businessData.operatingExpenses > 500
+                          ? "moderate. Keep monitoring for potential savings."
+                          : "low. Great job keeping costs down!"}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-hover card-sharp border-white mt-6">
+              <CardHeader>
+                <CardTitle className="gangster-font text-white">INVENTORY SETTINGS</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="font-medium gangster-font">INVENTORY MANAGEMENT</h3>
+                  <div className="bg-smoke p-4">
+                    <p className="text-sm">
+                      Your inventory is tracked across all components. Changes in the register will update your inventory
+                      levels, and inventory purchases will be reflected in your financial reports.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-medium gangster-font">INVENTORY METRICS</h3>
+                  <div className="bg-smoke p-4 space-y-4">
+                    <div className="flex justify-between">
+                      <span className="gangster-font">TOTAL INVENTORY VALUE:</span>
+                      <span className="text-white">
+                        {formatCurrency(inventory.reduce((sum, item) => sum + item.totalCost, 0))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="gangster-font">TOTAL QUANTITY:</span>
+                      <span className="text-white">
+                        {formatGrams(inventory.reduce((sum, item) => sum + item.quantityG, 0))}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="gangster-font">LOW STOCK ITEMS:</span>
+                      <span className="text-white">
+                        {inventory.filter((item) => item.quantityG <= item.reorderThresholdG).length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-medium gangster-font">INVENTORY RECOMMENDATIONS</h3>
+                  <div className="space-y-2">
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">• Keep at least 2 weeks of inventory on hand based on your sales velocity</p>
+                    </div>
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">• Set reorder thresholds to ensure you never run out of product</p>
+                    </div>
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">• Track cost per unit carefully to maintain your profit margins</p>
+                    </div>
+                    <div className="bg-smoke p-3">
+                      <p className="text-sm">• Consider bulk purchases to reduce your cost per unit</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setActiveTab("inventory")}
+                  className="w-full bg-white hover:bg-white/90 text-black button-sharp"
+                >
+                  MANAGE INVENTORY
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   )
 }

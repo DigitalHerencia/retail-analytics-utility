@@ -69,6 +69,7 @@ export function RetailAnalyticsForm({
         markupPercentage: businessData.markupPercentage,
         retailPricePerGram: businessData.retailPricePerGram,
         targetProfit: businessData.targetProfit,
+        inventoryQty: businessData.inventoryQty, // Fix: include required property
       }
       try {
         await saveBusinessData(userId, values)

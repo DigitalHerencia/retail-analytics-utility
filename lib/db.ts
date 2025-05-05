@@ -4,7 +4,7 @@ import { neon } from '@neondatabase/serverless';
  * Creates a database connection with error handling
  */
 
-// Initialize database connection
+// Initialize database connection with proper error handling
 const sql = createDatabaseConnection();
 
 export default sql;
@@ -32,14 +32,21 @@ export async function executeQuery<T>(queryFn: () => Promise<T>): Promise<{ succ
  * @returns Neon SQL client
  */
 function createDatabaseConnection() {
-  // Direct use of process.env without validation
-  const databaseUrl = process.env.DATABASE_URL;
-  
-  if (!databaseUrl) {
-    console.warn('DATABASE_URL not found in environment variables');
-    // Return a dummy connection or handle this case as needed
+  try {
+    // Validate and use the database URL from environment variables
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      console.error('DATABASE_URL not found in environment variables');
+      throw new Error('Database connection string is missing');
+    }
+    
+    // Create and return the neon SQL client with the connection string
+    return neon(databaseUrl);
+  } catch (error) {
+    console.error('Failed to create database connection:', error);
+    // In production, you might want to throw an error instead of returning a dummy connection
+    // For now, return a dummy connection to prevent the app from crashing
     return neon('postgresql://user:password@localhost:5432/dummy');
   }
-  
-  return neon(databaseUrl);
 }

@@ -72,9 +72,9 @@ export default function InventoryManagement({
     defaultValues: {
       name: "",
       description: "",
-      quantity: 0, // Default to 0 as requested
-      unit: "oz",
-      costPerOz: 0, // Default to 0 as requested
+      quantity: 1, // Default to 1
+      unit: "oz", // Default to ounce
+      costPerOz: 0,
       purchaseDate: new Date().toISOString().split("T")[0],
       reorderThresholdG: 100,
     },
@@ -86,8 +86,8 @@ export default function InventoryManagement({
       form.reset({
         name: "",
         description: "",
-        quantity: 0,
-        unit: "oz",
+        quantity: 1, // Default to 1
+        unit: "oz", // Default to ounce
         costPerOz: 0,
         purchaseDate: new Date().toISOString().split("T")[0],
         reorderThresholdG: 100,

@@ -35,7 +35,8 @@ export function PersistentStateProvider({ children }: { children: ReactNode }) {
       operatingExpenses: 0,
       targetProfit: undefined,
       markupPercentage: 0,
-      retailPricePerGram: 0
+      retailPricePerGram: 0,
+      inventoryQty: 0 // Fix: add missing required property
     },
     inventory: [],
     customers: [],

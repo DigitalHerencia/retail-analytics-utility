@@ -5,6 +5,8 @@ export interface BusinessData {
   wholesalePricePerOz: number
   targetProfitPerMonth: number
   operatingExpenses: number
+  inventoryQty: number
+  risk_mode?: string // Added for mode support
 }
 
 export interface PricePoint {
