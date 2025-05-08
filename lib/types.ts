@@ -1,17 +1,104 @@
-import type { Prisma } from "@prisma/client"
+// Custom types to replace Prisma types
+export interface BusinessData {
+  id: string
+  wholesalePricePerOz: number
+  targetProfitPerMonth: number
+  operatingExpenses: number
+  createdAt: Date
+  updatedAt: Date
+}
 
-export type BusinessData = Prisma.BusinessDataGetPayload<{}>
-export type ScenarioData = Prisma.ScenarioGetPayload<{
-  include: { salespeople: true }
-}>
-export type InventoryItem = Prisma.InventoryItemGetPayload<{}>
-export type Customer = Prisma.CustomerGetPayload<{
-  include: { payments: true }
-}>
-export type Payment = Prisma.PaymentGetPayload<{}>
-export type Transaction = Prisma.TransactionGetPayload<{}>
-export type Account = Prisma.AccountGetPayload<{}>
-export type Salesperson = Prisma.SalespersonGetPayload<{}>
+export interface Salesperson {
+  id: string
+  scenarioId: string
+  name: string
+  commissionRate: number
+  salesQuantity: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ScenarioData {
+  id: string
+  name: string
+  description: string | null
+  wholesalePrice: number
+  retailPrice: number
+  quantity: number
+  timePeriod: string
+  expenses: number
+  createdAt: Date
+  updatedAt: Date
+  salespeople: Salesperson[]
+}
+
+export interface InventoryItem {
+  id: string
+  name: string
+  description: string | null
+  quantityG: number
+  quantityOz: number
+  quantityKg: number
+  purchaseDate: string
+  costPerOz: number
+  totalCost: number
+  reorderThresholdG: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Payment {
+  id: string
+  customerId: string
+  amount: number
+  date: string
+  method: string
+  notes: string | null
+  createdAt: Date
+}
+
+export interface Customer {
+  id: string
+  name: string
+  phone: string | null
+  email: string | null
+  address: string | null
+  amountOwed: number
+  dueDate: string | null
+  status: string
+  notes: string | null
+  createdAt: Date
+  updatedAt: Date
+  payments: Payment[]
+}
+
+export interface Transaction {
+  id: string
+  date: string
+  type: string
+  inventoryId: string | null
+  inventoryName: string | null
+  quantityGrams: number
+  pricePerGram: number
+  totalPrice: number
+  cost: number
+  profit: number
+  paymentMethod: string
+  customerId: string | null
+  customerName: string | null
+  notes: string | null
+  createdAt: Date
+}
+
+export interface Account {
+  id: string
+  name: string
+  type: string
+  balance: number
+  description: string | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 // Business concept explanations
 export const businessConcepts = {

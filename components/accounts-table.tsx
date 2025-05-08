@@ -21,9 +21,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Plus, Edit, Trash2, DollarSign } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown } from "lucide-react"
-import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/app/actions"
-import type { Account, Payment } from "@/lib/types"
+import type { Account, Payment } from "@/lib/data"
 import { formatCurrency } from "@/lib/utils"
+import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/app/actions"
 
 interface AccountsTableProps {
   onAddPayment?: (accountId: string, payment: Payment) => void
@@ -55,9 +55,14 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
   useEffect(() => {
     const loadAccounts = async () => {
       setIsLoading(true)
-      const data = await getAccounts()
-      setAccounts(data)
-      setIsLoading(false)
+      try {
+        const data = await getAccounts()
+        setAccounts(data)
+      } catch (error) {
+        console.error("Error loading accounts:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     loadAccounts()
@@ -82,57 +87,95 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
   })
 
   const handleAddAccount = async (values: z.infer<typeof accountFormSchema>) => {
-    const newAccount = {
-      name: values.customerName,
-      balance: values.amountOwed,
-      type: "asset",
-      description: `Account created on ${values.purchaseDate}, due on ${values.dueDate}`,
-    }
+    setIsLoading(true)
 
-    const created = await createAccount(newAccount)
-    if (created) {
-      setAccounts([...accounts, created])
-      setIsAddDialogOpen(false)
-      accountForm.reset()
+    try {
+      const newAccount = {
+        name: values.customerName,
+        balance: values.amountOwed,
+        type: "asset",
+        description: `Account created on ${values.purchaseDate}, due on ${values.dueDate}`,
+      }
+
+      const created = await createAccount(newAccount)
+
+      if (created) {
+        setAccounts([...accounts, created])
+        setIsAddDialogOpen(false)
+        accountForm.reset()
+      }
+    } catch (error) {
+      console.error("Error adding account:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleEditAccount = async (values: z.infer<typeof accountFormSchema>) => {
     if (!editingAccount) return
 
-    const updatedAccount = {
-      name: values.customerName,
-      balance: values.amountOwed,
-      description: `Account updated on ${values.purchaseDate}, due on ${values.dueDate}`,
-    }
+    setIsLoading(true)
 
-    const updated = await updateAccount(editingAccount.id, updatedAccount)
-    if (updated) {
-      setAccounts(accounts.map((account) => (account.id === updated.id ? updated : account)))
-      setIsEditDialogOpen(false)
-      setEditingAccount(null)
+    try {
+      const updatedAccount = {
+        name: values.customerName,
+        balance: values.amountOwed,
+        description: `Account updated on ${values.purchaseDate}, due on ${values.dueDate}`,
+      }
+
+      const updated = await updateAccount(editingAccount.id, updatedAccount)
+
+      if (updated) {
+        setAccounts(accounts.map((account) => (account.id === updated.id ? updated : account)))
+        setIsEditDialogOpen(false)
+        setEditingAccount(null)
+      }
+    } catch (error) {
+      console.error("Error updating account:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleAddPayment = async (values: z.infer<typeof paymentFormSchema>) => {
     if (!payingAccount) return
 
-    const payment = {
-      amount: values.amount,
-      date: values.date,
-      method: "cash",
-      notes: `Payment for account ${payingAccount.name}`,
-    }
+    setIsLoading(true)
 
-    // Update account balance
-    const newBalance = Math.max(0, payingAccount.balance - values.amount)
-    const updated = await updateAccount(payingAccount.id, { balance: newBalance })
+    try {
+      const payment = {
+        amount: values.amount,
+        date: values.date,
+        method: "cash",
+        notes: `Payment for account ${payingAccount.name}`,
+      }
 
-    if (updated) {
-      setAccounts(accounts.map((account) => (account.id === updated.id ? updated : account)))
-      setIsPaymentDialogOpen(false)
-      setPayingAccount(null)
-      paymentForm.reset()
+      // Update account balance
+      const newBalance = Math.max(0, payingAccount.balance - values.amount)
+      const updated = await updateAccount(payingAccount.id, { balance: newBalance })
+
+      if (updated) {
+        setAccounts(accounts.map((account) => (account.id === updated.id ? updated : account)))
+
+        // Call the onAddPayment prop if provided
+        if (onAddPayment) {
+          onAddPayment(payingAccount.id, {
+            id: Date.now().toString(), // Temporary ID until saved
+            date: values.date,
+            amount: values.amount,
+            method: "cash",
+            notes: `Payment for account ${payingAccount.name}`,
+          })
+        }
+
+        setIsPaymentDialogOpen(false)
+        setPayingAccount(null)
+        paymentForm.reset()
+      }
+    } catch (error) {
+      console.error("Error adding payment:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -157,9 +200,18 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
   }
 
   const handleDeleteAccount = async (id: string) => {
-    const success = await deleteAccount(id)
-    if (success) {
-      setAccounts(accounts.filter((account) => account.id !== id))
+    setIsLoading(true)
+
+    try {
+      const success = await deleteAccount(id)
+
+      if (success) {
+        setAccounts(accounts.filter((account) => account.id !== id))
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -175,7 +227,7 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
 
   const totalOverdue = overdueAccounts.reduce((sum, account) => sum + account.balance, 0)
 
-  if (isLoading) {
+  if (isLoading && accounts.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -259,7 +311,9 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
                     />
                   </div>
                   <DialogFooter>
-                    <Button type="submit">Add Account</Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Adding..." : "Add Account"}
+                    </Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -340,14 +394,24 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
                               variant="outline"
                               size="icon"
                               onClick={() => openPaymentDialog(account)}
-                              disabled={account.balance === 0}
+                              disabled={account.balance === 0 || isLoading}
                             >
                               <DollarSign className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="icon" onClick={() => openEditDialog(account)}>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => openEditDialog(account)}
+                              disabled={isLoading}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="icon" onClick={() => handleDeleteAccount(account.id)}>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleDeleteAccount(account.id)}
+                              disabled={isLoading}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -441,7 +505,9 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
                 />
               </div>
               <DialogFooter>
-                <Button type="submit">Update Account</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Updating..." : "Update Account"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -484,7 +550,9 @@ export default function AccountsTable({ onAddPayment }: AccountsTableProps) {
                 )}
               />
               <DialogFooter>
-                <Button type="submit">Record Payment</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? "Processing..." : "Record Payment"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>

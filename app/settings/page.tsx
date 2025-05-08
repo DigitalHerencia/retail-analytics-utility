@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs"
 import RetailPricingTool from "@/components/retail-pricing-tool"
 import SettingsTab from "@/components/settings-tab"
 import { defaultBusinessData, sampleInventory, sampleCustomers } from "@/lib/data"
 import type { BusinessData, PricePoint, InventoryItem, Customer } from "@/lib/data"
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("general")
+  const [activeTab, setActiveTab] = useState<"general" | "pricing">("general")
   const [businessData, setBusinessData] = useState<BusinessData>(defaultBusinessData)
   const [inventory, setInventory] = useState<InventoryItem[]>(sampleInventory)
   const [customers, setCustomers] = useState<Customer[]>(sampleCustomers)
@@ -44,14 +44,7 @@ export default function SettingsPage() {
   return (
     <div className="container py-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="general" className="gangster-font">
-            GENERAL
-          </TabsTrigger>
-          <TabsTrigger value="pricing" className="gangster-font">
-            PRICING
-          </TabsTrigger>
-        </TabsList>
+        <TabsList className="hidden">{/* Triggers removed as requested */}</TabsList>
 
         <TabsContent value="general" className="mt-4">
           <SettingsTab

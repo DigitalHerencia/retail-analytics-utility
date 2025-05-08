@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, Settings, HelpCircle, DollarSign } from "lucide-react"
+import { Menu, Settings, HelpCircle, DollarSign, Code } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
@@ -23,7 +23,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-gold bg-black">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-xl font-bold text-gold font-graffiti">
+          <Link href="/" className="flex items-center gap-2 text-3xl font-bold text-gold font-graffiti">
+            <Code className="h-7 w-7 text-gold" />
             HUSTLER'S CODE
           </Link>
         </div>

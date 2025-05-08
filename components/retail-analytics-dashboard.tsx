@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import RetailAnalyticsTable from "@/components/retail-analytics-table"
@@ -9,8 +9,7 @@ import RetailAnalyticsCharts from "@/components/retail-analytics-charts"
 import SalespeopleTable from "@/components/salespeople-table"
 import SalespeopleCharts from "@/components/salespeople-charts"
 import PriceGenerator from "@/components/price-generator"
-import { getScenarios, createScenario, updateScenario, deleteScenario } from "@/app/actions"
-import type { ScenarioData } from "@/lib/types"
+import type { ScenarioData } from "@/lib/data"
 
 export default function RetailAnalyticsDashboard() {
   const [scenarios, setScenarios] = useState<ScenarioData[]>([])
@@ -18,46 +17,32 @@ export default function RetailAnalyticsDashboard() {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load scenarios from database
-  useEffect(() => {
-    const loadScenarios = async () => {
-      setIsLoading(true)
-      const data = await getScenarios()
-      setScenarios(data)
-      if (data.length > 0 && !selectedScenarioId) {
-        setSelectedScenarioId(data[0].id)
-      }
-      setIsLoading(false)
-    }
-
-    loadScenarios()
-  }, [])
+  // TODO: Implement data fetching from an external API or data source
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const data = await fetch('/api/scenarios');
+  //     const scenarios = await data.json();
+  //     setScenarios(scenarios);
+  //   };
+  //   fetchData();
+  // }, []);
 
   const selectedScenario = scenarios.find((s) => s.id === selectedScenarioId) || scenarios[0]
 
-  const handleAddScenario = async (newScenario: Omit<ScenarioData, "id" | "createdAt" | "updatedAt">) => {
-    const created = await createScenario(newScenario)
-    if (created) {
-      setScenarios([...scenarios, created])
-      setSelectedScenarioId(created.id)
-    }
+  const handleAddScenario = (newScenario: ScenarioData) => {
+    setScenarios([...scenarios, newScenario])
+    setSelectedScenarioId(newScenario.id)
   }
 
-  const handleUpdateScenario = async (updatedScenario: ScenarioData) => {
-    const updated = await updateScenario(updatedScenario.id, updatedScenario)
-    if (updated) {
-      setScenarios(scenarios.map((scenario) => (scenario.id === updated.id ? updated : scenario)))
-      setEditingScenario(null)
-    }
+  const handleUpdateScenario = (updatedScenario: ScenarioData) => {
+    setScenarios(scenarios.map((scenario) => (scenario.id === updatedScenario.id ? updatedScenario : scenario)))
+    setEditingScenario(null)
   }
 
-  const handleDeleteScenario = async (id: string) => {
-    const success = await deleteScenario(id)
-    if (success) {
-      setScenarios(scenarios.filter((scenario) => scenario.id !== id))
-      if (selectedScenarioId === id && scenarios.length > 1) {
-        setSelectedScenarioId(scenarios[0].id === id ? scenarios[1].id : scenarios[0].id)
-      }
+  const handleDeleteScenario = (id: string) => {
+    setScenarios(scenarios.filter((scenario) => scenario.id !== id))
+    if (selectedScenarioId === id && scenarios.length > 1) {
+      setSelectedScenarioId(scenarios[0].id === id ? scenarios[1].id : scenarios[0].id)
     }
   }
 
@@ -65,39 +50,36 @@ export default function RetailAnalyticsDashboard() {
     setEditingScenario(scenario)
   }
 
-  const handleUpdateSalespeople = async (scenarioId: string, updatedSalespeople: any) => {
-    const scenario = scenarios.find((s) => s.id === scenarioId)
-    if (!scenario) return
+  const handleUpdateSalespeople = (scenarioId: string, updatedSalespeople: any) => {
+    setScenarios(
+      scenarios.map((scenario) => {
+        if (scenario.id === scenarioId) {
+          const updatedScenario = {
+            ...scenario,
+            salespeople: updatedSalespeople,
+          }
+          // Recalculate total commission
+          updatedScenario.totalCommission = updatedSalespeople.reduce(
+            (total: number, person: any) => total + person.earnings,
+            0,
+          )
+          // Update net profit after commission
+          updatedScenario.netProfitAfterCommission = scenario.netProfit - updatedScenario.totalCommission
 
-    // Calculate total commission
-    const totalCommission = updatedSalespeople.reduce((total: number, person: any) => total + person.earnings, 0)
-
-    // Update net profit after commission
-    const netProfitAfterCommission = scenario.netProfit - totalCommission
-
-    const updated = await updateScenario(scenarioId, {
-      salespeople: updatedSalespeople,
-      totalCommission,
-      netProfitAfterCommission,
-    })
-
-    if (updated) {
-      setScenarios(scenarios.map((s) => (s.id === updated.id ? updated : s)))
-    }
+          return updatedScenario
+        }
+        return scenario
+      }),
+    )
   }
 
-  const handleGenerateScenarios = async (newScenarios: Omit<ScenarioData, "id" | "createdAt" | "updatedAt">[]) => {
-    // Create all scenarios in the database
-    const createdScenarios = await Promise.all(newScenarios.map((scenario) => createScenario(scenario)))
-
-    // Filter out any null values (failed creations)
-    const validScenarios = createdScenarios.filter(Boolean) as ScenarioData[]
-
-    if (validScenarios.length > 0) {
-      setScenarios(validScenarios)
+  const handleGenerateScenarios = (newScenarios: ScenarioData[]) => {
+    // Replace all scenarios with the newly generated ones
+    setScenarios(newScenarios)
+    if (newScenarios.length > 0) {
       // Select the middle scenario (base price)
-      const middleIndex = Math.floor(validScenarios.length / 2)
-      setSelectedScenarioId(validScenarios[middleIndex].id)
+      const middleIndex = Math.floor(newScenarios.length / 2)
+      setSelectedScenarioId(newScenarios[middleIndex].id)
     }
   }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -22,8 +22,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { HustleTip } from "@/components/hustle-tip"
-import { getInventory, createInventoryItem, updateInventoryItem, deleteInventoryItem } from "@/app/actions"
-import type { InventoryItem } from "@/lib/types"
+import type { InventoryItem } from "@/lib/data"
 import {
   formatCurrency,
   formatGrams,
@@ -33,6 +32,7 @@ import {
   gramsToOunces,
   gramsToKilograms,
 } from "@/lib/utils"
+import { v4 as uuidv4 } from "uuid"
 
 interface InventoryTableProps {
   showTips?: boolean
@@ -54,19 +54,6 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Load inventory from database
-  useEffect(() => {
-    const loadInventory = async () => {
-      setIsLoading(true)
-      const data = await getInventory()
-      setInventory(data)
-      setIsLoading(false)
-    }
-
-    loadInventory()
-  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,11 +64,11 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
       unit: "oz",
       costPerOz: 0,
       purchaseDate: new Date().toISOString().split("T")[0],
-      reorderThresholdG: 100,
+      reorderThresholdG: 0,
     },
   })
 
-  const handleAddItem = async (values: z.infer<typeof formSchema>) => {
+  const handleAddItem = (values: z.infer<typeof formSchema>) => {
     // Convert quantity to grams based on selected unit
     let quantityG: number
 
@@ -98,7 +85,8 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
     const costPerOz = values.costPerOz
     const totalCost = costPerOz * quantityOz
 
-    const newItem = {
+    const newItem: InventoryItem = {
+      id: uuidv4(),
       name: values.name,
       description: values.description || "",
       quantityG,
@@ -110,15 +98,12 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
       reorderThresholdG: values.reorderThresholdG,
     }
 
-    const created = await createInventoryItem(newItem)
-    if (created) {
-      setInventory([...inventory, created])
-      setIsAddDialogOpen(false)
-      form.reset()
-    }
+    setInventory([...inventory, newItem])
+    setIsAddDialogOpen(false)
+    form.reset()
   }
 
-  const handleEditItem = async (values: z.infer<typeof formSchema>) => {
+  const handleEditItem = (values: z.infer<typeof formSchema>) => {
     if (!editingItem) return
 
     // Convert quantity to grams based on selected unit
@@ -137,7 +122,8 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
     const costPerOz = values.costPerOz
     const totalCost = costPerOz * quantityOz
 
-    const updatedItem = {
+    const updatedItem: InventoryItem = {
+      ...editingItem,
       name: values.name,
       description: values.description || "",
       quantityG,
@@ -149,12 +135,10 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
       reorderThresholdG: values.reorderThresholdG,
     }
 
-    const updated = await updateInventoryItem(editingItem.id, updatedItem)
-    if (updated) {
-      setInventory(inventory.map((item) => (item.id === updated.id ? updated : item)))
-      setIsEditDialogOpen(false)
-      setEditingItem(null)
-    }
+    setInventory(inventory.map((item) => (item.id === updatedItem.id ? updatedItem : item)))
+    setIsEditDialogOpen(false)
+    setEditingItem(null)
+    form.reset()
   }
 
   const openEditDialog = (item: InventoryItem) => {
@@ -174,25 +158,14 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
     setIsEditDialogOpen(true)
   }
 
-  const handleDeleteItem = async (id: string) => {
-    const success = await deleteInventoryItem(id)
-    if (success) {
-      setInventory(inventory.filter((item) => item.id !== id))
-    }
+  const handleDeleteItem = (id: string) => {
+    setInventory(inventory.filter((item) => item.id !== id))
   }
 
   const totalInventoryValue = inventory.reduce((sum, item) => sum + item.totalCost, 0)
   const totalQuantityG = inventory.reduce((sum, item) => sum + item.quantityG, 0)
   const totalQuantityOz = inventory.reduce((sum, item) => sum + item.quantityOz, 0)
   const totalQuantityKg = inventory.reduce((sum, item) => sum + item.quantityKg, 0)
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -461,7 +434,7 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                   <FormItem>
                     <FormLabel>Grade/Name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Premium, Standard, etc." />
+                      <Input {...field} placeholder="Premium, Standard, etc." className="input-sharp" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -474,7 +447,7 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Optional description" />
+                      <Textarea {...field} placeholder="Optional description" className="input-sharp resize-none" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -488,7 +461,7 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                     <FormItem>
                       <FormLabel>Quantity</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} />
+                        <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -501,7 +474,7 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                     <FormItem>
                       <FormLabel>Unit</FormLabel>
                       <select
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-none border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 input-sharp"
                         {...field}
                       >
                         <option value="g">Grams (g)</option>
@@ -520,9 +493,9 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                   name="costPerOz"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cost per Ounce</FormLabel>
+                      <FormLabel className="gangster-font">COST PER OUNCE</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" min="0" {...field} />
+                        <Input type="number" step="0.01" min="0" {...field} className="input-sharp" />
                       </FormControl>
                       <FormDescription>Wholesale cost per ounce</FormDescription>
                       <FormMessage />
@@ -534,9 +507,9 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                   name="purchaseDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Purchase Date</FormLabel>
+                      <FormLabel className="gangster-font">PURCHASE DATE</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" {...field} className="input-sharp" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -548,9 +521,9 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                 name="reorderThresholdG"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reorder Threshold (grams)</FormLabel>
+                    <FormLabel className="gangster-font">REORDER THRESHOLD (GRAMS)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="1" min="0" {...field} />
+                      <Input type="number" step="1" min="0" {...field} className="input-sharp" />
                     </FormControl>
                     <FormDescription>When to reorder (in grams)</FormDescription>
                     <FormMessage />
@@ -558,8 +531,8 @@ export default function InventoryTable({ showTips = true, onHideTips = () => {} 
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="bg-gold hover:bg-gold/90 text-black">
-                  Update Inventory
+                <Button type="submit" className="bg-gold hover:bg-gold/90 text-black button-sharp">
+                  UPDATE PRODUCT
                 </Button>
               </DialogFooter>
             </form>

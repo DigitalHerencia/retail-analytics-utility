@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { v4 as uuidv4 } from "uuid"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,9 +35,13 @@ import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
 import type { InventoryItem, Transaction } from "@/lib/data"
 import { formatCurrency, formatGrams, formatOunces, gramsToOunces, ouncesToGrams } from "@/lib/utils"
-import { sampleInventory } from "@/lib/data"
-import { generateDemoData } from "@/lib/demo-data"
-import { sampleCustomers } from "@/lib/data"
+import {
+  getInventory,
+  createInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+  createTransaction,
+} from "@/app/actions"
 
 interface InventoryManagementProps {
   inventory?: InventoryItem[]
@@ -68,7 +71,7 @@ export default function InventoryManagement({
   // Internal state to handle the case when props aren't provided
   const [internalInventory, setInternalInventory] = useState<InventoryItem[]>([])
   const [internalShowTips, setInternalShowTips] = useState(true)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -84,36 +87,19 @@ export default function InventoryManagement({
   // Initialize inventory data if not provided via props
   useEffect(() => {
     if (propInventory === undefined) {
-      // Try to load from localStorage first
-      const storedInventory = typeof window !== "undefined" ? localStorage.getItem("inventory") : null
-      if (storedInventory) {
+      const loadInventory = async () => {
+        setIsLoading(true)
         try {
-          setInternalInventory(JSON.parse(storedInventory))
+          const data = await getInventory()
+          setInternalInventory(data)
         } catch (error) {
-          console.error("Failed to parse inventory from localStorage:", error)
-          // Generate demo data as fallback
-          try {
-            const demoData = generateDemoData(100, sampleCustomers, sampleInventory)
-            setInternalInventory(demoData.updatedInventory || sampleInventory)
-            setTransactions(demoData.transactions || [])
-          } catch (demoError) {
-            console.error("Error generating demo data:", demoError)
-            // Last resort fallback
-            setInternalInventory(sampleInventory)
-          }
-        }
-      } else {
-        // Generate demo data if no localStorage data
-        try {
-          const demoData = generateDemoData(100, sampleCustomers, sampleInventory)
-          setInternalInventory(demoData.updatedInventory || sampleInventory)
-          setTransactions(demoData.transactions || [])
-        } catch (error) {
-          console.error("Error generating demo data:", error)
-          // Fallback to sample data
-          setInternalInventory(sampleInventory)
+          console.error("Error loading inventory:", error)
+        } finally {
+          setIsLoading(false)
         }
       }
+
+      loadInventory()
     }
   }, [propInventory])
 
@@ -135,19 +121,18 @@ export default function InventoryManagement({
       onUpdateInventory(newInventory)
     } else {
       setInternalInventory(newInventory)
-      // Save to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem("inventory", JSON.stringify(newInventory))
-      }
     }
   }
 
-  const handleAddTransaction = (transaction: Transaction) => {
+  const handleAddTransaction = async (transaction: Transaction) => {
     if (onAddTransaction) {
       onAddTransaction(transaction)
     } else {
-      setTransactions((prev) => [...prev, transaction])
-      // Could save to localStorage if needed
+      try {
+        await createTransaction(transaction)
+      } catch (error) {
+        console.error("Error creating transaction:", error)
+      }
     }
   }
 
@@ -159,133 +144,169 @@ export default function InventoryManagement({
     }
   }
 
-  const handleAddItem = (values: z.infer<typeof formSchema>) => {
-    // Convert quantity to grams based on selected unit
-    let quantityG: number
+  const handleAddItem = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true)
 
-    if (values.unit === "oz") {
-      quantityG = ouncesToGrams(values.quantity)
-    } else if (values.unit === "kg") {
-      quantityG = values.quantity * 1000
-    } else {
-      quantityG = values.quantity
-    }
+    try {
+      // Convert quantity to grams based on selected unit
+      let quantityG: number
 
-    const quantityOz = gramsToOunces(quantityG)
-    const costPerOz = values.costPerOz
-    const totalCost = costPerOz * quantityOz
+      if (values.unit === "oz") {
+        quantityG = ouncesToGrams(values.quantity)
+      } else if (values.unit === "kg") {
+        quantityG = values.quantity * 1000
+      } else {
+        quantityG = values.quantity
+      }
 
-    const newItem: InventoryItem = {
-      id: uuidv4(),
-      name: values.name,
-      description: values.description || "",
-      quantityG,
-      quantityOz,
-      quantityKg: quantityG / 1000,
-      purchaseDate: values.purchaseDate,
-      costPerOz,
-      totalCost,
-      reorderThresholdG: values.reorderThresholdG,
-    }
+      const quantityOz = gramsToOunces(quantityG)
+      const costPerOz = values.costPerOz
+      const totalCost = costPerOz * quantityOz
 
-    // Create a transaction record for the inventory purchase
-    const transaction: Transaction = {
-      id: uuidv4(),
-      date: new Date().toISOString(),
-      type: "purchase",
-      inventoryId: newItem.id,
-      inventoryName: newItem.name,
-      quantityGrams: quantityG,
-      pricePerGram: 0,
-      totalPrice: totalCost,
-      cost: totalCost,
-      profit: 0,
-      paymentMethod: "cash",
-      customerId: null,
-      customerName: null,
-      notes: `Initial inventory purchase: ${newItem.name}`,
-      createdAt: new Date().toISOString(),
-    }
+      const newItem: Omit<InventoryItem, "id" | "createdAt" | "updatedAt"> = {
+        name: values.name,
+        description: values.description || "",
+        quantityG,
+        quantityOz,
+        quantityKg: quantityG / 1000,
+        purchaseDate: values.purchaseDate,
+        costPerOz,
+        totalCost,
+        reorderThresholdG: values.reorderThresholdG,
+      }
 
-    handleAddTransaction(transaction)
-    handleUpdateInventory([...inventory, newItem])
-    setIsAddDialogOpen(false)
-    form.reset()
-  }
+      // Create inventory item in database
+      const createdItem = await createInventoryItem(newItem)
 
-  const handleEditItem = (values: z.infer<typeof formSchema>) => {
-    if (!editingItem) return
-
-    // Convert quantity to grams based on selected unit
-    let quantityG: number
-
-    if (values.unit === "oz") {
-      quantityG = ouncesToGrams(values.quantity)
-    } else if (values.unit === "kg") {
-      quantityG = values.quantity * 1000
-    } else {
-      quantityG = values.quantity
-    }
-
-    const quantityOz = gramsToOunces(quantityG)
-    const costPerOz = values.costPerOz
-    const totalCost = costPerOz * quantityOz
-
-    const updatedItem: InventoryItem = {
-      ...editingItem,
-      name: values.name,
-      description: values.description || "",
-      quantityG,
-      quantityOz,
-      quantityKg: quantityG / 1000,
-      purchaseDate: values.purchaseDate,
-      costPerOz,
-      totalCost,
-      reorderThresholdG: values.reorderThresholdG,
-    }
-
-    // If quantity changed, create a transaction record
-    if (quantityG !== editingItem.quantityG) {
-      const quantityDiff = quantityG - editingItem.quantityG
-      const costDiff = totalCost - editingItem.totalCost
-
-      if (quantityDiff !== 0) {
-        const transaction: Transaction = {
-          id: uuidv4(),
+      if (createdItem) {
+        // Create a transaction record for the inventory purchase
+        const transaction: Omit<Transaction, "id" | "createdAt"> = {
           date: new Date().toISOString(),
           type: "purchase",
-          inventoryId: editingItem.id,
-          inventoryName: editingItem.name,
-          quantityGrams: Math.abs(quantityDiff),
+          inventoryId: createdItem.id,
+          inventoryName: createdItem.name,
+          quantityGrams: quantityG,
           pricePerGram: 0,
-          totalPrice: Math.abs(costDiff),
-          cost: Math.abs(costDiff),
+          totalPrice: totalCost,
+          cost: totalCost,
           profit: 0,
           paymentMethod: "cash",
           customerId: null,
           customerName: null,
-          notes:
-            quantityDiff > 0
-              ? `Added ${formatGrams(quantityDiff)} to inventory`
-              : `Removed ${formatGrams(Math.abs(quantityDiff))} from inventory`,
-          createdAt: new Date().toISOString(),
+          notes: `Initial inventory purchase: ${createdItem.name}`,
         }
 
-        handleAddTransaction(transaction)
-      }
-    }
+        await handleAddTransaction(transaction)
 
-    handleUpdateInventory(inventory.map((item) => (item.id === updatedItem.id ? updatedItem : item)))
-    setIsEditDialogOpen(false)
-    setEditingItem(null)
+        // Update local state
+        handleUpdateInventory([...inventory, createdItem])
+      }
+    } catch (error) {
+      console.error("Error adding inventory item:", error)
+    } finally {
+      setIsLoading(false)
+      setIsAddDialogOpen(false)
+      form.reset()
+    }
   }
 
-  const handleDeleteItem = () => {
+  const handleEditItem = async (values: z.infer<typeof formSchema>) => {
+    if (!editingItem) return
+
+    setIsLoading(true)
+
+    try {
+      // Convert quantity to grams based on selected unit
+      let quantityG: number
+
+      if (values.unit === "oz") {
+        quantityG = ouncesToGrams(values.quantity)
+      } else if (values.unit === "kg") {
+        quantityG = values.quantity * 1000
+      } else {
+        quantityG = values.quantity
+      }
+
+      const quantityOz = gramsToOunces(quantityG)
+      const costPerOz = values.costPerOz
+      const totalCost = costPerOz * quantityOz
+
+      const updatedItem: Partial<InventoryItem> = {
+        name: values.name,
+        description: values.description || "",
+        quantityG,
+        quantityOz,
+        quantityKg: quantityG / 1000,
+        purchaseDate: values.purchaseDate,
+        costPerOz,
+        totalCost,
+        reorderThresholdG: values.reorderThresholdG,
+      }
+
+      // Update inventory item in database
+      const updated = await updateInventoryItem(editingItem.id, updatedItem)
+
+      if (updated) {
+        // If quantity changed, create a transaction record
+        if (quantityG !== editingItem.quantityG) {
+          const quantityDiff = quantityG - editingItem.quantityG
+          const costDiff = totalCost - editingItem.totalCost
+
+          if (quantityDiff !== 0) {
+            const transaction: Omit<Transaction, "id" | "createdAt"> = {
+              date: new Date().toISOString(),
+              type: "purchase",
+              inventoryId: editingItem.id,
+              inventoryName: editingItem.name,
+              quantityGrams: Math.abs(quantityDiff),
+              pricePerGram: 0,
+              totalPrice: Math.abs(costDiff),
+              cost: Math.abs(costDiff),
+              profit: 0,
+              paymentMethod: "cash",
+              customerId: null,
+              customerName: null,
+              notes:
+                quantityDiff > 0
+                  ? `Added ${formatGrams(quantityDiff)} to inventory`
+                  : `Removed ${formatGrams(Math.abs(quantityDiff))} from inventory`,
+            }
+
+            await handleAddTransaction(transaction)
+          }
+        }
+
+        // Update local state
+        handleUpdateInventory(inventory.map((item) => (item.id === updated.id ? updated : item)))
+      }
+    } catch (error) {
+      console.error("Error updating inventory item:", error)
+    } finally {
+      setIsLoading(false)
+      setIsEditDialogOpen(false)
+      setEditingItem(null)
+    }
+  }
+
+  const handleDeleteItem = async () => {
     if (!deletingItemId) return
 
-    handleUpdateInventory(inventory.filter((item) => item.id !== deletingItemId))
-    setIsDeleteDialogOpen(false)
-    setDeletingItemId(null)
+    setIsLoading(true)
+
+    try {
+      const success = await deleteInventoryItem(deletingItemId)
+
+      if (success) {
+        // Update local state
+        handleUpdateInventory(inventory.filter((item) => item.id !== deletingItemId))
+      }
+    } catch (error) {
+      console.error("Error deleting inventory item:", error)
+    } finally {
+      setIsLoading(false)
+      setIsDeleteDialogOpen(false)
+      setDeletingItemId(null)
+    }
   }
 
   const openEditDialog = (item: InventoryItem) => {
@@ -320,6 +341,14 @@ export default function InventoryManagement({
   const lowStockItems = Array.isArray(inventory)
     ? inventory.filter((item) => item.quantityG <= item.reorderThresholdG).length
     : 0
+
+  if (isLoading && inventory.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -479,8 +508,12 @@ export default function InventoryManagement({
                     )}
                   />
                   <DialogFooter>
-                    <Button type="submit" className="bg-gold hover:bg-gold/90 text-black button-sharp">
-                      ADD PRODUCT
+                    <Button
+                      type="submit"
+                      className="bg-gold hover:bg-gold/90 text-black button-sharp"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "ADDING..." : "ADD PRODUCT"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -533,6 +566,7 @@ export default function InventoryManagement({
                           size="sm"
                           className="bg-gold hover:bg-gold/90 text-black button-sharp"
                           onClick={() => openEditDialog(item)}
+                          disabled={isLoading}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -540,6 +574,7 @@ export default function InventoryManagement({
                           size="sm"
                           className="bg-gold hover:bg-gold/90 text-black button-sharp"
                           onClick={() => openDeleteDialog(item.id)}
+                          disabled={isLoading}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -666,8 +701,8 @@ export default function InventoryManagement({
                 )}
               />
               <DialogFooter>
-                <Button type="submit" className="bg-gold hover:bg-gold/90 text-black button-sharp">
-                  UPDATE PRODUCT
+                <Button type="submit" className="bg-gold hover:bg-gold/90 text-black button-sharp" disabled={isLoading}>
+                  {isLoading ? "UPDATING..." : "UPDATE PRODUCT"}
                 </Button>
               </DialogFooter>
             </form>
@@ -696,8 +731,9 @@ export default function InventoryManagement({
             <AlertDialogAction
               onClick={handleDeleteItem}
               className="bg-blood hover:bg-blood/90 text-white button-sharp"
+              disabled={isLoading}
             >
-              DELETE
+              {isLoading ? "DELETING..." : "DELETE"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

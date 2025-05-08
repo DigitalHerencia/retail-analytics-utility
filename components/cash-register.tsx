@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DollarSign, Plus, Minus, ShoppingCart, Save } from "lucide-react"
 import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
-import { getInventory, getCustomers, createTransaction, addPayment } from "@/app/actions"
 import type { Customer, InventoryItem, Transaction } from "@/lib/types"
 import { formatCurrency, formatGrams, formatOunces, ouncesToGrams } from "@/lib/utils"
+import { getInventory, getCustomers, createTransaction, addPayment } from "@/app/actions"
 
 interface CashRegisterProps {
   showTips: boolean
@@ -30,21 +30,25 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
   const [dailyRevenue, setDailyRevenue] = useState(0)
   const [dailyTransactions, setDailyTransactions] = useState(0)
   const [dailyProfit, setDailyProfit] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [retailPricePerGram, setRetailPricePerGram] = useState(100) // Default value
 
-  // Load data from database
+  // Load inventory and customer data
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
-      const [inventoryData, customersData] = await Promise.all([getInventory(), getCustomers()])
-
-      setInventory(inventoryData)
-      setCustomers(customersData)
-      setIsLoading(false)
+      try {
+        const [inventoryData, customersData] = await Promise.all([getInventory(), getCustomers()])
+        setInventory(inventoryData)
+        setCustomers(customersData)
+      } catch (error) {
+        console.error("Error loading data:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     loadData()
@@ -81,27 +85,29 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
   const handleQuickSale = async () => {
     if (!selectedInventory) return
 
-    // Create transaction record
-    const transaction: Omit<Transaction, "id" | "createdAt"> = {
-      date: new Date().toISOString(),
-      type: "sale",
-      inventoryId: selectedInventory.id,
-      inventoryName: selectedInventory.name,
-      quantityGrams: quantity,
-      pricePerGram: calculateSalePrice() / quantity,
-      totalPrice: calculateSalePrice(),
-      cost: calculateCost(),
-      profit: calculateProfit(),
-      paymentMethod: paymentMethod,
-      customerId: selectedCustomer?.id || null,
-      customerName: selectedCustomer?.name || null,
-      notes: notes,
-    }
+    setIsLoading(true)
 
-    // Create transaction in database
-    const createdTransaction = await createTransaction(transaction)
+    try {
+      // Create transaction record
+      const transaction: Omit<Transaction, "id" | "createdAt"> = {
+        date: new Date().toISOString(),
+        type: "sale",
+        inventoryId: selectedInventory.id,
+        inventoryName: selectedInventory.name,
+        quantityGrams: quantity,
+        pricePerGram: calculateSalePrice() / quantity,
+        totalPrice: calculateSalePrice(),
+        cost: calculateCost(),
+        profit: calculateProfit(),
+        paymentMethod: paymentMethod,
+        customerId: selectedCustomer?.id || null,
+        customerName: selectedCustomer?.name || null,
+        notes: notes,
+      }
 
-    if (createdTransaction) {
+      // Save transaction to database
+      await createTransaction(transaction)
+
       // Update daily stats
       setDailyRevenue((prev) => prev + calculateSalePrice())
       setDailyTransactions((prev) => prev + 1)
@@ -121,6 +127,10 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
       setQuantity(1)
       setCustomPrice(null)
       setNotes("")
+    } catch (error) {
+      console.error("Error processing sale:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -128,41 +138,23 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
   const handleCustomerPayment = async () => {
     if (!selectedCustomer) return
 
-    const paymentAmount = customPrice || selectedCustomer.amountOwed
+    setIsLoading(true)
 
-    if (paymentAmount <= 0) return
+    try {
+      const paymentAmount = customPrice !== null ? customPrice : selectedCustomer.amountOwed
 
-    // Create payment record
-    const payment = {
-      amount: paymentAmount,
-      date: new Date().toISOString().split("T")[0],
-      method: paymentMethod,
-      notes: notes,
-    }
+      if (paymentAmount <= 0) return
 
-    // Add payment to database
-    const addedPayment = await addPayment(selectedCustomer.id, payment)
-
-    if (addedPayment) {
-      // Create transaction record
-      const transaction: Omit<Transaction, "id" | "createdAt"> = {
-        date: new Date().toISOString(),
-        type: "payment",
-        inventoryId: null,
-        inventoryName: null,
-        quantityGrams: 0,
-        pricePerGram: 0,
-        totalPrice: paymentAmount,
-        cost: 0,
-        profit: 0,
-        paymentMethod: paymentMethod,
-        customerId: selectedCustomer.id,
-        customerName: selectedCustomer.name,
+      // Create payment record
+      const payment = {
+        amount: paymentAmount,
+        date: new Date().toISOString().split("T")[0],
+        method: paymentMethod,
         notes: notes,
       }
 
-      // Create transaction in database
-      await createTransaction(transaction)
+      // Add payment to database
+      await addPayment(selectedCustomer.id, payment)
 
       // Update daily stats
       setDailyRevenue((prev) => prev + paymentAmount)
@@ -175,6 +167,10 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
       // Reset form
       setCustomPrice(null)
       setNotes("")
+    } catch (error) {
+      console.error("Error processing payment:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -200,7 +196,7 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
     return () => clearTimeout(timer)
   }, [dailyRevenue, dailyTransactions, dailyProfit])
 
-  if (isLoading) {
+  if (isLoading && inventory.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
@@ -413,13 +409,14 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
               <Button
                 onClick={handleQuickSale}
                 disabled={
+                  isLoading ||
                   !selectedInventory ||
                   quantity <= 0 ||
                   (selectedInventory && quantity > ouncesToGrams(selectedInventory.quantityOz))
                 }
                 className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
               >
-                COMPLETE SALE
+                {isLoading ? "PROCESSING..." : "COMPLETE SALE"}
               </Button>
             </CardContent>
           </Card>
@@ -463,7 +460,7 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
                       <span className="text-blood font-bold">{formatCurrency(selectedCustomer.amountOwed)}</span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
-                      Due date: {new Date(selectedCustomer.dueDate).toLocaleDateString()}
+                      Due date: {new Date(selectedCustomer.dueDate || "").toLocaleDateString()}
                     </div>
                   </div>
 
@@ -526,12 +523,13 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
                   <Button
                     onClick={handleCustomerPayment}
                     disabled={
+                      isLoading ||
                       !selectedCustomer ||
                       (customPrice !== null && (customPrice <= 0 || customPrice > selectedCustomer.amountOwed))
                     }
                     className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
                   >
-                    RECORD PAYMENT
+                    {isLoading ? "PROCESSING..." : "RECORD PAYMENT"}
                   </Button>
                 </>
               )}

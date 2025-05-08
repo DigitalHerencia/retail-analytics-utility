@@ -1,247 +1,124 @@
 import { v4 as uuidv4 } from "uuid"
-import type { Customer, Payment } from "./data"
+import { defaultBusinessData, sampleInventory, sampleCustomers } from "./data"
+import type { BusinessData, InventoryItem, Customer, Payment, Transaction, Account } from "./types"
 
-// Add this interface after the imports
-interface Purchase {
-  id: string
-  date: string
-  product: string
-  quantity: number
-  price: number
-  total: number
-  paid: boolean
-}
+// Generate demo data for the application
+export function generateDemoData() {
+  // Create business data
+  const businessData: BusinessData = {
+    ...defaultBusinessData,
+    id: uuidv4(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
 
-interface InventoryItem {
-  id: string
-  name: string
-  quantity: number
-  unit: string
-  costPerUnit: number
-  totalCost: number
-  reorderPoint: number
-  supplier: string
-  lastRestockDate: string
-}
+  // Create inventory items
+  const inventoryItems: InventoryItem[] = sampleInventory.map((item) => ({
+    ...item,
+    id: uuidv4(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
 
-interface Transaction {
-  id: string
-  date: string
-  type: string
-  amount: number
-  description: string
-  category: string
-  customer?: string
-}
+  // Create customers with payment history
+  const customers: Customer[] = []
+  const payments: Payment[] = []
 
-// Generate a random date within the last month
-const getRandomRecentDate = () => {
-  const now = new Date()
-  const oneMonthAgo = new Date()
-  oneMonthAgo.setMonth(now.getMonth() - 1)
+  sampleCustomers.forEach((customer) => {
+    const customerId = uuidv4()
 
-  const randomTime = oneMonthAgo.getTime() + Math.random() * (now.getTime() - oneMonthAgo.getTime())
-  return new Date(randomTime).toISOString().split("T")[0]
-}
+    // Create customer
+    const newCustomer = {
+      ...customer,
+      id: customerId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      paymentHistory: [],
+    }
 
-// Generate a random amount between min and max
-const getRandomAmount = (min: number, max: number) => {
-  return +(min + Math.random() * (max - min)).toFixed(2)
-}
-
-// Generate demo customers with realistic data
-export const generateDemoCustomers = (): Customer[] => {
-  const customerNames = [
-    "Mike Johnson",
-    "Sarah Williams",
-    "Dave Smith",
-    "Lisa Brown",
-    "Chris Davis",
-    "Jessica Wilson",
-    "Tony Martinez",
-    "Rachel Taylor",
-    "Kevin Anderson",
-    "Amanda Thomas",
-    "Eric Garcia",
-    "Nicole Lewis",
-  ]
-
-  return customerNames.map((name) => {
-    const totalPurchases = Math.floor(Math.random() * 10) + 1
-    const purchaseHistory: Purchase[] = []
-    const paymentHistory: Payment[] = []
-    let totalSpent = 0
-    let accountBalance = 0
-
-    // Generate purchase history
-    for (let i = 0; i < totalPurchases; i++) {
-      const quantity = getRandomAmount(1, 10)
-      const price = 100 // $100 per gram as requested
-      const total = quantity * price
-      const paid = Math.random() > 0.3 // 70% chance of being paid
-
-      if (!paid) {
-        accountBalance += total
+    // Add payment history if customer has outstanding balance
+    if (customer.amountOwed > 0) {
+      // Create a partial payment
+      const paymentId = uuidv4()
+      const payment = {
+        id: paymentId,
+        customerId: customerId,
+        amount: customer.amountOwed * 0.5, // 50% payment
+        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        method: "cash",
+        notes: "Partial payment",
+        createdAt: new Date().toISOString(),
       }
 
-      totalSpent += total
-
-      purchaseHistory.push({
-        id: uuidv4(),
-        date: getRandomRecentDate(),
-        product: "Premium",
-        quantity,
-        price,
-        total,
-        paid,
-      })
+      payments.push(payment)
+      newCustomer.paymentHistory.push(payment)
     }
 
-    // Generate payment history
-    const paymentCount = Math.floor(totalPurchases * 0.7) // Roughly 70% of purchases are paid
-    for (let i = 0; i < paymentCount; i++) {
-      const amount = purchaseHistory[i]?.total || getRandomAmount(50, 500)
-
-      paymentHistory.push({
-        id: uuidv4(),
-        date: getRandomRecentDate(),
-        amount,
-        method: Math.random() > 0.5 ? "Cash" : "Other",
-        notes: "",
-      })
-    }
-
-    return {
-      id: uuidv4(),
-      name,
-      phone: `(${Math.floor(Math.random() * 900) + 100}) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-      email: `${name.toLowerCase().replace(" ", ".")}@example.com`,
-      address: `${Math.floor(Math.random() * 9000) + 1000} Main St`,
-      notes: "",
-      totalPurchases,
-      totalSpent,
-      lastPurchaseDate:
-        purchaseHistory.length > 0 ? purchaseHistory[purchaseHistory.length - 1].date : getRandomRecentDate(),
-      accountBalance,
-      preferredProduct: "Premium",
-      purchaseHistory,
-      paymentHistory,
-    }
+    customers.push(newCustomer)
   })
-}
 
-// Generate demo inventory items
-export const generateDemoInventory = (): InventoryItem[] => {
-  return [
-    {
-      id: uuidv4(),
-      name: "Premium",
-      quantity: 250,
-      unit: "g",
-      costPerUnit: 70, // Cost per gram
-      totalCost: 250 * 70,
-      reorderPoint: 50,
-      supplier: "Main Supplier",
-      lastRestockDate: getRandomRecentDate(),
-    },
-    {
-      id: uuidv4(),
-      name: "Standard",
-      quantity: 500,
-      unit: "g",
-      costPerUnit: 50, // Cost per gram
-      totalCost: 500 * 50,
-      reorderPoint: 100,
-      supplier: "Secondary Supplier",
-      lastRestockDate: getRandomRecentDate(),
-    },
-    {
-      id: uuidv4(),
-      name: "Economy",
-      quantity: 750,
-      unit: "g",
-      costPerUnit: 30, // Cost per gram
-      totalCost: 750 * 30,
-      reorderPoint: 150,
-      supplier: "Budget Supplier",
-      lastRestockDate: getRandomRecentDate(),
-    },
-  ]
-}
-
-// Generate demo transactions
-export const generateDemoTransactions = (customers: Customer[]): Transaction[] => {
+  // Create transactions
   const transactions: Transaction[] = []
 
-  // Add sales transactions from customer purchase history
-  customers.forEach((customer) => {
-    customer.purchaseHistory.forEach((purchase) => {
-      transactions.push({
-        id: uuidv4(),
-        date: purchase.date,
-        type: "sale",
-        amount: purchase.total,
-        description: `${purchase.quantity}g of ${purchase.product} to ${customer.name}`,
-        category: "Sales",
-        customer: customer.id,
-      })
-    })
-
-    // Add payment transactions from customer payment history
-    customer.paymentHistory.forEach((payment) => {
-      transactions.push({
-        id: uuidv4(),
-        date: payment.date,
-        type: "payment",
-        amount: payment.amount,
-        description: `Payment from ${customer.name} via ${payment.method}`,
-        category: "Payments",
-        customer: customer.id,
-      })
-    })
-  })
-
-  // Add inventory purchase transactions
-  for (let i = 0; i < 5; i++) {
-    const amount = getRandomAmount(1000, 5000)
-    transactions.push({
+  // Sample sale transaction
+  if (inventoryItems.length > 0 && customers.length > 0) {
+    const transaction = {
       id: uuidv4(),
-      date: getRandomRecentDate(),
-      type: "purchase",
-      amount,
-      description: `Inventory restock`,
-      category: "Inventory",
-    })
+      date: new Date().toISOString(),
+      type: "sale",
+      inventoryId: inventoryItems[0].id,
+      inventoryName: inventoryItems[0].name,
+      quantityGrams: 3.5,
+      pricePerGram: 15,
+      totalPrice: 52.5,
+      cost: 10,
+      profit: 42.5,
+      paymentMethod: "cash",
+      customerId: customers[0].id,
+      customerName: customers[0].name,
+      notes: "Regular sale",
+    }
+
+    transactions.push(transaction)
   }
 
-  // Add expense transactions
-  const expenseCategories = ["Rent", "Transportation", "Communication", "Equipment", "Miscellaneous"]
-  for (let i = 0; i < 10; i++) {
-    const category = expenseCategories[Math.floor(Math.random() * expenseCategories.length)]
-    const amount = getRandomAmount(50, 500)
-    transactions.push({
+  // Create accounts
+  const accounts: Account[] = [
+    {
       id: uuidv4(),
-      date: getRandomRecentDate(),
-      type: "expense",
-      amount,
-      description: `${category} expense`,
-      category,
-    })
-  }
-
-  // Sort transactions by date
-  return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-}
-
-// Generate all demo data
-export const generateDemoData = () => {
-  const customers = generateDemoCustomers()
-  const inventory = generateDemoInventory()
-  const transactions = generateDemoTransactions(customers)
+      name: "Cash on Hand",
+      type: "asset",
+      balance: 1500,
+      description: "Physical cash in the register",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: uuidv4(),
+      name: "Bank Account",
+      type: "asset",
+      balance: 5000,
+      description: "Business checking account",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: uuidv4(),
+      name: "Accounts Receivable",
+      type: "asset",
+      balance: customers.reduce((total, customer) => total + customer.amountOwed, 0),
+      description: "Money owed by customers",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ]
 
   return {
+    businessData,
+    inventoryItems,
     customers,
-    inventory,
+    payments,
     transactions,
+    accounts,
   }
 }

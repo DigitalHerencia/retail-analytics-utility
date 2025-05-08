@@ -1,15 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, AlertCircle, Shield, Database } from "lucide-react"
+import { Check, AlertCircle, Shield, Trash2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { getBusinessData, saveBusinessData, updateBusinessData } from "@/app/actions"
 import type { BusinessData, InventoryItem, Customer } from "@/lib/types"
 import { HustleTip } from "@/components/hustle-tip"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 interface SettingsTabProps {
   businessData: BusinessData
@@ -115,85 +116,61 @@ export default function SettingsTab({ businessData, inventory, customers, onData
         <CardContent className="pt-6">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gangster-font text-gold">
-              <Database className="h-5 w-5 mr-2 text-gold" />
-              BUSINESS SETTINGS
-            </h3>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="wholesalePricePerOz" className="gangster-font">
-                  WHOLESALE PRICE PER OZ
-                </Label>
-                <Input
-                  id="wholesalePricePerOz"
-                  type="number"
-                  value={wholesalePricePerOz}
-                  onChange={(e) => setWholesalePricePerOz(Number.parseFloat(e.target.value))}
-                  className="input-sharp"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="targetProfitPerMonth" className="gangster-font">
-                  TARGET PROFIT PER MONTH
-                </Label>
-                <Input
-                  id="targetProfitPerMonth"
-                  type="number"
-                  value={targetProfitPerMonth}
-                  onChange={(e) => setTargetProfitPerMonth(Number.parseFloat(e.target.value))}
-                  className="input-sharp"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="operatingExpenses" className="gangster-font">
-                  OPERATING EXPENSES
-                </Label>
-                <Input
-                  id="operatingExpenses"
-                  type="number"
-                  value={operatingExpenses}
-                  onChange={(e) => setOperatingExpenses(Number.parseFloat(e.target.value))}
-                  className="input-sharp"
-                />
-              </div>
-
-              <Button
-                onClick={handleSaveBusinessData}
-                disabled={isLoading}
-                className="w-full bg-gold hover:bg-gold/90 text-black button-sharp"
-              >
-                {isLoading ? "SAVING..." : "SAVE SETTINGS"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="card-hover card-sharp border-gold">
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gangster-font text-gold">
               <Shield className="h-5 w-5 mr-2 text-gold" />
-              ABOUT
+              DATA PRIVACY
             </h3>
             <p className="text-sm text-muted-foreground">
-              Hustle Calculator helps you maximize profits, track inventory, and collect debts. Stay on top of your
-              business and keep your money right.
+              Control how your business data is stored and when it should be automatically deleted for privacy and
+              security.
             </p>
-            <div className="flex items-center justify-between bg-smoke p-3">
-              <span className="text-sm gangster-font">VERSION</span>
-              <span className="text-sm font-medium text-gold">2.0</span>
+
+            <div className="space-y-4 bg-smoke p-4 rounded-md">
+              <div className="flex items-center justify-between">
+                <span className="text-sm gangster-font">AUTO-DELETE DATA</span>
+                <div className="flex items-center">
+                  <Switch id="auto-delete" className="mr-2" />
+                  <Label htmlFor="auto-delete" className="text-sm font-medium text-gold">
+                    ENABLED
+                  </Label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="inactivity-period" className="text-sm gangster-font">
+                  DELETE AFTER INACTIVITY PERIOD
+                </Label>
+                <Select defaultValue="90">
+                  <SelectTrigger className="w-full input-sharp">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 days</SelectItem>
+                    <SelectItem value="60">60 days</SelectItem>
+                    <SelectItem value="90">90 days</SelectItem>
+                    <SelectItem value="180">6 months</SelectItem>
+                    <SelectItem value="365">1 year</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Your data will be automatically deleted after the selected period of inactivity.
+                </p>
+              </div>
             </div>
+
             <div className="flex items-center justify-between bg-smoke p-3">
               <span className="text-sm gangster-font">DATA STORAGE</span>
-              <span className="text-sm font-medium text-gold">NEON DB</span>
+              <span className="text-sm font-medium text-gold">POSTGRES</span>
             </div>
+
             <div className="flex items-center justify-between bg-smoke p-3">
-              <span className="text-sm gangster-font">THEME</span>
-              <span className="text-sm font-medium text-gold">BOSS MODE</span>
+              <span className="text-sm gangster-font">ENCRYPTION</span>
+              <span className="text-sm font-medium text-gold">ENABLED</span>
             </div>
+
+            <Button variant="outline" className="w-full border-gold text-gold hover:bg-gold/10 button-sharp">
+              <Trash2 className="h-4 w-4 mr-2" />
+              DELETE ALL DATA NOW
+            </Button>
           </div>
         </CardContent>
       </Card>
