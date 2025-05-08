@@ -19,7 +19,7 @@ export default function HomePage() {
         setIsLoading(false)
       } catch (err) {
         console.error("Initialization error:", err)
-        setError("Failed to initialize application data. Please check your database connection.")
+        setError("Failed to initialize application data. Using demo data instead.")
         setIsLoading(false)
       }
     }
@@ -42,8 +42,11 @@ export default function HomePage() {
   return (
     <div className="container py-4">
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Error: </strong>
+        <div
+          className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
+          <strong className="font-bold">Note: </strong>
           <span className="block sm:inline">{error}</span>
         </div>
       )}

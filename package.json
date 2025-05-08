@@ -61,8 +61,8 @@
     "pg-native": "latest",
     "uuid": "latest",
     "pg": "latest",
-    "path": "latest",
-    "fs": "latest"
+    "fs": "latest",
+    "path": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

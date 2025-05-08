@@ -1,6 +1,6 @@
 # Retail Analytics Utility
 
-A comprehensive retail analytics tool for business management, inventory tracking, and financial analysis.
+A comprehensive retail analytics tool for tracking inventory, customers, sales, and profitability.
 
 ## Features
 
@@ -10,74 +10,78 @@ A comprehensive retail analytics tool for business management, inventory trackin
 - Accounts receivable tracking
 - Cash register functionality
 - Sales and profit tracking
-- Data privacy controls
 
 ## Tech Stack
 
 - Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS
-- PostgreSQL (Neon)
-- Vercel Deployment
+- Prisma ORM
+- PostgreSQL (Neon DB)
+- shadcn/ui components
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL database (or Neon account)
+- Node.js 18+ 
+- PostgreSQL database (Neon DB)
 
-### Environment Setup
+### Environment Variables
 
-1. Copy the example environment file:
-   \`\`\`
-   cp .env.example .env
-   \`\`\`
+Create a `.env` file in the root directory with the following variables:
 
-2. Update the `.env` file with your database credentials:
-   \`\`\`
-   DATABASE_URL=postgres://user:password@host:port/database
-   \`\`\`
+\`\`\`
+DATABASE_URL="postgresql://username:password@host:port/database"
+\`\`\`
 
 ### Installation
 
-1. Install dependencies:
-   \`\`\`
-   npm install
-   \`\`\`
+1. Clone the repository
+2. Install dependencies:
 
-2. Set up the database:
-   \`\`\`
-   npm run setup-db
-   \`\`\`
+\`\`\`bash
+npm install
+\`\`\`
 
-3. Run the development server:
-   \`\`\`
-   npm run dev
-   \`\`\`
+3. Set up the database:
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+\`\`\`bash
+npx prisma migrate dev --name init
+\`\`\`
+
+4. Seed the database with initial data:
+
+\`\`\`bash
+npm run seed
+\`\`\`
+
+5. Run the development server:
+
+\`\`\`bash
+npm run dev
+\`\`\`
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Database Schema
+
+The application uses Prisma ORM with the following models:
+
+- BusinessData: Core business settings
+- Scenario: Pricing scenarios for analysis
+- Salesperson: Sales team members and commission tracking
+- InventoryItem: Product inventory tracking
+- Customer: Customer information and payment history
+- Payment: Payment records
+- Transaction: Sales and payment transactions
+- Account: Financial accounts
 
 ## Deployment
 
-### Deploying to Vercel
+This application can be deployed to Vercel:
 
-1. Push your code to GitHub.
-
-2. Connect your GitHub repository to Vercel.
-
-3. Add the following environment variables in Vercel:
-   - `DATABASE_URL`: Your Neon PostgreSQL connection string
-   - `NODE_ENV`: Set to `production`
-
-4. Deploy! The database migrations will run automatically during the build process.
-
-## Database Management
-
-- Run migrations: `npm run migrate`
-- Seed the database: `npm run seed`
-- Complete setup: `npm run setup-db`
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+1. Push your code to a GitHub repository
+2. Connect your repository to Vercel
+3. Add your environment variables in the Vercel dashboard
+4. Deploy!

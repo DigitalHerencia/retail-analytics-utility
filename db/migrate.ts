@@ -1,23 +1,30 @@
-import { query, closePool } from "@/lib/db"
-import path from "path"
-import fs from "fs"
+// Check if we're in a browser environment
+const isBrowser = typeof window !== "undefined"
+
+import { query, pool } from "@/lib/db"
 
 async function migrate() {
+  // Skip migration in browser environment
+  if (isBrowser) {
+    console.log("Migration skipped in browser environment")
+    return
+  }
+
   console.log("Starting database migration...")
 
   try {
+    // Import fs and path dynamically only on server
+    const fs = await import("fs")
+    const path = await import("path")
+
     // Create a migrations table if it doesn't exist
     await query(`
       CREATE TABLE IF NOT EXISTS migrations (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL UNIQUE,
+        name VARCHAR(255) NOT NULL,
         applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       )
     `)
-
-    // Get list of applied migrations
-    const appliedResult = await query(`SELECT name FROM migrations ORDER BY id ASC`)
-    const appliedMigrations = appliedResult.rows.map((row) => row.name)
 
     // Read the schema file
     const schemaPath = path.join(process.cwd(), "db", "schema.sql")
@@ -26,43 +33,10 @@ async function migrate() {
     // Execute the schema
     await query(schema)
 
-    // Record the migration if not already applied
-    const migrationName = `initial_schema_${new Date().toISOString().split("T")[0]}`
-
-    if (!appliedMigrations.includes(migrationName)) {
-      await query(`INSERT INTO migrations (name) VALUES ($1)`, [migrationName])
-      console.log(`Applied migration: ${migrationName}`)
-    } else {
-      console.log(`Migration ${migrationName} already applied, skipping`)
-    }
-
-    // Check for additional migration files in the migrations directory
-    const migrationsDir = path.join(process.cwd(), "db", "migrations")
-
-    if (fs.existsSync(migrationsDir)) {
-      const migrationFiles = fs
-        .readdirSync(migrationsDir)
-        .filter((file) => file.endsWith(".sql"))
-        .sort() // Ensure migrations are applied in order
-
-      for (const file of migrationFiles) {
-        const migrationName = path.basename(file, ".sql")
-
-        if (!appliedMigrations.includes(migrationName)) {
-          const migrationPath = path.join(migrationsDir, file)
-          const migrationSql = fs.readFileSync(migrationPath, "utf8")
-
-          // Apply the migration
-          await query(migrationSql)
-
-          // Record the migration
-          await query(`INSERT INTO migrations (name) VALUES ($1)`, [migrationName])
-          console.log(`Applied migration: ${migrationName}`)
-        } else {
-          console.log(`Migration ${migrationName} already applied, skipping`)
-        }
-      }
-    }
+    // Record the migration
+    await query(`INSERT INTO migrations (name) VALUES ($1) ON CONFLICT DO NOTHING`, [
+      "initial_schema_" + new Date().toISOString().split("T")[0],
+    ])
 
     console.log("Migration completed successfully")
   } catch (error) {
@@ -70,12 +44,12 @@ async function migrate() {
     throw error
   } finally {
     // Close the pool
-    await closePool()
+    await pool.end()
   }
 }
 
 // Run the migration if this file is executed directly
-if (typeof require !== "undefined" && require.main === module) {
+if (!isBrowser && typeof require !== "undefined" && require.main === module) {
   migrate()
     .then(() => process.exit(0))
     .catch(() => process.exit(1))
