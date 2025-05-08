@@ -7,6 +7,5 @@ import {
 } from 'next-themes'
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  // Force dark theme and remove theme switching capability
-  return <NextThemesProvider {...props} forcedTheme="dark">{children}</NextThemesProvider>
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }

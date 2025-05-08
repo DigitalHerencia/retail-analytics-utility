@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { v4 as uuidv4 } from "uuid"
-import type { PricePoint, BusinessData } from "@/types"
+import type { PricePoint, BusinessData } from "./data"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -9,50 +9,32 @@ export function cn(...inputs: ClassValue[]) {
 
 // Formatting functions with null/undefined checks
 export const formatCurrency = (value: number | undefined | null): string => {
-  if (value === undefined || value === null || isNaN(value)) return "$0.00"
+  if (value === undefined || value === null) return "$0.00"
   return `$${value.toFixed(2)}`
 }
 
-// Format grams
+// Format grams with "g" suffix
 export const formatGrams = (grams: number | undefined | null): string => {
-  if (grams === undefined || grams === null || isNaN(grams)) return "0.0"
-  return `${grams.toFixed(1)}`
-}
-
-// Function to calculate derived values
-export const calculateDerivedValues = (retailPriceG: number, grossMarginG: number, targetProfit: number) => {
-  // Calculate cost of goods sold (COGS)
-  const cogs = retailPriceG - grossMarginG
-
-  // Calculate units needed to achieve target profit
-  const unitsNeeded = targetProfit / grossMarginG
-
-  // Calculate total revenue
-  const totalRevenue = unitsNeeded * retailPriceG
-
-  return {
-    cogs,
-    unitsNeeded,
-    totalRevenue,
-  }
+  if (grams === undefined || grams === null) return "0.00g"
+  return `${grams.toFixed(2)}g`
 }
 
 // Format kilograms with "kg" suffix
 export const formatKilograms = (kilograms: number | undefined | null): string => {
-  if (kilograms === undefined || kilograms === null || isNaN(kilograms)) return "0.00kg"
+  if (kilograms === undefined || kilograms === null) return "0.00kg"
   return `${kilograms.toFixed(2)}kg`
 }
 
 // Format ounces with "oz" suffix
 export const formatOunces = (ounces: number | undefined | null): string => {
-  if (ounces === undefined || ounces === null || isNaN(ounces)) return "0.00oz"
+  if (ounces === undefined || ounces === null) return "0.00oz"
   return `${ounces.toFixed(2)}oz`
 }
 
 // Format percentage
-export const formatPercentage = (value: number | undefined | null, digits: number = 0): string => {
-  if (value === undefined || value === null || isNaN(value)) return "0%"
-  return `${(value * 100).toFixed(digits)}%`
+export const formatPercentage = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) return "0%"
+  return `${Math.round(value * 100)}%`
 }
 
 // Convert grams to ounces
@@ -76,7 +58,7 @@ export const kilogramsToGrams = (kilograms: number): number => {
 }
 
 // Calculate price points based on wholesale price
-export const calculatePricePoints = ( markupPercentages: number[], targetProfit: number, businessData: BusinessData): PricePoint[] => {
+export const calculatePricePoints = (businessData: BusinessData, markupPercentages: number[]): PricePoint[] => {
   const { wholesalePricePerOz, targetProfitPerMonth, operatingExpenses } = businessData
   const wholesalePricePerGram = wholesalePricePerOz / 28.35
 
@@ -86,7 +68,7 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
 
     // Calculate profit per gram
     const profitPerGram = retailPricePerGram - wholesalePricePerGram
-    
+
     // Calculate break-even quantity (including operating expenses)
     const totalMonthlyExpenses = operatingExpenses + targetProfitPerMonth
     const breakEvenGramsPerMonth = totalMonthlyExpenses / profitPerGram
@@ -102,10 +84,9 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
     const roi = (monthlyProfit / totalInvestment) * 100
 
     return {
-      value: retailPricePerGram,
       id: uuidv4(),
       markupPercentage,
-      retailPrice: retailPricePerGram,
+      retailPricePerGram,
       profitPerGram,
       breakEvenGramsPerMonth,
       breakEvenOuncesPerMonth,
@@ -113,13 +94,58 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
       monthlyCost,
       monthlyProfit,
       roi,
-      wholesalePricePerGram,
-      retailPricePerGram,
-      updatedAt: new Date().toISOString(),
-      wholesale: wholesalePricePerGram,
-      retail: retailPricePerGram,
     }
   })
+}
+
+// Calculate derived business values from raw data
+export const calculateDerivedValues = (data: any) => {
+  const { wholesalePricePerOz, retailPricePerGram, monthlySalesQuantity, operatingExpenses, commissionRate } = data
+
+  // Convert wholesale price to per gram
+  const wholesalePricePerGram = wholesalePricePerOz / 28.3495
+
+  // Calculate monthly values
+  const monthlySalesGrams = monthlySalesQuantity || 0
+  const monthlyRevenue = monthlySalesGrams * (retailPricePerGram || 0)
+  const monthlyCost = monthlySalesGrams * wholesalePricePerGram
+
+  // Calculate profit before commission and expenses
+  const grossProfit = monthlyRevenue - monthlyCost
+
+  // Calculate commission if applicable
+  const commission = commissionRate ? (commissionRate / 100) * monthlyRevenue : 0
+
+  // Calculate net profit
+  const netProfit = grossProfit - (operatingExpenses || 0) - commission
+
+  // Calculate profit margin
+  const profitMargin = monthlyRevenue > 0 ? (netProfit / monthlyRevenue) * 100 : 0
+
+  // Calculate ROI
+  const investment = monthlyCost + (operatingExpenses || 0)
+  const roi = investment > 0 ? (netProfit / investment) * 100 : 0
+
+  // Calculate profit per gram
+  const profitPerGram = monthlySalesGrams > 0 ? netProfit / monthlySalesGrams : 0
+
+  // Calculate break-even quantity
+  const profitPerGramBeforeExpenses = (retailPricePerGram || 0) - wholesalePricePerGram
+  const breakEvenGrams = profitPerGramBeforeExpenses > 0 ? (operatingExpenses || 0) / profitPerGramBeforeExpenses : 0
+
+  return {
+    wholesalePricePerGram,
+    monthlyRevenue,
+    monthlyCost,
+    grossProfit,
+    commission,
+    netProfit,
+    profitMargin,
+    roi,
+    profitPerGram,
+    breakEvenGrams,
+    breakEvenOunces: breakEvenGrams / 28.3495,
+  }
 }
 
 // Business concept explanations

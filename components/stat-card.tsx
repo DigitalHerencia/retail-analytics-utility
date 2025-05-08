@@ -17,7 +17,7 @@ export function StatCard({ title, value, icon, trend, trendValue, className }: S
       <CardContent className="p-6">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm font-medium text-white">{title}</p>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <h3 className="text-2xl font-bold mt-1">{value}</h3>
             {trend && trendValue && (
               <p
@@ -25,7 +25,7 @@ export function StatCard({ title, value, icon, trend, trendValue, className }: S
                   "text-xs mt-1",
                   trend === "up" && "text-green-500",
                   trend === "down" && "text-red-500",
-                  trend === "neutral" && "text-white",
+                  trend === "neutral" && "text-muted-foreground",
                 )}
               >
                 {trend === "up" && "↑ "}

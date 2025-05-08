@@ -1,22 +1,289 @@
 import { v4 as uuidv4 } from "uuid"
 
+// Simplified data models
+export interface BusinessData {
+  wholesalePricePerOz: number
+  targetProfitPerMonth: number
+  operatingExpenses: number
+}
+
+export interface PricePoint {
+  id: string
+  markupPercentage: number
+  retailPricePerGram: number
+  profitPerGram: number
+  breakEvenGramsPerMonth: number
+  breakEvenOuncesPerMonth: number
+  monthlyRevenue: number
+  monthlyCost: number
+  monthlyProfit: number
+  roi: number
+}
+
+export interface InventoryItem {
+  id: string
+  name: string
+  description: string
+  quantityG: number
+  quantityOz: number
+  quantityKg: number
+  purchaseDate: string
+  costPerOz: number
+  totalCost: number
+  reorderThresholdG: number
+}
+
+export interface Payment {
+  id: string
+  amount: number
+  date: string
+  method: string
+  notes?: string
+  createdAt: string
+}
+
+export interface Transaction {
+  id: string
+  date: string
+  type: "sale" | "payment" | "purchase"
+  inventoryId: string | null
+  inventoryName: string | null
+  quantityGrams: number
+  pricePerGram: number
+  totalPrice: number
+  cost: number
+  profit: number
+  paymentMethod: string
+  customerId: string | null
+  customerName: string | null
+  notes: string
+  createdAt: string
+}
+
+export interface Customer {
+  id: string
+  name: string
+  phone: string
+  email: string
+  address: string
+  amountOwed: number
+  dueDate: string
+  status: "paid" | "unpaid" | "partial"
+  paymentHistory: Payment[]
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Account {
+  id: string
+  name: string
+  balance: number
+  type: "asset" | "liability" | "income" | "expense"
+  description: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Salesperson {
+  id: string
+  name: string
+  commissionRate: number
+  salesTarget: number
+  actualSales: number
+  earnings: number
+}
+
+export interface ScenarioData {
+  id: string
+  scenario: string
+  retailPriceG: number
+  grossMarginG: number
+  qtyMonthG: number
+  qtyMonthOz: number
+  monthlyRevenue: number
+  monthlyCost: number
+  totalCommission: number
+  netProfit: number
+  netProfitAfterCommission: number
+  salespeople: Salesperson[]
+}
+
 // Default business data
-export const defaultBusinessData = {
+export const defaultBusinessData: BusinessData = {
   wholesalePricePerOz: 100,
   targetProfitPerMonth: 2000,
   operatingExpenses: 500,
-  targetProfit: undefined,
-};
+}
 
 // Default markup percentages
-export const defaultMarkupPercentages = [50, 75, 100, 125, 150];
+export const defaultMarkupPercentages = [50, 75, 100, 125, 150]
 
-export const ouncesToGrams = (ounces: number) => {
+const ouncesToGrams = (ounces: number) => {
   return ounces * 28.3495
 }
 
-export const gramsToOunces = (grams: number) => grams / 28.3495;
-export const gramsToKg = (grams: number) => grams / 1000;
+// Sample inventory
+export const sampleInventory: InventoryItem[] = [
+  {
+    id: uuidv4(),
+    name: "Premium Grade",
+    description: "High quality product",
+    quantityG: ouncesToGrams(5),
+    quantityOz: 5,
+    quantityKg: ouncesToGrams(5) / 1000,
+    purchaseDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    costPerOz: 120,
+    totalCost: 600,
+    reorderThresholdG: 50,
+  },
+  {
+    id: uuidv4(),
+    name: "Standard Grade",
+    description: "Regular quality product",
+    quantityG: ouncesToGrams(8),
+    quantityOz: 8,
+    quantityKg: ouncesToGrams(8) / 1000,
+    purchaseDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    costPerOz: 90,
+    totalCost: 720,
+    reorderThresholdG: 100,
+  },
+]
+
+// Sample accounts
+export const sampleAccounts: Account[] = [
+  {
+    id: uuidv4(),
+    name: "Cash on Hand",
+    balance: 5000,
+    type: "asset",
+    description: "Physical cash available",
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Bank Account",
+    balance: 12000,
+    type: "asset",
+    description: "Main business bank account",
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Accounts Receivable",
+    balance: 3500,
+    type: "asset",
+    description: "Money owed by customers",
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Supplier Credit",
+    balance: 2000,
+    type: "liability",
+    description: "Money owed to suppliers",
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Sales Revenue",
+    balance: 25000,
+    type: "income",
+    description: "Income from sales",
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Operating Expenses",
+    balance: 8500,
+    type: "expense",
+    description: "General business expenses",
+    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+]
+
+// Sample customers
+export const sampleCustomers: Customer[] = [
+  {
+    id: uuidv4(),
+    name: "John Smith",
+    phone: "555-123-4567",
+    email: "john@example.com",
+    address: "123 Main St, Anytown",
+    amountOwed: 250,
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    status: "unpaid",
+    paymentHistory: [],
+    notes: "Regular client, always pays on time",
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Jane Doe",
+    phone: "555-987-6543",
+    email: "jane@example.com",
+    address: "456 Oak Ave, Somewhere",
+    amountOwed: 0,
+    dueDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    status: "paid",
+    paymentHistory: [
+      {
+        id: uuidv4(),
+        amount: 500,
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        method: "cash",
+        notes: "Paid in full",
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ],
+    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Mike Johnson",
+    phone: "555-555-5555",
+    email: "mike@example.com",
+    address: "789 Pine St, Elsewhere",
+    amountOwed: 350,
+    dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    status: "unpaid",
+    paymentHistory: [],
+    notes: "New client",
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: uuidv4(),
+    name: "Sarah Williams",
+    phone: "555-222-3333",
+    email: "sarah@example.com",
+    address: "101 Maple Dr, Nowhere",
+    amountOwed: 175,
+    dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    status: "partial",
+    paymentHistory: [
+      {
+        id: uuidv4(),
+        amount: 125,
+        date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        method: "bank_transfer",
+        notes: "First installment",
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ],
+    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+]
 
 // Business concept explanations
 export const businessConcepts = {

@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model BusinessData {
+  id                  String   @id @default(cuid())
+  wholesalePricePerOz Float
+  targetProfitPerMonth Float
+  operatingExpenses   Float
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Scenario {
+  id                     String   @id @default(cuid())
+  name                   String
+  markupPercentage       Float
+  retailPricePerGram     Float
+  profitPerGram          Float
+  breakEvenGramsPerMonth Float
+  breakEvenOuncesPerMonth Float
+  monthlyRevenue         Float
+  monthlyCost            Float
+  monthlyProfit          Float
+  roi                    Float
+  totalCommission        Float    @default(0)
+  netProfit              Float
+  netProfitAfterCommission Float   @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  salespeople            Salesperson[]
+}
+
+model Salesperson {
+  id          String   @id @default(cuid())
+  name        String
+  commissionRate Float
+  salesTarget Float
+  actualSales Float
+  earnings    Float
+  scenarioId  String
+  scenario    Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model InventoryItem {
+  id                String   @id @default(cuid())
+  name              String
+  description       String
+  quantityG         Float
+  quantityOz        Float
+  quantityKg        Float
+  purchaseDate      String
+  costPerOz         Float
+  totalCost         Float
+  reorderThresholdG Float
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  transactions      Transaction[]
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  name           String
+  phone          String
+  email          String
+  address        String
+  amountOwed     Float
+  dueDate        String
+  status         String
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  payments       Payment[]
+  transactions   Transaction[]
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  amount      Float
+  date        String
+  method      String
+  notes       String?
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model Transaction {
+  id             String   @id @default(cuid())
+  date           String
+  type           String
+  inventoryId    String?
+  inventory      InventoryItem? @relation(fields: [inventoryId], references: [id], onDelete: SetNull)
+  inventoryName  String?
+  quantityGrams  Float
+  pricePerGram   Float
+  totalPrice     Float
+  cost           Float
+  profit         Float
+  paymentMethod  String
+  customerId     String?
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName   String?
+  notes          String
+  createdAt      DateTime @default(now())
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  name        String
+  balance     Float
+  type        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
