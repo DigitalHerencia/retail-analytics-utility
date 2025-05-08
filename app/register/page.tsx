@@ -2,22 +2,38 @@
 
 import CashRegister from "@/components/cash-register"
 import { useState, useEffect } from "react"
-import { generateDemoData } from "@/lib/demo-data"
-import { sampleInventory, sampleCustomers } from "@/lib/data"
-import type { Customer, InventoryItem, Transaction } from "@/lib/data"
+import { getInventory, getCustomers, getTransactions } from "@/app/actions"
+import type { Customer, InventoryItem, Transaction } from "@/lib/types"
 
 export default function RegisterPage() {
-  const [inventory, setInventory] = useState<InventoryItem[]>(sampleInventory)
-  const [customers, setCustomers] = useState<Customer[]>(sampleCustomers)
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [showTips, setShowTips] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Generate demo data on first load
+  // Load real data on first load
   useEffect(() => {
-    const demoData = generateDemoData(100, customers, inventory)
-    setTransactions(demoData.transactions)
-    setCustomers(demoData.updatedCustomers)
-    setInventory(demoData.updatedInventory)
+    const loadData = async () => {
+      setIsLoading(true)
+      try {
+        const [inventoryData, customersData, transactionsData] = await Promise.all([
+          getInventory(),
+          getCustomers(),
+          getTransactions(),
+        ])
+
+        setInventory(inventoryData)
+        setCustomers(customersData)
+        setTransactions(transactionsData)
+      } catch (error) {
+        console.error("Error loading data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
   }, [])
 
   const handleUpdateInventory = (items: InventoryItem[]) => {
@@ -34,6 +50,14 @@ export default function RegisterPage() {
 
   const handleHideTips = () => {
     setShowTips(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    )
   }
 
   return (

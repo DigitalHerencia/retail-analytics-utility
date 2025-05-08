@@ -16,7 +16,7 @@ function getPool(): Pool {
   if (!pool) {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: true } : false,
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
       max: 10, // Optimal for serverless functions
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
@@ -25,13 +25,7 @@ function getPool(): Pool {
     // Log pool errors
     pool.on("error", (err) => {
       console.error("Unexpected error on idle client", err)
-      process.exit(-1)
     })
-
-    // Log connection events in development
-    if (process.env.NODE_ENV !== "production") {
-      pool.on("connect", () => console.log("Connected to PostgreSQL database"))
-    }
   }
 
   return pool
@@ -46,8 +40,8 @@ export async function query(text: string, params: any[] = []) {
     const res = await dbPool.query(text, params)
     const duration = Date.now() - start
 
-    // Log slow queries
-    if (duration > 100) {
+    // Log slow queries in production for monitoring
+    if (duration > 500) {
       console.log("Slow query:", {
         text,
         duration,
@@ -58,11 +52,7 @@ export async function query(text: string, params: any[] = []) {
     return res
   } catch (error) {
     console.error("Database query error:", error)
-
-    // Add query context to the error
-    const contextError = new Error(`Query failed: ${text}`)
-    contextError.cause = error
-    throw contextError
+    throw error
   }
 }
 

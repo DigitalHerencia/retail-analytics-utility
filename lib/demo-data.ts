@@ -1,124 +1,91 @@
 import { v4 as uuidv4 } from "uuid"
-import { defaultBusinessData, sampleInventory, sampleCustomers } from "./data"
-import type { BusinessData, InventoryItem, Customer, Payment, Transaction, Account } from "./types"
+import type { Customer, InventoryItem, Transaction } from "./types"
 
 // Generate demo data for the application
-export function generateDemoData() {
-  // Create business data
-  const businessData: BusinessData = {
-    ...defaultBusinessData,
-    id: uuidv4(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
-
-  // Create inventory items
-  const inventoryItems: InventoryItem[] = sampleInventory.map((item) => ({
-    ...item,
-    id: uuidv4(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }))
-
-  // Create customers with payment history
-  const customers: Customer[] = []
-  const payments: Payment[] = []
-
-  sampleCustomers.forEach((customer) => {
-    const customerId = uuidv4()
-
-    // Create customer
-    const newCustomer = {
-      ...customer,
-      id: customerId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      paymentHistory: [],
-    }
-
-    // Add payment history if customer has outstanding balance
-    if (customer.amountOwed > 0) {
-      // Create a partial payment
-      const paymentId = uuidv4()
-      const payment = {
-        id: paymentId,
-        customerId: customerId,
-        amount: customer.amountOwed * 0.5, // 50% payment
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        method: "cash",
-        notes: "Partial payment",
-        createdAt: new Date().toISOString(),
-      }
-
-      payments.push(payment)
-      newCustomer.paymentHistory.push(payment)
-    }
-
-    customers.push(newCustomer)
-  })
-
+export function generateDemoData(count = 10, baseCustomers: Customer[] = [], baseInventory: InventoryItem[] = []) {
   // Create transactions
   const transactions: Transaction[] = []
+  const updatedCustomers = [...baseCustomers]
+  const updatedInventory = [...baseInventory]
 
-  // Sample sale transaction
-  if (inventoryItems.length > 0 && customers.length > 0) {
-    const transaction = {
+  // Generate random transactions
+  for (let i = 0; i < count; i++) {
+    if (updatedInventory.length === 0) break
+
+    const randomInventoryIndex = Math.floor(Math.random() * updatedInventory.length)
+    const randomInventory = updatedInventory[randomInventoryIndex]
+
+    const randomQuantity = Math.min(
+      Math.max(0.5, Math.random() * 5), // Random quantity between 0.5 and 5
+      randomInventory.quantityG, // Don't exceed available inventory
+    )
+
+    const pricePerGram = 100 // Default retail price
+    const totalPrice = pricePerGram * randomQuantity
+    const cost = (randomInventory.costPerOz / 28.35) * randomQuantity
+    const profit = totalPrice - cost
+
+    // Create transaction
+    const transaction: Transaction = {
       id: uuidv4(),
-      date: new Date().toISOString(),
+      date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(), // Random date in last 30 days
       type: "sale",
-      inventoryId: inventoryItems[0].id,
-      inventoryName: inventoryItems[0].name,
-      quantityGrams: 3.5,
-      pricePerGram: 15,
-      totalPrice: 52.5,
-      cost: 10,
-      profit: 42.5,
-      paymentMethod: "cash",
-      customerId: customers[0].id,
-      customerName: customers[0].name,
-      notes: "Regular sale",
+      inventoryId: randomInventory.id,
+      inventoryName: randomInventory.name,
+      quantityGrams: randomQuantity,
+      pricePerGram,
+      totalPrice,
+      cost,
+      profit,
+      paymentMethod: Math.random() > 0.3 ? "cash" : "credit",
+      customerId: null,
+      customerName: null,
+      notes: "Demo transaction",
+      createdAt: new Date().toISOString(),
+    }
+
+    // Update inventory
+    updatedInventory[randomInventoryIndex] = {
+      ...randomInventory,
+      quantityG: randomInventory.quantityG - randomQuantity,
+      quantityOz: (randomInventory.quantityG - randomQuantity) / 28.35,
+      quantityKg: (randomInventory.quantityG - randomQuantity) / 1000,
+      totalCost: ((randomInventory.quantityG - randomQuantity) / 28.35) * randomInventory.costPerOz,
+      purchaseDate: randomInventory.purchaseDate,
+    }
+
+    // Randomly assign to customer
+    if (updatedCustomers.length > 0 && Math.random() > 0.5) {
+      const randomCustomerIndex = Math.floor(Math.random() * updatedCustomers.length)
+      const randomCustomer = updatedCustomers[randomCustomerIndex]
+
+      transaction.customerId = randomCustomer.id
+      transaction.customerName = randomCustomer.name
+
+      // If credit sale, update customer balance
+      if (transaction.paymentMethod === "credit") {
+        updatedCustomers[randomCustomerIndex] = {
+          ...randomCustomer,
+          amountOwed: randomCustomer.amountOwed + totalPrice,
+          dueDate: new Date().toISOString(),
+          status: "unpaid",
+          phone: randomCustomer.phone,
+          email: randomCustomer.email,
+          address: randomCustomer.address,
+          notes: randomCustomer.notes,
+          createdAt: randomCustomer.createdAt,
+          updatedAt: new Date().toISOString(),
+          paymentHistory: [],
+        }
+      }
     }
 
     transactions.push(transaction)
   }
 
-  // Create accounts
-  const accounts: Account[] = [
-    {
-      id: uuidv4(),
-      name: "Cash on Hand",
-      type: "asset",
-      balance: 1500,
-      description: "Physical cash in the register",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: uuidv4(),
-      name: "Bank Account",
-      type: "asset",
-      balance: 5000,
-      description: "Business checking account",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: uuidv4(),
-      name: "Accounts Receivable",
-      type: "asset",
-      balance: customers.reduce((total, customer) => total + customer.amountOwed, 0),
-      description: "Money owed by customers",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ]
-
   return {
-    businessData,
-    inventoryItems,
-    customers,
-    payments,
     transactions,
-    accounts,
+    updatedCustomers,
+    updatedInventory,
   }
 }
