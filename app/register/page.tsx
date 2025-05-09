@@ -18,11 +18,34 @@ export default function RegisterPage() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [inventoryData, customersData, transactionsData] = await Promise.all([
-          getInventory(),
-          getCustomers(),
-          getTransactions(),
-        ])
+        // Load each data type separately to better identify errors
+        let inventoryData: InventoryItem[] = []
+        let customersData: Customer[] = []
+        let transactionsData: Transaction[] = []
+
+        try {
+          inventoryData = await getInventory()
+          console.log("Inventory loaded:", inventoryData)
+        } catch (err) {
+          console.error("Error loading inventory:", err)
+          setError("Failed to load inventory data. Please check database connection.")
+        }
+
+        try {
+          customersData = await getCustomers()
+          console.log("Customers loaded:", customersData)
+        } catch (err) {
+          console.error("Error loading customers:", err)
+          setError("Failed to load customer data. Please check database connection.")
+        }
+
+        try {
+          transactionsData = await getTransactions()
+          console.log("Transactions loaded:", transactionsData)
+        } catch (err) {
+          console.error("Error loading transactions:", err)
+          setError("Failed to load transaction data. Please check database connection.")
+        }
 
         setInventory(inventoryData)
         setCustomers(customersData)
@@ -68,6 +91,14 @@ export default function RegisterPage() {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Error: </strong>
           <span className="block sm:inline">{error}</span>
+          <div className="mt-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-700 hover:bg-red-800 text-white font-bold py-1 px-2 rounded text-xs"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     )

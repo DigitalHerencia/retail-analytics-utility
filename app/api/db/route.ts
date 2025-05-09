@@ -1,24 +1,30 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { query, toCamelCase } from "@/lib/db"
+import { query } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const { sql, params } = await request.json()
+    // Parse the request body
+    const body = await request.json()
+    const { sql, params } = body
 
-    // Security check - prevent dangerous operations in preview
-    const lowerSql = sql.toLowerCase()
+    // Basic security check - prevent dangerous operations in preview
+    const sqlLower = sql.toLowerCase().trim()
     if (
-      lowerSql.includes("drop") ||
-      lowerSql.includes("truncate") ||
-      (lowerSql.includes("delete from") && !lowerSql.includes("where"))
+      sqlLower.startsWith("drop") ||
+      sqlLower.startsWith("alter") ||
+      sqlLower.startsWith("truncate") ||
+      sqlLower.includes("information_schema")
     ) {
-      return NextResponse.json({ error: "This operation is not allowed" }, { status: 403 })
+      return NextResponse.json({ error: "Operation not allowed" }, { status: 403 })
     }
 
-    const result = await query(sql, params)
-    return NextResponse.json({ data: toCamelCase(result.rows) })
-  } catch (error: any) {
+    // Execute the query
+    const result = await query(sql, params || [])
+
+    // Return the result
+    return NextResponse.json({ data: result.rows })
+  } catch (error) {
     console.error("API route error:", error)
-    return NextResponse.json({ error: error.message || "Database operation failed" }, { status: 500 })
+    return NextResponse.json({ error: "Database operation failed" }, { status: 500 })
   }
 }

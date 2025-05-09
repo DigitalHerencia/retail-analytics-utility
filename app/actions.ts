@@ -300,7 +300,7 @@ export async function deleteScenario(id: string): Promise<boolean> {
 // Inventory Actions
 export async function getInventory(): Promise<InventoryItem[]> {
   try {
-    const result = await query("SELECT * FROM inventory ORDER BY name")
+    const result = await query("SELECT * FROM inventory_items ORDER BY name")
     return toCamelCase(result.rows)
   } catch (error) {
     console.error("Error getting inventory:", error)
@@ -310,7 +310,7 @@ export async function getInventory(): Promise<InventoryItem[]> {
 
 export async function getInventoryItem(id: string): Promise<InventoryItem | null> {
   try {
-    const result = await query("SELECT * FROM inventory WHERE id = $1", [id])
+    const result = await query("SELECT * FROM inventory_items WHERE id = $1", [id])
 
     if (result.rows.length === 0) {
       return null
@@ -328,7 +328,7 @@ export async function createInventoryItem(
 ): Promise<InventoryItem> {
   try {
     const result = await query(
-      `INSERT INTO inventory 
+      `INSERT INTO inventory_items 
        (id, name, description, quantity_g, quantity_oz, quantity_kg, purchase_date, cost_per_oz, total_cost, reorder_threshold_g) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
        RETURNING *`,
@@ -363,7 +363,7 @@ export async function updateInventoryItem(id: string, item: Partial<InventoryIte
     }
 
     const result = await query(
-      `UPDATE inventory 
+      `UPDATE inventory_items 
        SET name = $1, 
            description = $2, 
            quantity_g = $3, 
@@ -400,7 +400,7 @@ export async function updateInventoryItem(id: string, item: Partial<InventoryIte
 
 export async function deleteInventoryItem(id: string): Promise<boolean> {
   try {
-    const result = await query("DELETE FROM inventory WHERE id = $1 RETURNING id", [id])
+    const result = await query("DELETE FROM inventory_items WHERE id = $1 RETURNING id", [id])
     revalidatePath("/")
     return result.rows.length > 0
   } catch (error) {
@@ -642,7 +642,9 @@ export async function createTransaction(transaction: Omit<Transaction, "id" | "c
 
       // If this is a sale, update inventory
       if (transaction.type === "sale" && transaction.inventoryId) {
-        const inventoryResult = await client.query("SELECT * FROM inventory WHERE id = $1", [transaction.inventoryId])
+        const inventoryResult = await client.query("SELECT * FROM inventory_items WHERE id = $1", [
+          transaction.inventoryId,
+        ])
 
         if (inventoryResult.rows.length > 0) {
           const inventory = toCamelCase(inventoryResult.rows[0])
@@ -651,7 +653,7 @@ export async function createTransaction(transaction: Omit<Transaction, "id" | "c
           const newQuantityKg = newQuantityG / 1000
 
           await client.query(
-            `UPDATE inventory 
+            `UPDATE inventory_items 
              SET quantity_g = $1, 
                  quantity_oz = $2, 
                  quantity_kg = $3,

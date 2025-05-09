@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS salespeople (
 
 -- Inventory Items
 CREATE TABLE IF NOT EXISTS inventory_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   quantity_g DECIMAL(10, 2) NOT NULL DEFAULT 0,
@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS inventory_items (
   cost_per_oz DECIMAL(10, 2) NOT NULL DEFAULT 0,
   total_cost DECIMAL(10, 2) NOT NULL DEFAULT 0,
   reorder_threshold_g DECIMAL(10, 2) NOT NULL DEFAULT 100,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Customers
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS accounts (
 );
 
 -- Indexes
-CREATE INDEX IF NOT EXISTS idx_inventory_items_name ON inventory_items(name);
+CREATE INDEX IF NOT EXISTS idx_inventory_name ON inventory_items(name);
 CREATE INDEX IF NOT EXISTS idx_customers_name ON customers(name);
 CREATE INDEX IF NOT EXISTS idx_customers_status ON customers(status);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
