@@ -31,6 +31,7 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
   const [dailyTransactions, setDailyTransactions] = useState(0)
   const [dailyProfit, setDailyProfit] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -40,12 +41,23 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
+      setError(null)
       try {
         const [inventoryData, customersData] = await Promise.all([getInventory(), getCustomers()])
+
+        if (!inventoryData || inventoryData.length === 0) {
+          console.warn("No inventory data found.")
+        }
+
+        if (!customersData || customersData.length === 0) {
+          console.warn("No customer data found.")
+        }
+
         setInventory(inventoryData)
         setCustomers(customersData)
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading data:", error)
+        setError("Failed to load data. Please try again.")
       } finally {
         setIsLoading(false)
       }
@@ -86,6 +98,7 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
     if (!selectedInventory) return
 
     setIsLoading(true)
+    setError(null)
 
     try {
       // Create transaction record
@@ -127,8 +140,9 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
       setQuantity(1)
       setCustomPrice(null)
       setNotes("")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing sale:", error)
+      setError("Failed to process sale. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -139,6 +153,7 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
     if (!selectedCustomer) return
 
     setIsLoading(true)
+    setError(null)
 
     try {
       const paymentAmount = customPrice !== null ? customPrice : selectedCustomer.amountOwed
@@ -167,8 +182,9 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
       // Reset form
       setCustomPrice(null)
       setNotes("")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing payment:", error)
+      setError("Failed to process payment. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -196,12 +212,16 @@ export default function CashRegister({ showTips, onHideTips }: CashRegisterProps
     return () => clearTimeout(timer)
   }, [dailyRevenue, dailyTransactions, dailyProfit])
 
-  if (isLoading && inventory.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
       </div>
     )
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-64 text-red-500">{error}</div>
   }
 
   return (

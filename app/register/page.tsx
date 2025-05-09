@@ -3,7 +3,7 @@
 import CashRegister from "@/components/cash-register"
 import { useState, useEffect } from "react"
 import { getInventory, getCustomers, getTransactions } from "@/app/actions"
-import type { Customer, InventoryItem, Transaction } from "@/lib/types"
+import type { Customer, InventoryItem, Transaction } from "@/lib/data"
 
 export default function RegisterPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [showTips, setShowTips] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Load real data on first load
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function RegisterPage() {
         setTransactions(transactionsData)
       } catch (error) {
         console.error("Error loading data:", error)
+        setError("Failed to load data. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
       }
@@ -56,6 +58,17 @@ export default function RegisterPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container py-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+        </div>
       </div>
     )
   }
