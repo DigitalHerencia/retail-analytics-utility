@@ -2,15 +2,9 @@
 
 import MonthlyForecast from "@/components/monthly-forecast"
 import { useState, useEffect } from "react"
-<<<<<<< HEAD
-import { generateDemoData } from "@/db/demo-data"
-import { sampleInventory, sampleCustomers, defaultBusinessData } from "@/db/data"
-import type { BusinessData, InventoryItem, Customer, Transaction } from "@/db/data"
-=======
 import { generateDemoData } from "@/lib/demo-data"
 import { sampleInventory, sampleCustomers, defaultBusinessData } from "@/lib/data"
 import type { BusinessData, InventoryItem, Customer, Transaction } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 export default function ForecastPage() {
   const [businessData, setBusinessData] = useState<BusinessData>(defaultBusinessData)

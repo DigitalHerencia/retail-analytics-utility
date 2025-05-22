@@ -1,32 +1,22 @@
 "use server"
 
-<<<<<<< HEAD
-import { query, withTransaction, toCamelCase, toSnakeCase } from "@/db/db"
-import { v4 as uuidv4 } from "uuid"
-import type { BusinessData, InventoryItem, Customer, Transaction, Account, Payment, PricePoint } from "@/db/data"
-import { defaultMarkupPercentages } from "@/db/data"
-=======
-import { query, withTransaction, toCamelCase, toSnakeCase } from "@/lib/db"
-import { v4 as uuidv4 } from "uuid"
-import type { BusinessData, InventoryItem, Customer, Transaction, Account, Payment, PricePoint } from "@/lib/data"
-import { defaultMarkupPercentages } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { revalidatePath } from "next/cache"
+import { query, toCamelCase, toSnakeCase } from "@/lib/db"
+import type { BusinessData, ScenarioData, InventoryItem, Customer, Payment, Transaction, Account } from "@/lib/types"
 
 // Business Data Actions
-export async function getBusinessData(): Promise<BusinessData> {
+export async function getBusinessData(): Promise<BusinessData | null> {
   try {
-    const result = await query("SELECT * FROM business_data LIMIT 1")
+    const result = await query(`SELECT * FROM business_data ORDER BY created_at DESC LIMIT 1`)
 
     if (result.rows.length === 0) {
-      // If no business data exists, initialize with defaults
-      return initializeDefaultBusinessData()
+      return null
     }
 
     return toCamelCase(result.rows[0])
   } catch (error) {
-    console.error("Error getting business data:", error)
-    throw new Error("Failed to get business data")
+    console.error("Error fetching business data:", error)
+    return null
   }
 }
 
@@ -37,15 +27,10 @@ export async function saveBusinessData(
     const snakeCaseData = toSnakeCase(data)
     const result = await query(
       `INSERT INTO business_data 
-       (id, wholesale_price_per_oz, target_profit_per_month, operating_expenses) 
-       VALUES ($1, $2, $3, $4) 
+       (wholesale_price_per_oz, target_profit_per_month, operating_expenses) 
+       VALUES ($1, $2, $3) 
        RETURNING *`,
-      [
-        uuidv4(),
-        snakeCaseData.wholesale_price_per_oz,
-        snakeCaseData.target_profit_per_month,
-        snakeCaseData.operating_expenses,
-      ],
+      [snakeCaseData.wholesale_price_per_oz, snakeCaseData.target_profit_per_month, snakeCaseData.operating_expenses],
     )
 
     revalidatePath("/")
@@ -56,66 +41,57 @@ export async function saveBusinessData(
   }
 }
 
-export async function initializeDefaultBusinessData(): Promise<BusinessData> {
+export async function updateBusinessData(id: string, data: Partial<BusinessData>): Promise<BusinessData | null> {
   try {
-    // Check if business data already exists
-    const existingData = await query("SELECT * FROM business_data LIMIT 1")
+    // Build dynamic query based on provided fields
+    const updates: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
 
-    if (existingData.rows.length > 0) {
-      return toCamelCase(existingData.rows[0])
+    const snakeCaseData = toSnakeCase(data)
+
+    if (snakeCaseData.wholesale_price_per_oz !== undefined) {
+      updates.push(`wholesale_price_per_oz = $${paramIndex}`)
+      values.push(snakeCaseData.wholesale_price_per_oz)
+      paramIndex++
     }
 
-    // Insert default business data
-    const result = await query(
-      `INSERT INTO business_data 
-       (id, wholesale_price_per_oz, target_profit_per_month, operating_expenses) 
-       VALUES ($1, $2, $3, $4) 
-       RETURNING *`,
-      [
-        uuidv4(),
-        100, // Default wholesale price per oz
-        2000, // Default target profit per month
-        500, // Default operating expenses
-      ],
-    )
+    if (snakeCaseData.target_profit_per_month !== undefined) {
+      updates.push(`target_profit_per_month = $${paramIndex}`)
+      values.push(snakeCaseData.target_profit_per_month)
+      paramIndex++
+    }
 
-    return toCamelCase(result.rows[0])
-  } catch (error) {
-    console.error("Error initializing business data:", error)
-    throw new Error("Failed to initialize business data")
-  }
-}
+    if (snakeCaseData.operating_expenses !== undefined) {
+      updates.push(`operating_expenses = $${paramIndex}`)
+      values.push(snakeCaseData.operating_expenses)
+      paramIndex++
+    }
 
-export async function updateBusinessData(data: Partial<BusinessData>): Promise<BusinessData> {
-  try {
-    const existingData = await getBusinessData()
+    // Add updated_at timestamp
+    updates.push(`updated_at = NOW()`)
+
+    // Add id as the last parameter
+    values.push(id)
 
     const result = await query(
       `UPDATE business_data 
-       SET wholesale_price_per_oz = $1, 
-           target_profit_per_month = $2, 
-           operating_expenses = $3,
-           updated_at = NOW()
-       WHERE id = $4
+       SET ${updates.join(", ")} 
+       WHERE id = $${paramIndex} 
        RETURNING *`,
-      [
-        data.wholesalePricePerOz ?? existingData.wholesalePricePerOz,
-        data.targetProfitPerMonth ?? existingData.targetProfitPerMonth,
-        data.operatingExpenses ?? existingData.operatingExpenses,
-        existingData.id,
-      ],
+      values,
     )
 
     revalidatePath("/")
     return toCamelCase(result.rows[0])
   } catch (error) {
     console.error("Error updating business data:", error)
-    throw new Error("Failed to update business data")
+    return null
   }
 }
 
 // Scenario Actions
-export async function getScenarios(): Promise<any[]> {
+export async function getScenarios(): Promise<ScenarioData[]> {
   try {
     const scenariosResult = await query(`SELECT * FROM scenarios ORDER BY created_at DESC`)
 
@@ -135,7 +111,7 @@ export async function getScenarios(): Promise<any[]> {
   }
 }
 
-export async function getScenario(id: string): Promise<any | null> {
+export async function getScenario(id: string): Promise<ScenarioData | null> {
   try {
     const scenarioResult = await query(`SELECT * FROM scenarios WHERE id = $1`, [id])
 
@@ -157,7 +133,9 @@ export async function getScenario(id: string): Promise<any | null> {
   }
 }
 
-export async function createScenario(data: any): Promise<any | null> {
+export async function createScenario(
+  data: Omit<ScenarioData, "id" | "createdAt" | "updatedAt">,
+): Promise<ScenarioData | null> {
   try {
     const { salespeople, ...scenarioData } = data
     const snakeCaseData = toSnakeCase(scenarioData)
@@ -213,7 +191,7 @@ export async function createScenario(data: any): Promise<any | null> {
   }
 }
 
-export async function updateScenario(id: string, data: Partial<any>): Promise<any | null> {
+export async function updateScenario(id: string, data: Partial<ScenarioData>): Promise<ScenarioData | null> {
   try {
     const { salespeople, ...scenarioData } = data
     const snakeCaseData = toSnakeCase(scenarioData)
@@ -307,49 +285,35 @@ export async function deleteScenario(id: string): Promise<boolean> {
 // Inventory Actions
 export async function getInventory(): Promise<InventoryItem[]> {
   try {
-    const result = await query("SELECT * FROM inventory_items ORDER BY name")
+    const result = await query(`SELECT * FROM inventory_items ORDER BY created_at DESC`)
+
     return toCamelCase(result.rows)
   } catch (error) {
-    console.error("Error getting inventory:", error)
-    throw new Error("Failed to get inventory")
-  }
-}
-
-export async function getInventoryItem(id: string): Promise<InventoryItem | null> {
-  try {
-    const result = await query("SELECT * FROM inventory_items WHERE id = $1", [id])
-
-    if (result.rows.length === 0) {
-      return null
-    }
-
-    return toCamelCase(result.rows[0])
-  } catch (error) {
-    console.error("Error getting inventory item:", error)
-    throw new Error("Failed to get inventory item")
+    console.error("Error fetching inventory:", error)
+    return []
   }
 }
 
 export async function createInventoryItem(
-  item: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">,
-): Promise<InventoryItem> {
+  data: Omit<InventoryItem, "id" | "createdAt" | "updatedAt">,
+): Promise<InventoryItem | null> {
   try {
+    const snakeCaseData = toSnakeCase(data)
     const result = await query(
       `INSERT INTO inventory_items 
-       (id, name, description, quantity_g, quantity_oz, quantity_kg, purchase_date, cost_per_oz, total_cost, reorder_threshold_g) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+       (name, description, quantity_g, quantity_oz, quantity_kg, purchase_date, cost_per_oz, total_cost, reorder_threshold_g)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
-        uuidv4(),
-        item.name,
-        item.description,
-        item.quantityG,
-        item.quantityOz,
-        item.quantityKg,
-        item.purchaseDate,
-        item.costPerOz,
-        item.totalCost,
-        item.reorderThresholdG,
+        snakeCaseData.name,
+        snakeCaseData.description,
+        snakeCaseData.quantity_g,
+        snakeCaseData.quantity_oz,
+        snakeCaseData.quantity_kg,
+        snakeCaseData.purchase_date,
+        snakeCaseData.cost_per_oz,
+        snakeCaseData.total_cost,
+        snakeCaseData.reorder_threshold_g,
       ],
     )
 
@@ -357,486 +321,461 @@ export async function createInventoryItem(
     return toCamelCase(result.rows[0])
   } catch (error) {
     console.error("Error creating inventory item:", error)
-    throw new Error("Failed to create inventory item")
+    return null
   }
 }
 
-export async function updateInventoryItem(id: string, item: Partial<InventoryItem>): Promise<InventoryItem> {
+export async function updateInventoryItem(id: string, data: Partial<InventoryItem>): Promise<InventoryItem | null> {
   try {
-    const existingItem = await getInventoryItem(id)
+    const snakeCaseData = toSnakeCase(data)
 
-    if (!existingItem) {
-      throw new Error("Inventory item not found")
+    // Build dynamic query based on provided fields
+    const updates: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
+
+    for (const [key, value] of Object.entries(snakeCaseData)) {
+      if (value !== undefined) {
+        updates.push(`${key} = $${paramIndex}`)
+        values.push(value)
+        paramIndex++
+      }
     }
+
+    // Add updated_at timestamp
+    updates.push(`updated_at = NOW()`)
+
+    // Add id as the last parameter
+    values.push(id)
 
     const result = await query(
       `UPDATE inventory_items 
-       SET name = $1, 
-           description = $2, 
-           quantity_g = $3, 
-           quantity_oz = $4, 
-           quantity_kg = $5, 
-           purchase_date = $6, 
-           cost_per_oz = $7, 
-           total_cost = $8, 
-           reorder_threshold_g = $9,
-           updated_at = NOW()
-       WHERE id = $10
+       SET ${updates.join(", ")} 
+       WHERE id = $${paramIndex} 
        RETURNING *`,
-      [
-        item.name ?? existingItem.name,
-        item.description ?? existingItem.description,
-        item.quantityG ?? existingItem.quantityG,
-        item.quantityOz ?? existingItem.quantityOz,
-        item.quantityKg ?? existingItem.quantityKg,
-        item.purchaseDate ?? existingItem.purchaseDate,
-        item.costPerOz ?? existingItem.costPerOz,
-        item.totalCost ?? existingItem.totalCost,
-        item.reorderThresholdG ?? existingItem.reorderThresholdG,
-        id,
-      ],
+      values,
     )
 
     revalidatePath("/")
     return toCamelCase(result.rows[0])
   } catch (error) {
     console.error("Error updating inventory item:", error)
-    throw new Error("Failed to update inventory item")
+    return null
   }
 }
 
 export async function deleteInventoryItem(id: string): Promise<boolean> {
   try {
-    const result = await query("DELETE FROM inventory_items WHERE id = $1 RETURNING id", [id])
+    await query(`DELETE FROM inventory_items WHERE id = $1`, [id])
+
     revalidatePath("/")
-    return result.rows.length > 0
+    return true
   } catch (error) {
     console.error("Error deleting inventory item:", error)
-    throw new Error("Failed to delete inventory item")
+    return false
   }
 }
 
 // Customer Actions
 export async function getCustomers(): Promise<Customer[]> {
   try {
-    const result = await query("SELECT * FROM customers ORDER BY name")
-    const customers = toCamelCase(result.rows)
+    const customersResult = await query(`SELECT * FROM customers ORDER BY created_at DESC`)
 
-    // Get payment history for each customer
+    const customers = toCamelCase(customersResult.rows)
+
+    // For each customer, fetch their payments
     for (const customer of customers) {
-      const paymentsResult = await query("SELECT * FROM payments WHERE customer_id = $1 ORDER BY date DESC", [
+      const paymentsResult = await query(`SELECT * FROM payments WHERE customer_id = $1 ORDER BY date DESC`, [
         customer.id,
       ])
-      customer.paymentHistory = toCamelCase(paymentsResult.rows)
+
+      customer.payments = toCamelCase(paymentsResult.rows)
     }
 
     return customers
   } catch (error) {
-    console.error("Error getting customers:", error)
-    throw new Error("Failed to get customers")
+    console.error("Error fetching customers:", error)
+    return []
   }
 }
 
 export async function getCustomer(id: string): Promise<Customer | null> {
   try {
-    const result = await query("SELECT * FROM customers WHERE id = $1", [id])
+    const customerResult = await query(`SELECT * FROM customers WHERE id = $1`, [id])
 
-    if (result.rows.length === 0) {
+    if (customerResult.rows.length === 0) {
       return null
     }
 
-    const customer = toCamelCase(result.rows[0])
+    const customer = toCamelCase(customerResult.rows[0])
 
-    // Get payment history
-    const paymentsResult = await query("SELECT * FROM payments WHERE customer_id = $1 ORDER BY date DESC", [id])
-    customer.paymentHistory = toCamelCase(paymentsResult.rows)
+    // Fetch payments for this customer
+    const paymentsResult = await query(`SELECT * FROM payments WHERE customer_id = $1 ORDER BY date DESC`, [id])
+
+    customer.payments = toCamelCase(paymentsResult.rows)
 
     return customer
   } catch (error) {
-    console.error("Error getting customer:", error)
-    throw new Error("Failed to get customer")
+    console.error("Error fetching customer:", error)
+    return null
   }
 }
 
 export async function createCustomer(
-  customer: Omit<Customer, "id" | "createdAt" | "updatedAt" | "paymentHistory">,
-): Promise<Customer> {
+  data: Omit<Customer, "id" | "createdAt" | "updatedAt" | "payments">,
+): Promise<Customer | null> {
   try {
+    const snakeCaseData = toSnakeCase(data)
     const result = await query(
       `INSERT INTO customers 
-       (id, name, phone, email, address, amount_owed, due_date, status, notes) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+       (name, phone, email, address, amount_owed, due_date, status, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
-        uuidv4(),
-        customer.name,
-        customer.phone,
-        customer.email,
-        customer.address,
-        customer.amountOwed,
-        customer.dueDate,
-        customer.status,
-        customer.notes,
+        snakeCaseData.name,
+        snakeCaseData.phone,
+        snakeCaseData.email,
+        snakeCaseData.address,
+        snakeCaseData.amount_owed,
+        snakeCaseData.due_date,
+        snakeCaseData.status,
+        snakeCaseData.notes,
       ],
     )
 
-    const newCustomer = toCamelCase(result.rows[0])
-    newCustomer.paymentHistory = []
+    const customer = toCamelCase(result.rows[0])
+    customer.payments = []
 
     revalidatePath("/")
-    return newCustomer
+    return customer
   } catch (error) {
     console.error("Error creating customer:", error)
-    throw new Error("Failed to create customer")
+    return null
   }
 }
 
-export async function updateCustomer(id: string, customer: Partial<Customer>): Promise<Customer> {
+export async function updateCustomer(id: string, data: Partial<Customer>): Promise<Customer | null> {
   try {
-    const existingCustomer = await getCustomer(id)
+    const { payments, ...customerData } = data
+    const snakeCaseData = toSnakeCase(customerData)
 
-    if (!existingCustomer) {
-      throw new Error("Customer not found")
+    // Build dynamic query based on provided fields
+    const updates: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
+
+    for (const [key, value] of Object.entries(snakeCaseData)) {
+      if (value !== undefined) {
+        updates.push(`${key} = $${paramIndex}`)
+        values.push(value)
+        paramIndex++
+      }
     }
 
-    const result = await query(
+    // Add updated_at timestamp
+    updates.push(`updated_at = NOW()`)
+
+    // Add id as the last parameter
+    values.push(id)
+
+    await query(
       `UPDATE customers 
-       SET name = $1, 
-           phone = $2, 
-           email = $3, 
-           address = $4, 
-           amount_owed = $5, 
-           due_date = $6, 
-           status = $7, 
-           notes = $8,
-           updated_at = NOW()
-       WHERE id = $9
-       RETURNING *`,
-      [
-        customer.name ?? existingCustomer.name,
-        customer.phone ?? existingCustomer.phone,
-        customer.email ?? existingCustomer.email,
-        customer.address ?? existingCustomer.address,
-        customer.amountOwed ?? existingCustomer.amountOwed,
-        customer.dueDate ?? existingCustomer.dueDate,
-        customer.status ?? existingCustomer.status,
-        customer.notes ?? existingCustomer.notes,
-        id,
-      ],
+       SET ${updates.join(", ")} 
+       WHERE id = $${paramIndex}`,
+      values,
     )
 
-    const updatedCustomer = toCamelCase(result.rows[0])
-    updatedCustomer.paymentHistory = existingCustomer.paymentHistory
+    // Fetch the updated customer with payments
+    const result = await getCustomer(id)
 
     revalidatePath("/")
-    return updatedCustomer
+    return result
   } catch (error) {
     console.error("Error updating customer:", error)
-    throw new Error("Failed to update customer")
+    return null
   }
 }
 
 export async function deleteCustomer(id: string): Promise<boolean> {
   try {
-    // Delete associated payments first
-    await query("DELETE FROM payments WHERE customer_id = $1", [id])
+    // Begin transaction
+    await query("BEGIN")
 
-    // Then delete the customer
-    const result = await query("DELETE FROM customers WHERE id = $1 RETURNING id", [id])
+    // Delete payments first (foreign key constraint)
+    await query(`DELETE FROM payments WHERE customer_id = $1`, [id])
+
+    // Delete customer
+    await query(`DELETE FROM customers WHERE id = $1`, [id])
+
+    // Commit transaction
+    await query("COMMIT")
+
     revalidatePath("/")
-    return result.rows.length > 0
+    return true
   } catch (error) {
+    // Rollback transaction on error
+    await query("ROLLBACK")
     console.error("Error deleting customer:", error)
-    throw new Error("Failed to delete customer")
+    return false
   }
 }
 
 // Payment Actions
-export async function addPayment(customerId: string, payment: Omit<Payment, "id" | "createdAt">): Promise<Payment> {
-  return await withTransaction(async (client) => {
-    try {
-      // Add payment record
-      const paymentResult = await client.query(
-        `INSERT INTO payments 
-         (id, customer_id, amount, date, method, notes) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
-         RETURNING *`,
-        [uuidv4(), customerId, payment.amount, payment.date, payment.method, payment.notes],
-      )
+export async function addPayment(
+  customerId: string,
+  data: Omit<Payment, "id" | "createdAt" | "customerId">,
+): Promise<Payment | null> {
+  try {
+    const snakeCaseData = toSnakeCase(data)
 
-      // Update customer's amount owed
-      const customerResult = await client.query("SELECT * FROM customers WHERE id = $1", [customerId])
+    // Begin transaction
+    await query("BEGIN")
 
-      if (customerResult.rows.length === 0) {
-        throw new Error("Customer not found")
+    // Insert payment
+    const paymentResult = await query(
+      `INSERT INTO payments 
+       (customer_id, amount, date, method, notes)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [customerId, snakeCaseData.amount, snakeCaseData.date, snakeCaseData.method, snakeCaseData.notes],
+    )
+
+    // Get the customer
+    const customerResult = await query(`SELECT * FROM customers WHERE id = $1`, [customerId])
+
+    if (customerResult.rows.length > 0) {
+      const customer = customerResult.rows[0]
+
+      // Calculate new amount owed
+      const newAmountOwed = Math.max(0, customer.amount_owed - snakeCaseData.amount)
+
+      // Determine new status
+      let newStatus = "unpaid"
+      if (newAmountOwed === 0) {
+        newStatus = "paid"
+      } else if (snakeCaseData.amount > 0) {
+        newStatus = "partial"
       }
 
-      const customer = toCamelCase(customerResult.rows[0])
-      const newAmountOwed = Math.max(0, customer.amountOwed - payment.amount)
-      const newStatus = newAmountOwed === 0 ? "paid" : newAmountOwed < customer.amountOwed ? "partial" : "unpaid"
-
-      await client.query(
+      // Update customer
+      await query(
         `UPDATE customers 
-         SET amount_owed = $1, 
-             status = $2,
-             updated_at = NOW()
+         SET amount_owed = $1, status = $2, updated_at = NOW() 
          WHERE id = $3`,
         [newAmountOwed, newStatus, customerId],
       )
-
-      revalidatePath("/")
-      return toCamelCase(paymentResult.rows[0])
-    } catch (error) {
-      console.error("Error adding payment:", error)
-      throw new Error("Failed to add payment")
     }
-  })
+
+    // Commit transaction
+    await query("COMMIT")
+
+    revalidatePath("/")
+    return toCamelCase(paymentResult.rows[0])
+  } catch (error) {
+    // Rollback transaction on error
+    await query("ROLLBACK")
+    console.error("Error adding payment:", error)
+    return null
+  }
 }
 
 // Transaction Actions
 export async function getTransactions(): Promise<Transaction[]> {
   try {
-    const result = await query("SELECT * FROM transactions ORDER BY date DESC")
+    const result = await query(`SELECT * FROM transactions ORDER BY created_at DESC`)
+
     return toCamelCase(result.rows)
   } catch (error) {
-    console.error("Error getting transactions:", error)
-    throw new Error("Failed to get transactions")
+    console.error("Error fetching transactions:", error)
+    return []
   }
 }
 
-export async function getTransaction(id: string): Promise<Transaction | null> {
+export async function createTransaction(data: Omit<Transaction, "id" | "createdAt">): Promise<Transaction | null> {
   try {
-    const result = await query("SELECT * FROM transactions WHERE id = $1", [id])
+    const snakeCaseData = toSnakeCase(data)
 
-    if (result.rows.length === 0) {
-      return null
+    // Begin transaction
+    await query("BEGIN")
+
+    // Insert transaction
+    const transactionResult = await query(
+      `INSERT INTO transactions 
+       (date, type, inventory_id, inventory_name, quantity_grams, price_per_gram, total_price, 
+        cost, profit, payment_method, customer_id, customer_name, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       RETURNING *`,
+      [
+        snakeCaseData.date,
+        snakeCaseData.type,
+        snakeCaseData.inventory_id,
+        snakeCaseData.inventory_name,
+        snakeCaseData.quantity_grams,
+        snakeCaseData.price_per_gram,
+        snakeCaseData.total_price,
+        snakeCaseData.cost,
+        snakeCaseData.profit,
+        snakeCaseData.payment_method,
+        snakeCaseData.customer_id,
+        snakeCaseData.customer_name,
+        snakeCaseData.notes,
+      ],
+    )
+
+    // If it's a sale, update inventory
+    if (snakeCaseData.type === "sale" && snakeCaseData.inventory_id) {
+      const inventoryResult = await query(`SELECT * FROM inventory_items WHERE id = $1`, [snakeCaseData.inventory_id])
+
+      if (inventoryResult.rows.length > 0) {
+        const inventory = inventoryResult.rows[0]
+
+        // Calculate new quantity
+        const newQuantityG = Math.max(0, inventory.quantity_g - snakeCaseData.quantity_grams)
+        const newQuantityOz = newQuantityG / 28.3495
+        const newQuantityKg = newQuantityG / 1000
+        const newTotalCost = newQuantityOz * inventory.cost_per_oz
+
+        // Update inventory
+        await query(
+          `UPDATE inventory_items 
+           SET quantity_g = $1, quantity_oz = $2, quantity_kg = $3, total_cost = $4, updated_at = NOW() 
+           WHERE id = $5`,
+          [newQuantityG, newQuantityOz, newQuantityKg, newTotalCost, snakeCaseData.inventory_id],
+        )
+      }
     }
 
-    return toCamelCase(result.rows[0])
+    // If it's a credit sale, update customer
+    if (snakeCaseData.type === "sale" && snakeCaseData.customer_id && snakeCaseData.payment_method === "credit") {
+      const customerResult = await query(`SELECT * FROM customers WHERE id = $1`, [snakeCaseData.customer_id])
+
+      if (customerResult.rows.length > 0) {
+        const customer = customerResult.rows[0]
+
+        await query(
+          `UPDATE customers 
+           SET amount_owed = $1, status = 'unpaid', updated_at = NOW() 
+           WHERE id = $2`,
+          [customer.amount_owed + snakeCaseData.total_price, snakeCaseData.customer_id],
+        )
+      }
+    }
+
+    // Commit transaction
+    await query("COMMIT")
+
+    revalidatePath("/")
+    return toCamelCase(transactionResult.rows[0])
   } catch (error) {
-    console.error("Error getting transaction:", error)
-    throw new Error("Failed to get transaction")
+    // Rollback transaction on error
+    await query("ROLLBACK")
+    console.error("Error creating transaction:", error)
+    return null
   }
-}
-
-export async function createTransaction(transaction: Omit<Transaction, "id" | "createdAt">): Promise<Transaction> {
-  return await withTransaction(async (client) => {
-    try {
-      // Create transaction record
-      const result = await client.query(
-        `INSERT INTO transactions 
-         (id, date, type, inventory_id, inventory_name, quantity_grams, price_per_gram, 
-          total_price, cost, profit, payment_method, customer_id, customer_name, notes) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
-         RETURNING *`,
-        [
-          uuidv4(),
-          transaction.date,
-          transaction.type,
-          transaction.inventoryId,
-          transaction.inventoryName,
-          transaction.quantityGrams,
-          transaction.pricePerGram,
-          transaction.totalPrice,
-          transaction.cost,
-          transaction.profit,
-          transaction.paymentMethod,
-          transaction.customerId,
-          transaction.customerName,
-          transaction.notes,
-        ],
-      )
-
-      // If this is a sale, update inventory
-      if (transaction.type === "sale" && transaction.inventoryId) {
-        const inventoryResult = await client.query("SELECT * FROM inventory_items WHERE id = $1", [
-          transaction.inventoryId,
-        ])
-
-        if (inventoryResult.rows.length > 0) {
-          const inventory = toCamelCase(inventoryResult.rows[0])
-          const newQuantityG = Math.max(0, inventory.quantityG - transaction.quantityGrams)
-          const newQuantityOz = newQuantityG / 28.35
-          const newQuantityKg = newQuantityG / 1000
-
-          await client.query(
-            `UPDATE inventory_items 
-             SET quantity_g = $1, 
-                 quantity_oz = $2, 
-                 quantity_kg = $3,
-                 updated_at = NOW()
-             WHERE id = $4`,
-            [newQuantityG, newQuantityOz, newQuantityKg, transaction.inventoryId],
-          )
-        }
-      }
-
-      // If this is a credit sale, update customer's amount owed
-      if (transaction.type === "sale" && transaction.paymentMethod === "credit" && transaction.customerId) {
-        const customerResult = await client.query("SELECT * FROM customers WHERE id = $1", [transaction.customerId])
-
-        if (customerResult.rows.length > 0) {
-          const customer = toCamelCase(customerResult.rows[0])
-          const newAmountOwed = customer.amountOwed + transaction.totalPrice
-
-          await client.query(
-            `UPDATE customers 
-             SET amount_owed = $1, 
-                 status = 'unpaid',
-                 updated_at = NOW()
-             WHERE id = $2`,
-            [newAmountOwed, transaction.customerId],
-          )
-        }
-      }
-
-      revalidatePath("/")
-      return toCamelCase(result.rows[0])
-    } catch (error) {
-      console.error("Error creating transaction:", error)
-      throw new Error("Failed to create transaction")
-    }
-  })
 }
 
 // Account Actions
 export async function getAccounts(): Promise<Account[]> {
   try {
-    const result = await query("SELECT * FROM accounts ORDER BY name")
+    const result = await query(`SELECT * FROM accounts ORDER BY created_at DESC`)
+
     return toCamelCase(result.rows)
   } catch (error) {
-    console.error("Error getting accounts:", error)
-    throw new Error("Failed to get accounts")
+    console.error("Error fetching accounts:", error)
+    return []
   }
 }
 
-export async function getAccount(id: string): Promise<Account | null> {
+export async function createAccount(data: Omit<Account, "id" | "createdAt" | "updatedAt">): Promise<Account | null> {
   try {
-    const result = await query("SELECT * FROM accounts WHERE id = $1", [id])
-
-    if (result.rows.length === 0) {
-      return null
-    }
-
-    return toCamelCase(result.rows[0])
-  } catch (error) {
-    console.error("Error getting account:", error)
-    throw new Error("Failed to get account")
-  }
-}
-
-export async function createAccount(account: Omit<Account, "id" | "createdAt" | "updatedAt">): Promise<Account> {
-  try {
+    const snakeCaseData = toSnakeCase(data)
     const result = await query(
       `INSERT INTO accounts 
-       (id, name, type, balance, description) 
-       VALUES ($1, $2, $3, $4, $5) 
+       (name, type, balance, description)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [uuidv4(), account.name, account.type, account.balance, account.description],
+      [snakeCaseData.name, snakeCaseData.type, snakeCaseData.balance, snakeCaseData.description],
     )
 
     revalidatePath("/")
     return toCamelCase(result.rows[0])
   } catch (error) {
     console.error("Error creating account:", error)
-    throw new Error("Failed to create account")
+    return null
   }
 }
 
-export async function updateAccount(id: string, account: Partial<Account>): Promise<Account> {
+export async function updateAccount(id: string, data: Partial<Account>): Promise<Account | null> {
   try {
-    const existingAccount = await getAccount(id)
+    const snakeCaseData = toSnakeCase(data)
 
-    if (!existingAccount) {
-      throw new Error("Account not found")
+    // Build dynamic query based on provided fields
+    const updates: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
+
+    for (const [key, value] of Object.entries(snakeCaseData)) {
+      if (value !== undefined) {
+        updates.push(`${key} = $${paramIndex}`)
+        values.push(value)
+        paramIndex++
+      }
     }
+
+    // Add updated_at timestamp
+    updates.push(`updated_at = NOW()`)
+
+    // Add id as the last parameter
+    values.push(id)
 
     const result = await query(
       `UPDATE accounts 
-       SET name = $1, 
-           type = $2, 
-           balance = $3, 
-           description = $4,
-           updated_at = NOW()
-       WHERE id = $5
+       SET ${updates.join(", ")} 
+       WHERE id = $${paramIndex} 
        RETURNING *`,
-      [
-        account.name ?? existingAccount.name,
-        account.type ?? existingAccount.type,
-        account.balance ?? existingAccount.balance,
-        account.description ?? existingAccount.description,
-        id,
-      ],
+      values,
     )
 
     revalidatePath("/")
     return toCamelCase(result.rows[0])
   } catch (error) {
     console.error("Error updating account:", error)
-    throw new Error("Failed to update account")
+    return null
   }
 }
 
 export async function deleteAccount(id: string): Promise<boolean> {
   try {
-    await query("DELETE FROM accounts WHERE id = $1 RETURNING id", [id])
+    await query(`DELETE FROM accounts WHERE id = $1`, [id])
+
     revalidatePath("/")
     return true
   } catch (error) {
     console.error("Error deleting account:", error)
-    throw new Error("Failed to delete account")
+    return false
   }
 }
 
-// Price Calculation
-export async function calculatePricePoints(): Promise<PricePoint[]> {
+// Initialize default business data if none exists
+export async function initializeDefaultBusinessData(): Promise<BusinessData | null> {
   try {
-    const businessData = await getBusinessData()
+    const existingDataResult = await query(`SELECT * FROM business_data LIMIT 1`)
 
-    const wholesalePricePerOz = businessData.wholesalePricePerOz
-    const targetProfitPerMonth = businessData.targetProfitPerMonth
-    const operatingExpenses = businessData.operatingExpenses
+    if (existingDataResult.rows.length === 0) {
+      const result = await query(
+        `INSERT INTO business_data 
+         (wholesale_price_per_oz, target_profit_per_month, operating_expenses) 
+         VALUES ($1, $2, $3) 
+         RETURNING *`,
+        [100, 2000, 500],
+      )
 
-    const wholesalePricePerGram = wholesalePricePerOz / 28.35
+      return toCamelCase(result.rows[0])
+    }
 
-    const pricePoints = defaultMarkupPercentages.map((markupPercentage) => {
-      // Calculate retail price based on markup
-      const retailPricePerGram = wholesalePricePerGram * (1 + markupPercentage / 100)
-
-      // Calculate profit per gram
-      const profitPerGram = retailPricePerGram - wholesalePricePerGram
-
-      // Calculate break-even quantity (including operating expenses)
-      const totalMonthlyExpenses = operatingExpenses + targetProfitPerMonth
-      const breakEvenGramsPerMonth = profitPerGram > 0 ? totalMonthlyExpenses / profitPerGram : 0
-      const breakEvenOuncesPerMonth = breakEvenGramsPerMonth / 28.35
-
-      // Calculate monthly financials
-      const monthlyRevenue = retailPricePerGram * breakEvenGramsPerMonth
-      const monthlyCost = wholesalePricePerGram * breakEvenGramsPerMonth
-      const monthlyProfit = monthlyRevenue - monthlyCost - operatingExpenses
-
-      // Calculate ROI
-      const totalInvestment = monthlyCost + operatingExpenses
-      const roi = totalInvestment > 0 ? (monthlyProfit / totalInvestment) * 100 : 0
-
-      return {
-        id: uuidv4(),
-        markupPercentage,
-        retailPricePerGram,
-        profitPerGram,
-        breakEvenGramsPerMonth,
-        breakEvenOuncesPerMonth,
-        monthlyRevenue,
-        monthlyCost,
-        monthlyProfit,
-        roi,
-      }
-    })
-
-    return pricePoints
+    return toCamelCase(existingDataResult.rows[0])
   } catch (error) {
-    console.error("Error calculating price points:", error)
-    throw new Error("Failed to calculate price points")
+    console.error("Error initializing default business data:", error)
+    return null
   }
 }

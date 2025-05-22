@@ -33,11 +33,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { HustleTip } from "@/components/hustle-tip"
 import { HustleStat } from "@/components/hustle-stat"
-<<<<<<< HEAD
-import type { InventoryItem, Transaction } from "@/db/data"
-=======
 import type { InventoryItem, Transaction } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { formatCurrency, formatGrams, formatOunces, gramsToOunces, ouncesToGrams } from "@/lib/utils"
 import {
   getInventory,

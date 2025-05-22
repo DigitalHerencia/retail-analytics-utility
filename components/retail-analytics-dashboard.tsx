@@ -9,11 +9,7 @@ import RetailAnalyticsCharts from "@/components/retail-analytics-charts"
 import SalespeopleTable from "@/components/salespeople-table"
 import SalespeopleCharts from "@/components/salespeople-charts"
 import PriceGenerator from "@/components/price-generator"
-<<<<<<< HEAD
-import type { ScenarioData } from "@/db/data"
-=======
 import type { ScenarioData } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 export default function RetailAnalyticsDashboard() {
   const [scenarios, setScenarios] = useState<ScenarioData[]>([])

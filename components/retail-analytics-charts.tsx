@@ -2,11 +2,7 @@
 
 import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-<<<<<<< HEAD
-import type { ScenarioData } from "@/db/data"
-=======
 import type { ScenarioData } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import {
   BarChart,
   Bar,

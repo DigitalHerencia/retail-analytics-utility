@@ -2,11 +2,7 @@
 
 import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-<<<<<<< HEAD
-import type { PricePoint } from "@/db/data"
-=======
 import type { PricePoint } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import {
   BarChart,
   Bar,

@@ -17,11 +17,7 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
-<<<<<<< HEAD
-import type { Customer } from "@/db/data"
-=======
 import type { Customer } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 interface CustomerFormProps {
   isOpen: boolean

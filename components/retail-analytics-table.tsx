@@ -4,11 +4,7 @@ import { useState, useMemo } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Edit, Trash2, ArrowUpDown } from "lucide-react"
-<<<<<<< HEAD
-import type { ScenarioData } from "@/db/data"
-=======
 import type { ScenarioData } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { formatCurrency, formatGrams, formatOunces } from "@/lib/utils"
 
 interface RetailAnalyticsTableProps {

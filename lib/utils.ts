@@ -1,80 +1,65 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { v4 as uuidv4 } from "uuid"
-import type { PricePoint, BusinessData } from "@/db/data"
+import type { PricePoint, BusinessData } from "./data"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Ensure value is a number before formatting
-const ensureNumber = (value: any): number => {
-  if (value === undefined || value === null) return 0
-  const num = typeof value === "string" ? Number.parseFloat(value) : value
-  return isNaN(num) ? 0 : num
-}
-
-// Formatting functions with enhanced type safety
-export const formatCurrency = (value: any): string => {
-  const num = ensureNumber(value)
-  return `$${num.toFixed(2)}`
+// Formatting functions with null/undefined checks
+export const formatCurrency = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) return "$0.00"
+  return `$${value.toFixed(2)}`
 }
 
 // Format grams with "g" suffix
-export const formatGrams = (grams: any): string => {
-  const num = ensureNumber(grams)
-  return `${num.toFixed(2)}g`
+export const formatGrams = (grams: number | undefined | null): string => {
+  if (grams === undefined || grams === null) return "0.00g"
+  return `${grams.toFixed(2)}g`
 }
 
 // Format kilograms with "kg" suffix
-export const formatKilograms = (kilograms: any): string => {
-  const num = ensureNumber(kilograms)
-  return `${num.toFixed(2)}kg`
+export const formatKilograms = (kilograms: number | undefined | null): string => {
+  if (kilograms === undefined || kilograms === null) return "0.00kg"
+  return `${kilograms.toFixed(2)}kg`
 }
 
 // Format ounces with "oz" suffix
-export const formatOunces = (ounces: any): string => {
-  const num = ensureNumber(ounces)
-  return `${num.toFixed(2)}oz`
+export const formatOunces = (ounces: number | undefined | null): string => {
+  if (ounces === undefined || ounces === null) return "0.00oz"
+  return `${ounces.toFixed(2)}oz`
 }
 
 // Format percentage
-export const formatPercentage = (value: any): string => {
-  const num = ensureNumber(value)
-  return `${Math.round(num * 100)}%`
+export const formatPercentage = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) return "0%"
+  return `${Math.round(value * 100)}%`
 }
 
-// Convert grams to ounces with safety
-export const gramsToOunces = (grams: any): number => {
-  const num = ensureNumber(grams)
-  return num / 28.3495
+// Convert grams to ounces
+export const gramsToOunces = (grams: number): number => {
+  return grams / 28.3495
 }
 
-// Convert ounces to grams with safety
-export const ouncesToGrams = (ounces: any): number => {
-  const num = ensureNumber(ounces)
-  return num * 28.3495
+// Convert ounces to grams
+export const ouncesToGrams = (ounces: number): number => {
+  return ounces * 28.3495
 }
 
-// Convert grams to kilograms with safety
-export const gramsToKilograms = (grams: any): number => {
-  const num = ensureNumber(grams)
-  return num / 1000
+// Convert grams to kilograms
+export const gramsToKilograms = (grams: number): number => {
+  return grams / 1000
 }
 
-// Convert kilograms to grams with safety
-export const kilogramsToGrams = (kilograms: any): number => {
-  const num = ensureNumber(kilograms)
-  return num * 1000
+// Convert kilograms to grams
+export const kilogramsToGrams = (kilograms: number): number => {
+  return kilograms * 1000
 }
 
 // Calculate price points based on wholesale price
 export const calculatePricePoints = (businessData: BusinessData, markupPercentages: number[]): PricePoint[] => {
-  // Ensure all values are numbers
-  const wholesalePricePerOz = ensureNumber(businessData.wholesalePricePerOz)
-  const targetProfitPerMonth = ensureNumber(businessData.targetProfitPerMonth)
-  const operatingExpenses = ensureNumber(businessData.operatingExpenses)
-
+  const { wholesalePricePerOz, targetProfitPerMonth, operatingExpenses } = businessData
   const wholesalePricePerGram = wholesalePricePerOz / 28.35
 
   return markupPercentages.map((markupPercentage) => {
@@ -86,7 +71,7 @@ export const calculatePricePoints = (businessData: BusinessData, markupPercentag
 
     // Calculate break-even quantity (including operating expenses)
     const totalMonthlyExpenses = operatingExpenses + targetProfitPerMonth
-    const breakEvenGramsPerMonth = profitPerGram > 0 ? totalMonthlyExpenses / profitPerGram : 0
+    const breakEvenGramsPerMonth = totalMonthlyExpenses / profitPerGram
     const breakEvenOuncesPerMonth = gramsToOunces(breakEvenGramsPerMonth)
 
     // Calculate monthly financials
@@ -96,7 +81,7 @@ export const calculatePricePoints = (businessData: BusinessData, markupPercentag
 
     // Calculate ROI
     const totalInvestment = monthlyCost + operatingExpenses
-    const roi = totalInvestment > 0 ? (monthlyProfit / totalInvestment) * 100 : 0
+    const roi = (monthlyProfit / totalInvestment) * 100
 
     return {
       id: uuidv4(),
@@ -115,19 +100,14 @@ export const calculatePricePoints = (businessData: BusinessData, markupPercentag
 
 // Calculate derived business values from raw data
 export const calculateDerivedValues = (data: any) => {
-  // Ensure all input values are numbers
-  const wholesalePricePerOz = ensureNumber(data.wholesalePricePerOz)
-  const retailPricePerGram = ensureNumber(data.retailPricePerGram)
-  const monthlySalesQuantity = ensureNumber(data.monthlySalesQuantity)
-  const operatingExpenses = ensureNumber(data.operatingExpenses)
-  const commissionRate = ensureNumber(data.commissionRate)
+  const { wholesalePricePerOz, retailPricePerGram, monthlySalesQuantity, operatingExpenses, commissionRate } = data
 
   // Convert wholesale price to per gram
   const wholesalePricePerGram = wholesalePricePerOz / 28.3495
 
   // Calculate monthly values
-  const monthlySalesGrams = monthlySalesQuantity
-  const monthlyRevenue = monthlySalesGrams * retailPricePerGram
+  const monthlySalesGrams = monthlySalesQuantity || 0
+  const monthlyRevenue = monthlySalesGrams * (retailPricePerGram || 0)
   const monthlyCost = monthlySalesGrams * wholesalePricePerGram
 
   // Calculate profit before commission and expenses
@@ -137,21 +117,21 @@ export const calculateDerivedValues = (data: any) => {
   const commission = commissionRate ? (commissionRate / 100) * monthlyRevenue : 0
 
   // Calculate net profit
-  const netProfit = grossProfit - operatingExpenses - commission
+  const netProfit = grossProfit - (operatingExpenses || 0) - commission
 
   // Calculate profit margin
   const profitMargin = monthlyRevenue > 0 ? (netProfit / monthlyRevenue) * 100 : 0
 
   // Calculate ROI
-  const investment = monthlyCost + operatingExpenses
+  const investment = monthlyCost + (operatingExpenses || 0)
   const roi = investment > 0 ? (netProfit / investment) * 100 : 0
 
   // Calculate profit per gram
   const profitPerGram = monthlySalesGrams > 0 ? netProfit / monthlySalesGrams : 0
 
   // Calculate break-even quantity
-  const profitPerGramBeforeExpenses = retailPricePerGram - wholesalePricePerGram
-  const breakEvenGrams = profitPerGramBeforeExpenses > 0 ? operatingExpenses / profitPerGramBeforeExpenses : 0
+  const profitPerGramBeforeExpenses = (retailPricePerGram || 0) - wholesalePricePerGram
+  const breakEvenGrams = profitPerGramBeforeExpenses > 0 ? (operatingExpenses || 0) / profitPerGramBeforeExpenses : 0
 
   return {
     wholesalePricePerGram,

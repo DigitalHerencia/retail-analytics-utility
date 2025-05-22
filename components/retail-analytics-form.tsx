@@ -8,11 +8,7 @@ import { v4 as uuidv4 } from "uuid"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-<<<<<<< HEAD
-import type { ScenarioData } from "@/db/data"
-=======
 import type { ScenarioData } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { calculateDerivedValues } from "@/lib/utils"
 
 const formSchema = z.object({

@@ -14,11 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PriceTable from "@/components/price-table"
 import PriceCharts from "@/components/price-charts"
 import { calculatePricePoints, formatCurrency } from "@/lib/utils"
-<<<<<<< HEAD
-import { defaultMarkupPercentages, type PricePoint, type BusinessData } from "@/db/data"
-=======
 import { defaultMarkupPercentages, type PricePoint, type BusinessData } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { HustleTip } from "@/components/hustle-tip"
 import { DollarSign, TrendingUp, Percent, Database, Calculator, BarChart4, Table, Settings, Save } from "lucide-react"
 import { updateBusinessData, saveBusinessData } from "@/app/actions"

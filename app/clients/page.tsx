@@ -2,13 +2,8 @@
 
 import CustomersTab from "@/components/customers-tab"
 import { useState, useEffect } from "react"
-<<<<<<< HEAD
-import { generateDemoData } from "@/db/demo-data"
-import type { Customer } from "@/db/data"
-=======
 import { generateDemoData } from "@/lib/demo-data"
 import type { Customer } from "@/lib/data"
->>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 export default function ClientsPage() {
   const [customers, setCustomers] = useState<Customer[]>([])

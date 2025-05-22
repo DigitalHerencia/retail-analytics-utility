@@ -45,6 +45,7 @@ export interface InventoryItem {
   reorderThresholdG: number
   createdAt?: Date
   updatedAt?: Date
+  initialQuantityOz?: number
 }
 
 export interface Payment {
@@ -75,18 +76,17 @@ export interface Transaction {
   id: string
   date: string
   type: string
-  inventoryId: string | null
-  inventoryName: string | null
+  inventoryId: string
+  inventoryName: string
   quantityGrams: number
   pricePerGram: number
   totalPrice: number
   cost: number
   profit: number
   paymentMethod: string
-  customerId: string | null
-  customerName: string | null
+  customerId: string
+  customerName: string
   notes: string
-  createdAt?: string
 }
 
 export interface Account {
@@ -112,9 +112,6 @@ export interface PricePoint {
   roi: number
 }
 
-// Default markup percentages for pricing calculations
-export const defaultMarkupPercentages = [50, 75, 100, 125, 150]
-
 export const defaultBusinessData: BusinessData = {
   id: "default",
   wholesalePricePerOz: 100,
@@ -124,43 +121,55 @@ export const defaultBusinessData: BusinessData = {
   updatedAt: new Date(),
 }
 
-// Sample inventory data for initialization and testing
+export const defaultMarkupPercentages = [50, 75, 100, 125, 150]
+
 export const sampleInventory: InventoryItem[] = [
   {
-    id: "inv1",
+    id: "inv-1",
     name: "Premium",
     description: "Top shelf product",
     quantityG: 100,
     quantityOz: 3.53,
     quantityKg: 0.1,
     purchaseDate: "2024-01-01",
-    costPerOz: 80.0,
+    costPerOz: 80,
     totalCost: 282.4,
     reorderThresholdG: 20,
   },
   {
-    id: "inv2",
+    id: "inv-2",
     name: "Standard",
     description: "Mid-grade product",
     quantityG: 200,
     quantityOz: 7.05,
     quantityKg: 0.2,
     purchaseDate: "2024-01-05",
-    costPerOz: 50.0,
+    costPerOz: 50,
     totalCost: 352.5,
     reorderThresholdG: 50,
   },
+  {
+    id: "inv-3",
+    name: "Budget",
+    description: "Lower-grade product",
+    quantityG: 50,
+    quantityOz: 1.76,
+    quantityKg: 0.05,
+    purchaseDate: "2024-01-10",
+    costPerOz: 30,
+    totalCost: 52.8,
+    reorderThresholdG: 10,
+  },
 ]
 
-// Sample customer data for initialization and testing
 export const sampleCustomers: Customer[] = [
   {
-    id: "cust1",
+    id: "cust-1",
     name: "John Doe",
     phone: "555-123-4567",
     email: "john.doe@example.com",
     address: "123 Main St",
-    amountOwed: 100.0,
+    amountOwed: 100,
     dueDate: "2024-02-15",
     status: "unpaid",
     paymentHistory: [],
@@ -169,12 +178,12 @@ export const sampleCustomers: Customer[] = [
     updatedAt: "2024-01-01",
   },
   {
-    id: "cust2",
+    id: "cust-2",
     name: "Jane Smith",
     phone: "555-987-6543",
     email: "jane.smith@example.com",
     address: "456 Elm St",
-    amountOwed: 0.0,
+    amountOwed: 0,
     dueDate: "2024-02-20",
     status: "paid",
     paymentHistory: [],
