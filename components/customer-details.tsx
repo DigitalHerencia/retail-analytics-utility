@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Edit, Trash2, DollarSign, Phone, Mail, MapPin, Clock, FileText } from "lucide-react"
+<<<<<<< HEAD
 import type { Customer } from "@/db/data"
+=======
+import type { Customer } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { formatCurrency } from "@/lib/utils"
 
 interface CustomerDetailsProps {

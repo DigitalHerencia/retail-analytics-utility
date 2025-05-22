@@ -1,83 +1,80 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { v4 as uuidv4 } from "uuid"
-import type { PricePoint, BusinessData } from "@/types"
+import type { PricePoint, BusinessData } from "./data"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Formatting functions with null/undefined checks
-export const formatCurrency = (value: number | undefined | null): string => {
-  if (value === undefined || value === null || isNaN(value)) return "$0.00"
-  return `$${value.toFixed(2)}`
+// Ensure value is a number before formatting
+const ensureNumber = (value: any): number => {
+  if (value === undefined || value === null) return 0
+  const num = typeof value === "string" ? Number.parseFloat(value) : value
+  return isNaN(num) ? 0 : num
 }
 
-// Format grams
-export const formatGrams = (grams: number | undefined | null): string => {
-  if (grams === undefined || grams === null || isNaN(grams)) return "0.0"
-  return `${grams.toFixed(1)}`
+// Formatting functions with enhanced type safety
+export const formatCurrency = (value: any): string => {
+  const num = ensureNumber(value)
+  return `$${num.toFixed(2)}`
 }
 
-// Function to calculate derived values
-export const calculateDerivedValues = (retailPriceG: number, grossMarginG: number, targetProfit: number) => {
-  // Calculate cost of goods sold (COGS)
-  const cogs = retailPriceG - grossMarginG
-
-  // Calculate units needed to achieve target profit
-  const unitsNeeded = targetProfit / grossMarginG
-
-  // Calculate total revenue
-  const totalRevenue = unitsNeeded * retailPriceG
-
-  return {
-    cogs,
-    unitsNeeded,
-    totalRevenue,
-  }
+// Format grams with "g" suffix
+export const formatGrams = (grams: any): string => {
+  const num = ensureNumber(grams)
+  return `${num.toFixed(2)}g`
 }
 
 // Format kilograms with "kg" suffix
-export const formatKilograms = (kilograms: number | undefined | null): string => {
-  if (kilograms === undefined || kilograms === null || isNaN(kilograms)) return "0.00kg"
-  return `${kilograms.toFixed(2)}kg`
+export const formatKilograms = (kilograms: any): string => {
+  const num = ensureNumber(kilograms)
+  return `${num.toFixed(2)}kg`
 }
 
 // Format ounces with "oz" suffix
-export const formatOunces = (ounces: number | undefined | null): string => {
-  if (ounces === undefined || ounces === null || isNaN(ounces)) return "0.00oz"
-  return `${ounces.toFixed(2)}oz`
+export const formatOunces = (ounces: any): string => {
+  const num = ensureNumber(ounces)
+  return `${num.toFixed(2)}oz`
 }
 
 // Format percentage
-export const formatPercentage = (value: number | undefined | null, digits: number = 0): string => {
-  if (value === undefined || value === null || isNaN(value)) return "0%"
-  return `${(value * 100).toFixed(digits)}%`
+export const formatPercentage = (value: any): string => {
+  const num = ensureNumber(value)
+  return `${Math.round(num * 100)}%`
 }
 
-// Convert grams to ounces
-export const gramsToOunces = (grams: number): number => {
-  return grams / 28.3495
+// Convert grams to ounces with safety
+export const gramsToOunces = (grams: any): number => {
+  const num = ensureNumber(grams)
+  return num / 28.3495
 }
 
-// Convert ounces to grams
-export const ouncesToGrams = (ounces: number): number => {
-  return ounces * 28.3495
+// Convert ounces to grams with safety
+export const ouncesToGrams = (ounces: any): number => {
+  const num = ensureNumber(ounces)
+  return num * 28.3495
 }
 
-// Convert grams to kilograms
-export const gramsToKilograms = (grams: number): number => {
-  return grams / 1000
+// Convert grams to kilograms with safety
+export const gramsToKilograms = (grams: any): number => {
+  const num = ensureNumber(grams)
+  return num / 1000
 }
 
-// Convert kilograms to grams
-export const kilogramsToGrams = (kilograms: number): number => {
-  return kilograms * 1000
+// Convert kilograms to grams with safety
+export const kilogramsToGrams = (kilograms: any): number => {
+  const num = ensureNumber(kilograms)
+  return num * 1000
 }
 
 // Calculate price points based on wholesale price
-export const calculatePricePoints = ( markupPercentages: number[], targetProfit: number, businessData: BusinessData): PricePoint[] => {
-  const { wholesalePricePerOz, targetProfitPerMonth, operatingExpenses } = businessData
+export const calculatePricePoints = (businessData: BusinessData, markupPercentages: number[]): PricePoint[] => {
+  // Ensure all values are numbers
+  const wholesalePricePerOz = ensureNumber(businessData.wholesalePricePerOz)
+  const targetProfitPerMonth = ensureNumber(businessData.targetProfitPerMonth)
+  const operatingExpenses = ensureNumber(businessData.operatingExpenses)
+
   const wholesalePricePerGram = wholesalePricePerOz / 28.35
 
   return markupPercentages.map((markupPercentage) => {
@@ -86,10 +83,10 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
 
     // Calculate profit per gram
     const profitPerGram = retailPricePerGram - wholesalePricePerGram
-    
+
     // Calculate break-even quantity (including operating expenses)
     const totalMonthlyExpenses = operatingExpenses + targetProfitPerMonth
-    const breakEvenGramsPerMonth = totalMonthlyExpenses / profitPerGram
+    const breakEvenGramsPerMonth = profitPerGram > 0 ? totalMonthlyExpenses / profitPerGram : 0
     const breakEvenOuncesPerMonth = gramsToOunces(breakEvenGramsPerMonth)
 
     // Calculate monthly financials
@@ -99,13 +96,12 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
 
     // Calculate ROI
     const totalInvestment = monthlyCost + operatingExpenses
-    const roi = (monthlyProfit / totalInvestment) * 100
+    const roi = totalInvestment > 0 ? (monthlyProfit / totalInvestment) * 100 : 0
 
     return {
-      value: retailPricePerGram,
       id: uuidv4(),
       markupPercentage,
-      retailPrice: retailPricePerGram,
+      retailPricePerGram,
       profitPerGram,
       breakEvenGramsPerMonth,
       breakEvenOuncesPerMonth,
@@ -113,13 +109,63 @@ export const calculatePricePoints = ( markupPercentages: number[], targetProfit:
       monthlyCost,
       monthlyProfit,
       roi,
-      wholesalePricePerGram,
-      retailPricePerGram,
-      updatedAt: new Date().toISOString(),
-      wholesale: wholesalePricePerGram,
-      retail: retailPricePerGram,
     }
   })
+}
+
+// Calculate derived business values from raw data
+export const calculateDerivedValues = (data: any) => {
+  // Ensure all input values are numbers
+  const wholesalePricePerOz = ensureNumber(data.wholesalePricePerOz)
+  const retailPricePerGram = ensureNumber(data.retailPricePerGram)
+  const monthlySalesQuantity = ensureNumber(data.monthlySalesQuantity)
+  const operatingExpenses = ensureNumber(data.operatingExpenses)
+  const commissionRate = ensureNumber(data.commissionRate)
+
+  // Convert wholesale price to per gram
+  const wholesalePricePerGram = wholesalePricePerOz / 28.3495
+
+  // Calculate monthly values
+  const monthlySalesGrams = monthlySalesQuantity
+  const monthlyRevenue = monthlySalesGrams * retailPricePerGram
+  const monthlyCost = monthlySalesGrams * wholesalePricePerGram
+
+  // Calculate profit before commission and expenses
+  const grossProfit = monthlyRevenue - monthlyCost
+
+  // Calculate commission if applicable
+  const commission = commissionRate ? (commissionRate / 100) * monthlyRevenue : 0
+
+  // Calculate net profit
+  const netProfit = grossProfit - operatingExpenses - commission
+
+  // Calculate profit margin
+  const profitMargin = monthlyRevenue > 0 ? (netProfit / monthlyRevenue) * 100 : 0
+
+  // Calculate ROI
+  const investment = monthlyCost + operatingExpenses
+  const roi = investment > 0 ? (netProfit / investment) * 100 : 0
+
+  // Calculate profit per gram
+  const profitPerGram = monthlySalesGrams > 0 ? netProfit / monthlySalesGrams : 0
+
+  // Calculate break-even quantity
+  const profitPerGramBeforeExpenses = retailPricePerGram - wholesalePricePerGram
+  const breakEvenGrams = profitPerGramBeforeExpenses > 0 ? operatingExpenses / profitPerGramBeforeExpenses : 0
+
+  return {
+    wholesalePricePerGram,
+    monthlyRevenue,
+    monthlyCost,
+    grossProfit,
+    commission,
+    netProfit,
+    profitMargin,
+    roi,
+    profitPerGram,
+    breakEvenGrams,
+    breakEvenOunces: breakEvenGrams / 28.3495,
+  }
 }
 
 // Business concept explanations

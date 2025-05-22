@@ -11,7 +11,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { DollarSign, TrendingUp, BarChart3, Percent, HelpCircle } from "lucide-react"
 import { formatCurrency, formatPercentage, businessConcepts, formatGrams } from "@/lib/utils"
 import { HustleTip } from "@/components/hustle-tip"
+<<<<<<< HEAD
 import type { BusinessData } from "@/db/data"
+=======
+import type { BusinessData } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { useInventory } from "@/lib/hooks/use-inventory"
 
 interface SetupTabProps {

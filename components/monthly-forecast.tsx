@@ -26,7 +26,11 @@ import {
 } from "recharts"
 import { formatCurrency, formatPercentage } from "@/lib/utils"
 import { DollarSign, TrendingUp, Calendar, AlertTriangle } from "lucide-react"
+<<<<<<< HEAD
 import type { BusinessData, InventoryItem, Customer, Transaction } from "@/db/data"
+=======
+import type { BusinessData, InventoryItem, Customer, Transaction } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { useMediaQuery } from "@/hooks/use-mobile"
 
 interface MonthlyForecastProps {

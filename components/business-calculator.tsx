@@ -5,8 +5,13 @@ import { Package, Users, Settings, TrendingUp, DollarSign } from "lucide-react"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { calculatePricePoints } from "@/lib/utils"
+<<<<<<< HEAD
 import { defaultBusinessData, defaultMarkupPercentages, sampleInventory, sampleCustomers } from "@/db/data"
 import type { BusinessData, PricePoint, InventoryItem, Customer, Transaction } from "@/db/data"
+=======
+import { defaultBusinessData, defaultMarkupPercentages, sampleInventory, sampleCustomers } from "@/lib/data"
+import type { BusinessData, PricePoint, InventoryItem, Customer, Transaction } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import SettingsTab from "@/components/settings-tab"
 import CustomersTab from "@/components/customers-tab"
 import CashRegister from "@/components/cash-register"

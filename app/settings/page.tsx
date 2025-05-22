@@ -4,8 +4,13 @@ import { useState } from "react"
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs"
 import RetailPricingTool from "@/components/retail-pricing-tool"
 import SettingsTab from "@/components/settings-tab"
+<<<<<<< HEAD
 import { defaultBusinessData, sampleInventory, sampleCustomers } from "@/db/data"
 import type { BusinessData, PricePoint, InventoryItem, Customer } from "@/db/data"
+=======
+import { defaultBusinessData, sampleInventory, sampleCustomers } from "@/lib/data"
+import type { BusinessData, PricePoint, InventoryItem, Customer } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"general" | "pricing">("general")

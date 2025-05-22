@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react"
 import InventoryManagement from "@/components/inventory-management"
 import { getInventory } from "@/app/actions"
+<<<<<<< HEAD
 import type { InventoryItem } from "@/db/data"
+=======
+import type { InventoryItem } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])

@@ -21,7 +21,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Plus, Edit, Trash2, DollarSign } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown } from "lucide-react"
+<<<<<<< HEAD
 import type { Account, Payment } from "@/db/data"
+=======
+import type { Account, Payment } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { formatCurrency } from "@/lib/utils"
 import { getAccounts, createAccount, updateAccount, deleteAccount } from "@/app/actions"
 

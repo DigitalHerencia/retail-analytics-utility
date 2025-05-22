@@ -18,7 +18,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+<<<<<<< HEAD
 import type { Customer, Payment } from "@/db/data"
+=======
+import type { Customer, Payment } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface CustomersTabProps {

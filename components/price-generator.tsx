@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
 import { calculateDerivedValues } from "@/lib/utils"
+<<<<<<< HEAD
 import type { ScenarioData } from "@/db/data"
+=======
+import type { ScenarioData } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 const formSchema = z.object({
   basePrice: z.coerce.number().positive("Base price must be positive"),

@@ -3,7 +3,11 @@
 import CashRegister from "@/components/cash-register"
 import { useState, useEffect } from "react"
 import { getInventory, getCustomers, getTransactions } from "@/app/actions"
+<<<<<<< HEAD
 import type { Customer, InventoryItem, Transaction } from "@/db/data"
+=======
+import type { Customer, InventoryItem, Transaction } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 
 export default function RegisterPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])

@@ -1,9 +1,16 @@
 "use server"
 
+<<<<<<< HEAD
 import { query, withTransaction, toCamelCase, toSnakeCase } from "@/db/db"
 import { v4 as uuidv4 } from "uuid"
 import type { BusinessData, InventoryItem, Customer, Transaction, Account, Payment, PricePoint } from "@/db/data"
 import { defaultMarkupPercentages } from "@/db/data"
+=======
+import { query, withTransaction, toCamelCase, toSnakeCase } from "@/lib/db"
+import { v4 as uuidv4 } from "uuid"
+import type { BusinessData, InventoryItem, Customer, Transaction, Account, Payment, PricePoint } from "@/lib/data"
+import { defaultMarkupPercentages } from "@/lib/data"
+>>>>>>> 6de2fd9eac2b05bd38ac61c9d2fe09041f0df49a
 import { revalidatePath } from "next/cache"
 
 // Business Data Actions

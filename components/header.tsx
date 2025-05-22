@@ -2,55 +2,46 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { Menu, Settings, HelpCircle, DollarSign, Code, LogOut } from "lucide-react"
-import { UserButton, useUser, useClerk } from "@clerk/nextjs"
+import { usePathname } from "next/navigation"
+import { Menu, Settings, HelpCircle, DollarSign, Code } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const router = useRouter()
-  const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
 
+  // Add pricing to the menu items, before settings
   const menuItems = [
     { id: "pricing", href: "/pricing", label: "PRICING", icon: <DollarSign className="h-5 w-5" /> },
     { id: "settings", href: "/settings", label: "SETTINGS", icon: <Settings className="h-5 w-5" /> },
     { id: "help", href: "/help", label: "HELP", icon: <HelpCircle className="h-5 w-5" /> },
   ]
 
-  const handleLogout = () => {
-    // Use the dedicated sign-out page instead of direct signOut
-    router.push('/sign-out');
-    setIsOpen(false);
-  };
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white bg-black">
+    <header className="sticky top-0 z-50 w-full border-b border-gold bg-black">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white font-graffiti">
-          <Code className="h-6 w-6 text-white" />
-          Hustlers Code
-        </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 text-3xl font-bold text-gold font-graffiti">
+            <Code className="h-7 w-7 text-gold" />
+            HUSTLER'S CODE
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white">
-                <Menu className="h-6 w-6 text-white" />
+              <Button variant="ghost" size="icon" className="text-gold">
+                <Menu className="h-6 w-6" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-black border-white p-0 w-[300px] text-white">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Menu</SheetTitle>
-              </SheetHeader>
+            <SheetContent side="right" className="bg-black border-gold p-0 w-[300px]">
               <div className="flex flex-col h-full">
-                <div className="p-6">
-                  <h2 className="text-2xl font-bold text-white font-graffiti">Hustlers Code</h2>
-                  <p className="text-sm text-white/70">STACK PAPER. STAY SMART.</p>
+                <div className="p-6 border-b border-gold">
+                  <h2 className="text-2xl font-bold text-gold font-graffiti">HUSTLER'S CODE</h2>
+                  <p className="text-sm text-gold/70">STACK PAPER. STAY SMART.</p>
                 </div>
 
                 <nav className="flex-1 overflow-auto">
@@ -60,10 +51,10 @@ export default function Header() {
                         <Link
                           href={item.href}
                           className={cn(
-                            "flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font text-white",
+                            "flex items-center px-3 py-2 rounded-md text-sm font-medium gangster-font",
                             pathname === item.href
-                              ? "bg-white text-black"
-                              : "text-white/70 hover:text-white hover:bg-white/10",
+                              ? "bg-gold/20 text-gold"
+                              : "text-gold/70 hover:text-gold hover:bg-gold/10",
                           )}
                           onClick={() => setIsOpen(false)}
                         >
@@ -72,24 +63,13 @@ export default function Header() {
                         </Link>
                       </li>
                     ))}
-                    
-                    {isLoaded && user && (
-                      <li>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center w-full px-3 py-2 rounded-md text-sm font-medium gangster-font text-white/70 hover:text-white hover:bg-white/10 text-left"
-                        >
-                          <LogOut className="h-5 w-5" />
-                          <span className="ml-3">LOGOUT</span>
-                        </button>
-                      </li>
-                    )}
                   </ul>
                 </nav>
-                <div className="p-6 border-t border-white">
-                  <div className="text-xs text-white/50 pt-2">
-                    <p>Hustlers Code v1.0</p>
-                    <p>© 2025 Hustlers Code</p>
+
+                <div className="p-6 border-t border-gold space-y-4">
+                  <div className="text-xs text-gold/50 pt-2">
+                    <p>HUSTLER'S CODE v2.0</p>
+                    <p>© 2025 STREET ANALYTICS</p>
                   </div>
                 </div>
               </div>
