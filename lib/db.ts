@@ -19,7 +19,7 @@ let poolInstance: Pool | null = null;
 
 function getPool(): Pool {
   if (!poolInstance) {
-    poolInstance = new Pool(getConnectionString());
+    poolInstance = new Pool;
     poolInstance.on("error", (err: Error) => {
       console.error("Unexpected error on idle DB client", err);
     });
