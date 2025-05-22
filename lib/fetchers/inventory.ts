@@ -1,6 +1,6 @@
 "use server";
 
-import sql from "../db";
+import sql from "../db/db";
 import { InventoryItem } from "@/types";
 
 export async function getInventory(tenantId: string): Promise<{ inventory: InventoryItem[] }> {

@@ -5,8 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Label } from "@/components/ui/label"
-import { saveUserSecret } from "@/app/(root)/actions"
 import Head from "next/head"
 import { useRouter, useSearchParams } from "next/navigation"
 
@@ -14,7 +12,6 @@ export default function CustomSignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [secretCode, setSecretCode] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState("")
@@ -55,14 +52,6 @@ export default function CustomSignUp() {
       if (result.status === "complete" && result.createdSessionId) {
         // Activate the session
         await setActive({ session: result.createdSessionId })
-        
-        try {
-          // Save the user's secret code for password reset
-          await saveUserSecret({ username, secretQuestion: 'code', secretAnswer: secretCode })
-        } catch (secretError) {
-          console.error("Error saving user secret:", secretError)
-          // Continue anyway as this shouldn't block signup
-        }
 
         try {
           // Trigger onboarding in Neon DB with sensible defaults
@@ -72,10 +61,10 @@ export default function CustomSignUp() {
             await saveOnboarding({
               clerkUserId: result.id,
               username,
-              secretCode,
               mode: "moderate",
               inventoryQty: 0,
               wholesalePricePerOz: RISK_MODE_DEFAULTS.moderate.wholesalePricePerOz,
+              secretCode: password, // Use password as secretCode, or replace with a secure value as needed
             });
           } else {
             console.error("No Clerk user ID returned from signUp.create");
@@ -128,18 +117,6 @@ export default function CustomSignUp() {
                   className="bg-black/80 border-white text-white placeholder-white/60"
                   autoComplete="current-password"
                 />
-                <div>
-                  <Label htmlFor="secret-code" className="text-white mb-1 block">Hustler's Code</Label>
-                  <Input
-                    id="secret-code"
-                    type="text"
-                    placeholder="Enter a secret code (for password reset)"
-                    value={secretCode}
-                    onChange={e => setSecretCode(e.target.value)}
-                    required
-                    className="bg-black/80 border-white text-white placeholder-white/60"
-                  />
-                </div>
                 <div id="clerk-captcha" className="mb-4"></div>
                 {error && <div className="text-red-400 text-sm">{error}</div>}
                 <Button type="submit" className="w-full bg-white text-black font-bold hover:bg-white/80" disabled={loading}>

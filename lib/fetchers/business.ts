@@ -1,6 +1,6 @@
 "use server";
 
-import sql from "../db";
+import sql from "../db/db";
 import { BusinessData } from "@/types";
 import { auth } from "@clerk/nextjs/server";
 

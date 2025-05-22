@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
-import sql from "@/lib/db"
+import sql from "@/lib/db/db"
 
 export async function GET() {
   const { userId } = await auth()

@@ -1,7 +1,7 @@
 'use server'
 
 import { PricePoint } from '@/types'
-import sql from '../db';
+import sql from '../db/db';
 
 /**
  * Updates the price in the database. If no price exists, inserts a new row.

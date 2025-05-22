@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { calculateDerivedValues } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns"
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,

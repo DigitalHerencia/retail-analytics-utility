@@ -1,6 +1,6 @@
 "use server";
 
-import sql from "../db";
+import sql from "../db/db";
 import { Customer, Payment } from "@/types";
 
 export async function getCustomers(tenantId: string): Promise<{ customers: Customer[] }> {

@@ -1,6 +1,6 @@
 "use server";
 
-import sql from "../db";
+import sql from "./db";
 
 /**
  * Ensures all required database tables are created

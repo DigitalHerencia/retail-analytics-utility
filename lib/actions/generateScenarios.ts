@@ -3,7 +3,7 @@ import { calculateDerivedValues } from '../utils'
 import { v4 as uuidv4 } from 'uuid'
 import type { ScenarioData } from '@/types'
 import { auth } from "@clerk/nextjs/server"
-import sql from "../db"
+import sql from "../db/db"
 
 export async function generateScenarios(formData: FormData): Promise<ScenarioData[]> {
   const basePrice = Number(formData.get('basePrice'))

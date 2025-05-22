@@ -1,43 +1,12 @@
 import { NextRequest } from "next/server"
-import { Customer } from "@/types"
 
-// In-memory store for demonstration (replace with DB in production)
-let customers: Customer[] = []
+// This API route is for demonstration only and uses in-memory data. Remove this file in production.
+// All customer CRUD should be handled via server actions in lib/actions/customers.ts.
 
 export async function GET() {
-  return Response.json(customers)
+  return Response.json({ error: "Not implemented. Use server actions for customer data." }, { status: 501 })
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const data = await req.json()
-    // Basic validation
-    if (!data.name || typeof data.amountOwed !== "number") {
-      return Response.json({ error: "Invalid customer" }, { status: 400 })
-    }
-    const customer: Customer = {
-      ...data,
-      id: data.id || `cust-${Date.now()}`,
-      tenantId: data.tenantId || "default",
-      phone: data.phone || "",
-      email: data.email || "",
-      address: data.address || "",
-      dueDate: data.dueDate || new Date().toISOString(),
-      status: data.status || "unpaid",
-      paymentHistory: data.paymentHistory || [],
-      notes: data.notes || "",
-      createdAt: data.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    // Upsert logic
-    const idx = customers.findIndex(c => c.id === customer.id)
-    if (idx > -1) {
-      customers[idx] = customer
-    } else {
-      customers.push(customer)
-    }
-    return Response.json(customer)
-  } catch (e) {
-    return Response.json({ error: "Invalid request" }, { status: 400 })
-  }
+export async function POST() {
+  return Response.json({ error: "Not implemented. Use server actions for customer data." }, { status: 501 })
 }

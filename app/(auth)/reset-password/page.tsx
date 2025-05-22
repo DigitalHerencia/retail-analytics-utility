@@ -5,13 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-// This is a mock function. Replace with your actual user/secret lookup and password reset logic.
+// This is a mock function. Remove and implement real password reset logic using server actions and database lookup.
 async function verifySecretAndResetPassword(username: string, secret: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
-  // TODO: Replace with real backend call
-  // For demonstration, accept any non-empty values and "Hustler's Code" as the correct answer
-  if (!username || !secret || !newPassword) return { success: false, error: "All fields are required." }
-  if (secret !== "Hustler's Code") return { success: false, error: "Incorrect Hustler's Code." }
-  return { success: true }
+  return { success: false, error: "Not implemented. Please use the production password reset flow." }
 }
 
 export default function ResetPassword() {

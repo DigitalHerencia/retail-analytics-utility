@@ -1,6 +1,6 @@
 "use server";
 
-import sql from "../db";
+import sql from "../db/db";
 import { Transaction } from "@/types";
 
 export async function getTransactions(tenantId: string): Promise<{ transactions: Transaction[] }> {

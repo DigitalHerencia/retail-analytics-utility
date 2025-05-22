@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { revalidatePath } from "next/cache"
 import { getInventory, getCustomers, getBusinessData, getTransactions } from "../fetchers"
-import sql from "../db"
+import sql from "../db/db"
 
 // Save the register state (price per gram, transactions, etc.) for the current user/tenant
 export async function saveRegisterState(data: any) {

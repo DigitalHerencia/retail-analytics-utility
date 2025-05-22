@@ -1,7 +1,7 @@
 'use server'
 
 import { PricePoint } from '@/types'
-import sql from '../db';
+import sql from '../db/db';
 
 /**
  * Fetches the latest price from the database.
