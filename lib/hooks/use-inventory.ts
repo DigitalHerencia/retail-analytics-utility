@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { type InventoryItem, sampleInventory } from "@/lib/data"
+import { type InventoryItem, sampleInventory } from "@/db/data"
 
 // This hook provides access to the inventory data
 // In a real application, this would likely fetch from a database or API
